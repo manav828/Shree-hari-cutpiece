@@ -1,0 +1,44 @@
+[
+  {
+    "id": "cat-001",
+    "name": "Cotton",
+    "slug": "cotton",
+    "description": "Breathable & comfortable everyday fabrics",
+    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80"
+  },
+  {
+    "id": "cat-002",
+    "name": "Silk",
+    "slug": "silk",
+    "description": "Luxurious fabrics for special occasions",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+  },
+  {
+    "id": "cat-003",
+    "name": "Georgette",
+    "slug": "georgette",
+    "description": "Elegant drape for graceful outfits",
+    "image": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80"
+  },
+  {
+    "id": "cat-004",
+    "name": "Rayon",
+    "slug": "rayon",
+    "description": "Soft & flowy for daily comfort",
+    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80"
+  },
+  {
+    "id": "cat-005",
+    "name": "Chiffon",
+    "slug": "chiffon",
+    "description": "Sheer elegance for festive wear",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+  },
+  {
+    "id": "cat-006",
+    "name": "Crepe",
+    "slug": "crepe",
+    "description": "Textured beauty for modern styles",
+    "image": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80"
+  }
+]

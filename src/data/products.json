@@ -1,0 +1,148 @@
+[
+  {
+    "id": "fab-001",
+    "name": "Premium Floral Cotton",
+    "slug": "premium-floral-cotton",
+    "price": 299,
+    "originalPrice": 399,
+    "unit": "per meter",
+    "category": "cotton",
+    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+    ],
+    "video": "https://www.w3schools.com/html/mov_bbb.mp4",
+    "description": "Beautiful floral print on soft cotton fabric. Perfect for kurtis and summer dresses.",
+    "fabric": "100% Cotton",
+    "width": "44 inches",
+    "care": "Machine wash cold",
+    "featured": true
+  },
+  {
+    "id": "fab-002",
+    "name": "Royal Banarasi Silk",
+    "slug": "royal-banarasi-silk",
+    "price": 899,
+    "originalPrice": 1199,
+    "unit": "per meter",
+    "category": "silk",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+    ],
+    "description": "Exquisite Banarasi silk with traditional weave. Ideal for lehengas and sarees.",
+    "fabric": "Pure Silk",
+    "width": "45 inches",
+    "care": "Dry clean only",
+    "featured": true
+  },
+  {
+    "id": "fab-003",
+    "name": "Elegant Georgette Print",
+    "slug": "elegant-georgette-print",
+    "price": 449,
+    "originalPrice": 549,
+    "unit": "per meter",
+    "category": "georgette",
+    "image": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80"
+    ],
+    "description": "Flowing georgette with elegant prints. Perfect for dupattas and suits.",
+    "fabric": "Pure Georgette",
+    "width": "44 inches",
+    "care": "Hand wash recommended",
+    "featured": true
+  },
+  {
+    "id": "fab-004",
+    "name": "Soft Rayon Solid",
+    "slug": "soft-rayon-solid",
+    "price": 199,
+    "originalPrice": 279,
+    "unit": "per meter",
+    "category": "rayon",
+    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80"
+    ],
+    "description": "Ultra-soft rayon in solid colors. Great for casual kurtis and tops.",
+    "fabric": "100% Rayon",
+    "width": "42 inches",
+    "care": "Machine wash cold",
+    "featured": true
+  },
+  {
+    "id": "fab-005",
+    "name": "Designer Chiffon Floral",
+    "slug": "designer-chiffon-floral",
+    "price": 349,
+    "originalPrice": 449,
+    "unit": "per meter",
+    "category": "chiffon",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+    ],
+    "description": "Delicate chiffon with beautiful floral prints. Perfect for dupattas.",
+    "fabric": "Pure Chiffon",
+    "width": "44 inches",
+    "care": "Hand wash only",
+    "featured": true
+  },
+  {
+    "id": "fab-006",
+    "name": "Textured Crepe Solid",
+    "slug": "textured-crepe-solid",
+    "price": 379,
+    "originalPrice": 479,
+    "unit": "per meter",
+    "category": "crepe",
+    "image": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80"
+    ],
+    "description": "Rich textured crepe in solid hues. Ideal for formal wear.",
+    "fabric": "Crepe",
+    "width": "44 inches",
+    "care": "Dry clean recommended",
+    "featured": true
+  },
+  {
+    "id": "fab-007",
+    "name": "Block Print Cotton",
+    "slug": "block-print-cotton",
+    "price": 349,
+    "originalPrice": 449,
+    "unit": "per meter",
+    "category": "cotton",
+    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80"
+    ],
+    "description": "Traditional block print on premium cotton. Timeless elegance.",
+    "fabric": "100% Cotton",
+    "width": "44 inches",
+    "care": "Machine wash cold",
+    "featured": false
+  },
+  {
+    "id": "fab-008",
+    "name": "Tussar Silk Natural",
+    "slug": "tussar-silk-natural",
+    "price": 749,
+    "originalPrice": 949,
+    "unit": "per meter",
+    "category": "silk",
+    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    "images": [
+      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+    ],
+    "description": "Natural Tussar silk with earthy tones. Perfect for ethnic wear.",
+    "fabric": "Tussar Silk",
+    "width": "45 inches",
+    "care": "Dry clean only",
+    "featured": false
+  }
+]

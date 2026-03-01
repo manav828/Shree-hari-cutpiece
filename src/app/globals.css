@@ -2,22 +2,48 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer components {
+  .container-premium {
+    @apply max-w-7xl mx-auto px-6 lg:px-8;
+  }
+  
+  .section-padding {
+    @apply py-section-sm lg:py-section;
+  }
+  
+  .btn-primary {
+    @apply inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-medium 
+           tracking-wide transition-all duration-300 ease-premium hover:bg-accent/90 
+           hover:shadow-premium-hover;
+  }
+  
+  .btn-secondary {
+    @apply inline-flex items-center justify-center px-8 py-4 border border-foreground text-foreground 
+           font-medium tracking-wide transition-all duration-300 ease-premium 
+           hover:bg-foreground hover:text-white;
+  }
+  
+  .card-premium {
+    @apply bg-white transition-all duration-500 ease-premium hover:shadow-premium-hover;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent;
+  }
 }
 
 @layer utilities {

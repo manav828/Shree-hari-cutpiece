@@ -1,0 +1,32 @@
+[
+  {
+    "id": "reel-001",
+    "thumbnail": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=300&h=500&q=80",
+    "url": "https://instagram.com",
+    "title": "Cotton Collection"
+  },
+  {
+    "id": "reel-002",
+    "thumbnail": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=500&q=80",
+    "url": "https://instagram.com",
+    "title": "Silk Showcase"
+  },
+  {
+    "id": "reel-003",
+    "thumbnail": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=300&h=500&q=80",
+    "url": "https://instagram.com",
+    "title": "New Arrivals"
+  },
+  {
+    "id": "reel-004",
+    "thumbnail": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=300&h=500&q=80",
+    "url": "https://instagram.com",
+    "title": "Festival Special"
+  },
+  {
+    "id": "reel-005",
+    "thumbnail": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=500&q=80",
+    "url": "https://instagram.com",
+    "title": "Customer Creations"
+  }
+]
