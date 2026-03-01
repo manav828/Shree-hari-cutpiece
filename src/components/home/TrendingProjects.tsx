@@ -35,14 +35,14 @@ const projects = [
 
 export default function TrendingProjects() {
     return (
-        <section className="section-padding bg-foreground text-background">
+        <section className="section-padding bg-[#F7F0F1]">
             <Container>
                 <div className="text-center max-w-2xl mx-auto mb-12 lg:mb-16">
-                    <p className="text-white/70 text-xs md:text-sm tracking-[0.3em] uppercase mb-4 font-medium">
+                    <p className="text-accent text-xs md:text-sm tracking-[0.3em] uppercase mb-4 font-medium">
                         Curated Selections
                     </p>
-                    <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-white">
-                        Shop by Project
+                    <h2 className="font-serif text-3xl md:text-4xl lg:text-5xl text-foreground">
+                        Premium Collection
                     </h2>
                 </div>
 

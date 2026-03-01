@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import Container from "@/components/ui/Container";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 const navLinks = [
   { name: "Home", href: "/" },
@@ -17,6 +18,7 @@ export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { totalItems, setIsCartOpen } = useCart();
+  const { user } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -73,6 +75,25 @@ export default function Navbar() {
 
             {/* Right Side - Cart & Mobile Menu */}
             <div className="flex items-center gap-4">
+              {/* User Account Button */}
+              <Link
+                href={user ? "/account" : "/login"}
+                className="relative p-2 hover:bg-background-secondary rounded-full transition-colors"
+                aria-label={user ? `Account: ${user.name}` : "Sign In"}
+              >
+                {user ? (
+                  <div className="w-6 h-6 rounded-full bg-accent flex items-center justify-center">
+                    <span className="text-white text-[10px] font-medium">
+                      {user.name.split(" ").map(n => n[0]).join("").toUpperCase().slice(0, 2)}
+                    </span>
+                  </div>
+                ) : (
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                )}
+              </Link>
+
               {/* Cart Button */}
               <button
                 onClick={() => setIsCartOpen(true)}
