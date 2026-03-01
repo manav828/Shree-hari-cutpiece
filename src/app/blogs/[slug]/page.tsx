@@ -61,7 +61,7 @@ export default function BlogDetailPage({ params }: BlogDetailPageProps) {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-32 pb-20 bg-background min-h-screen">
+            <main className="pt-12 lg:pt-24 pb-20 bg-background min-h-screen">
                 <Container>
                     {/* Breadcrumb */}
                     <nav className="mb-10">

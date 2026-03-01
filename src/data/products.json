@@ -7,10 +7,10 @@
     "originalPrice": 399,
     "unit": "per meter",
     "category": "cotton",
-    "image": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    "image": "/products/1c.jpeg",
     "images": [
-      "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
-      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+      "/products/1c.jpeg",
+      "/products/1d.jpeg"
     ],
     "video": "https://www.w3schools.com/html/mov_bbb.mp4",
     "description": "Beautiful floral print on soft cotton fabric. Perfect for kurtis and summer dresses.",
@@ -27,9 +27,10 @@
     "originalPrice": 1199,
     "unit": "per meter",
     "category": "silk",
-    "image": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    "image": "/products/2c.jpeg",
     "images": [
-      "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80"
+      "/products/2c.jpeg",
+      "/products/2d.jpeg"
     ],
     "description": "Exquisite Banarasi silk with traditional weave. Ideal for lehengas and sarees.",
     "fabric": "Pure Silk",
@@ -47,7 +48,10 @@
     "category": "georgette",
     "image": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
     "images": [
-      "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80"
+      "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+      "https://images.unsplash.com/photo-1584916201218-f4242ceb4809?w=600&q=80",
+      "https://images.unsplash.com/photo-1605000797499-95a51c5269ae?w=600&q=80",
+      "https://images.unsplash.com/photo-1620799140188-3b2a02fd9a77?w=600&q=80"
     ],
     "description": "Flowing georgette with elegant prints. Perfect for dupattas and suits.",
     "fabric": "Pure Georgette",

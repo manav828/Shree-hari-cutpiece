@@ -16,7 +16,7 @@ export default function BlogsPage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-32 pb-20 bg-background-secondary min-h-screen">
+            <main className="pt-12 lg:pt-24 pb-20 bg-background-secondary min-h-screen">
                 <Container>
                     {/* Page Header */}
                     <div className="text-center mb-16 max-w-2xl mx-auto">

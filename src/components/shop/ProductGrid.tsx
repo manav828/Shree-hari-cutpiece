@@ -48,11 +48,10 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
         <div className="flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory("all")}
-            className={`px-4 py-2 text-sm transition-all duration-300 ${
-              selectedCategory === "all"
+            className={`px-4 py-2 text-sm transition-all duration-300 ${selectedCategory === "all"
                 ? "bg-foreground text-white"
                 : "bg-background-secondary text-foreground hover:bg-border"
-            }`}
+              }`}
           >
             All
           </button>
@@ -60,11 +59,10 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.slug)}
-              className={`px-4 py-2 text-sm transition-all duration-300 ${
-                selectedCategory === category.slug
+              className={`px-4 py-2 text-sm transition-all duration-300 ${selectedCategory === category.slug
                   ? "bg-foreground text-white"
                   : "bg-background-secondary text-foreground hover:bg-border"
-              }`}
+                }`}
             >
               {category.name}
             </button>
@@ -91,7 +89,7 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
 
       {/* Products Grid */}
       {filteredProducts.length > 0 ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

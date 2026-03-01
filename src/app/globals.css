@@ -14,6 +14,11 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-serif;
   }
+
+  /* Add explicit cursor pointer to all inherently interactive elements */
+  a, button {
+    @apply cursor-pointer;
+  }
 }
 
 @layer components {
@@ -27,18 +32,18 @@
   
   .btn-primary {
     @apply inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-medium 
-           tracking-wide transition-all duration-300 ease-premium hover:bg-accent/90 
-           hover:shadow-premium-hover;
+           tracking-wide transition-all duration-[400ms] ease-premium hover:bg-accent/90 
+           hover:shadow-premium-hover hover:tracking-wider;
   }
   
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-8 py-4 border border-foreground text-foreground 
-           font-medium tracking-wide transition-all duration-300 ease-premium 
-           hover:bg-foreground hover:text-white;
+    @apply inline-flex items-center justify-center px-8 py-4 border border-border text-foreground 
+           font-medium tracking-wide transition-all duration-[400ms] ease-premium bg-transparent
+           hover:border-foreground hover:bg-background-secondary hover:tracking-wider;
   }
   
   .card-premium {
-    @apply bg-white transition-all duration-500 ease-premium hover:shadow-premium-hover;
+    @apply bg-white transition-all duration-[500ms] ease-premium hover:shadow-premium-hover;
   }
   
   .text-gradient {

@@ -15,7 +15,7 @@ export default function AboutPage() {
     <>
       <Navbar />
       <CartSidebar />
-      <main className="pt-32 pb-20">
+      <main className="pt-12 lg:pt-24 pb-20">
         {/* Hero Section */}
         <section className="mb-20">
           <Container>
@@ -28,14 +28,14 @@ export default function AboutPage() {
                   A Legacy of Quality Fabrics
                 </h1>
                 <p className="text-text-secondary text-lg leading-relaxed mb-6">
-                  For over a decade, Shree Hari Cutpiece has been serving customers 
-                  in Ahmedabad with the finest quality fabrics. What started as a 
-                  small family business has grown into a trusted name in the textile 
+                  For over a decade, Shree Hari Cutpiece has been serving customers
+                  in Ahmedabad with the finest quality fabrics. What started as a
+                  small family business has grown into a trusted name in the textile
                   industry.
                 </p>
                 <p className="text-text-secondary text-lg leading-relaxed">
-                  We believe in the art of self-expression through fabric. Every 
-                  meter of fabric we sell is carefully selected to help you create 
+                  We believe in the art of self-expression through fabric. Every
+                  meter of fabric we sell is carefully selected to help you create
                   outfits that reflect your unique style and personality.
                 </p>
               </div>
@@ -135,7 +135,7 @@ export default function AboutPage() {
                 Ready to Create Something Beautiful?
               </h2>
               <p className="text-white/70 mb-8">
-                Visit our store or browse our collection online. We're here to help 
+                Visit our store or browse our collection online. We&apos;re here to help
                 you find the perfect fabric for your vision.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">

@@ -15,7 +15,7 @@ export default function ShopPage() {
     <>
       <Navbar />
       <CartSidebar />
-      <main className="pt-32 pb-20">
+      <main className="pt-12 lg:pt-24 pb-20">
         <Container>
           {/* Page Header */}
           <div className="text-center mb-16">
@@ -26,7 +26,7 @@ export default function ShopPage() {
               Shop All Fabrics
             </h1>
             <p className="text-text-secondary max-w-2xl mx-auto">
-              Explore our curated collection of premium fabrics, handpicked for quality 
+              Explore our curated collection of premium fabrics, handpicked for quality
               and elegance. All fabrics sold per meter.
             </p>
           </div>

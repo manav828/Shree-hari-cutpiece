@@ -5,6 +5,7 @@ import OfferBanner from "@/components/home/OfferBanner";
 import Hero from "@/components/home/Hero";
 import Categories from "@/components/home/Categories";
 import DescriptionSection from "@/components/home/DescriptionSection";
+import TrendingProjects from "@/components/home/TrendingProjects";
 import FeaturedProducts from "@/components/home/FeaturedProducts";
 import InstagramReels from "@/components/home/InstagramReels";
 import TrustSection from "@/components/home/TrustSection";
@@ -20,6 +21,7 @@ export default function Home() {
       <main>
         <Hero />
         <Categories />
+        <TrendingProjects />
         <DescriptionSection />
         <FeaturedProducts />
         <InstagramReels />

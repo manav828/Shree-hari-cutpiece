@@ -11,12 +11,31 @@ const config: Config = {
       colors: {
         // Premium Design System
         background: "#FFFFFF",
-        "background-secondary": "#FAFAFA",
+        "background-secondary": "#FDFBF7", // Warmer, more elegant secondary background
         foreground: "#1A1A1A",
         "text-secondary": "#666666",
         accent: "#8B1E3F",
         "accent-light": "#F9F5F6",
         border: "#E5E5E5",
+      },
+      keyframes: {
+        "fade-in-up": {
+          "0%": { opacity: "0", transform: "translateY(20px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        "fade-in": {
+          "0%": { opacity: "0" },
+          "100%": { opacity: "1" },
+        },
+        "slide-prompt": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "50%": { transform: "translateX(8px)" },
+        }
+      },
+      animation: {
+        "fade-in-up": "fade-in-up 0.8s ease-out forwards",
+        "fade-in": "fade-in 0.5s ease-out forwards",
+        "slide-prompt": "slide-prompt 2s ease-in-out infinite",
       },
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],
@@ -31,11 +50,11 @@ const config: Config = {
         "display-sm": ["3rem", { lineHeight: "1.2", letterSpacing: "-0.02em" }],
       },
       boxShadow: {
-        "premium": "0 4px 20px rgba(0, 0, 0, 0.08)",
-        "premium-hover": "0 8px 30px rgba(0, 0, 0, 0.12)",
+        "premium": "0 4px 20px rgba(0, 0, 0, 0.04)",
+        "premium-hover": "0 12px 40px rgba(0, 0, 0, 0.08)", // More elevated, softer shadow
       },
       transitionTimingFunction: {
-        "premium": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "premium": "cubic-bezier(0.25, 1, 0.5, 1)", // Smoother, more deliberate transition
       },
     },
   },

@@ -73,17 +73,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const averageRating = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
 
   // Build media array combining main image, extra images and video if available
+  type ExtendedProduct = typeof product & { images?: string[]; video?: string };
+  const extProduct = product as ExtendedProduct;
+
   const media = [
     { type: "image", url: product.image },
-    ...((product as any).images?.filter((img: string) => img !== product.image).map((img: string) => ({ type: "image", url: img })) || []),
-    ...((product as any).video ? [{ type: "video", url: (product as any).video }] : []),
+    ...(extProduct.images?.filter((img: string) => img !== product.image).map((img: string) => ({ type: "image", url: img })) || []),
+    ...(extProduct.video ? [{ type: "video", url: extProduct.video }] : []),
   ];
 
   return (
     <>
       <Navbar />
       <CartSidebar />
-      <main className="pt-32 pb-20">
+      <main className="pt-12 lg:pt-24 pb-20">
         <Container>
           {/* Breadcrumb */}
           <nav className="mb-10">
@@ -107,60 +110,182 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
           {/* Product Details */}
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20">
             {/* Image Gallery */}
-            <div>
-              <div className="aspect-[4/5] relative overflow-hidden bg-background-secondary rounded-lg">
-                {media[activeMedia]?.type === "video" ? (
-                  <video
-                    src={media[activeMedia].url}
-                    controls
-                    autoPlay
-                    loop
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <Image
-                    src={media[activeMedia]?.url || product.image}
-                    alt={product.name}
-                    fill
-                    className="object-cover"
-                    priority
-                  />
+            <div className="flex flex-col gap-4">
+
+              {/* Desktop View: Thumbnails Left, Main Image Right */}
+              <div className="hidden md:flex flex-row gap-4 h-[500px] lg:h-[600px] w-full">
+                {/* Desktop Thumbnails */}
+                {media.length > 1 && (
+                  <div
+                    className="flex flex-col gap-4 overflow-y-auto scrollbar-hide w-24 flex-shrink-0"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {media.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveMedia(idx)}
+                        className={`relative w-full h-32 flex-shrink-0 border-2 overflow-hidden transition-all ${activeMedia === idx ? "border-accent" : "border-transparent hover:border-border"
+                          }`}
+                      >
+                        {item.type === "video" ? (
+                          <>
+                            <video src={item.url} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                            </div>
+                          </>
+                        ) : (
+                          <Image src={item.url} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 )}
-                {product.originalPrice > product.price && (
-                  <div className="absolute top-4 left-4 bg-accent text-white text-sm px-4 py-2">
-                    {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+
+                {/* Desktop Main Image */}
+                <div className="relative overflow-hidden bg-background-secondary rounded-lg flex-1 group">
+                  {media[activeMedia]?.type === "video" ? (
+                    <video
+                      src={media[activeMedia].url}
+                      controls
+                      autoPlay
+                      loop
+                      muted
+                      className="w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Image
+                      src={media[activeMedia]?.url || product.image}
+                      alt={product.name}
+                      fill
+                      className="object-contain"
+                      priority
+                    />
+                  )}
+
+                  {product.originalPrice > product.price && (
+                    <div className="absolute top-4 left-4 bg-accent text-white text-sm px-4 py-2 z-10">
+                      {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                    </div>
+                  )}
+
+                  {/* Desktop Navigation Arrows */}
+                  {media.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMedia((prev) => (prev === 0 ? media.length - 1 : prev - 1));
+                        }}
+                        className="absolute left-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-foreground hover:bg-white hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-sm"
+                        aria-label="Previous image"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMedia((prev) => (prev === media.length - 1 ? 0 : prev + 1));
+                        }}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 w-10 h-10 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-foreground hover:bg-white hover:scale-110 transition-all opacity-0 group-hover:opacity-100 z-10 shadow-sm"
+                        aria-label="Next image"
+                      >
+                        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Mobile View: Main Image Top, Thumbnails Below */}
+              <div className="md:hidden flex flex-col gap-4">
+                {/* Main Image Container */}
+                <div className="relative overflow-hidden bg-background-secondary rounded-lg w-full aspect-[3/4]">
+                  {media[activeMedia]?.type === "video" ? (
+                    <video
+                      src={media[activeMedia].url}
+                      controls
+                      autoPlay
+                      loop
+                      muted
+                      className="absolute inset-0 w-full h-full object-contain"
+                    />
+                  ) : (
+                    <Image
+                      src={media[activeMedia]?.url || product.image}
+                      alt={product.name}
+                      fill
+                      className="absolute inset-0 object-contain"
+                      priority
+                    />
+                  )}
+                  {product.originalPrice > product.price && (
+                    <div className="absolute top-4 left-4 bg-accent text-white text-xs px-3 py-1.5 font-medium tracking-wide z-10">
+                      {Math.round((1 - product.price / product.originalPrice) * 100)}% OFF
+                    </div>
+                  )}
+
+                  {/* Mobile Navigation Arrows */}
+                  {media.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMedia((prev) => (prev === 0 ? media.length - 1 : prev - 1));
+                        }}
+                        className="absolute left-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-foreground shadow-sm z-10"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMedia((prev) => (prev === media.length - 1 ? 0 : prev + 1));
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/80 backdrop-blur rounded-full flex items-center justify-center text-foreground shadow-sm z-10"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </>
+                  )}
+                </div>
+
+                {/* Mobile Thumbnails List Below */}
+                {media.length > 1 && (
+                  <div
+                    className="flex flex-row gap-2 overflow-x-auto scrollbar-hide w-full snap-x"
+                    style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
+                  >
+                    {media.map((item, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setActiveMedia(idx)}
+                        className={`relative w-20 h-24 flex-shrink-0 snap-start border-2 overflow-hidden transition-all ${activeMedia === idx ? "border-accent" : "border-transparent hover:border-border"
+                          }`}
+                      >
+                        {item.type === "video" ? (
+                          <>
+                            <video src={item.url} className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                            </div>
+                          </>
+                        ) : (
+                          <Image src={item.url} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                        )}
+                      </button>
+                    ))}
                   </div>
                 )}
               </div>
-
-              {/* Thumbnails */}
-              {media.length > 1 && (
-                <div
-                  className="flex gap-4 mt-4 overflow-x-auto scrollbar-hide pb-2"
-                  style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                >
-                  {media.map((item, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => setActiveMedia(idx)}
-                      className={`relative w-24 h-32 flex-shrink-0 border-2 overflow-hidden transition-all ${activeMedia === idx ? "border-accent" : "border-transparent hover:border-border"
-                        }`}
-                    >
-                      {item.type === "video" ? (
-                        <>
-                          <video src={item.url} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                            <svg className="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                          </div>
-                        </>
-                      ) : (
-                        <Image src={item.url} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
 
             {/* Product Info */}
@@ -288,8 +413,8 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as typeof activeTab)}
                   className={`pb-4 text-sm font-medium transition-colors relative ${activeTab === tab.id
-                      ? "text-accent"
-                      : "text-text-secondary hover:text-foreground"
+                    ? "text-accent"
+                    : "text-text-secondary hover:text-foreground"
                     }`}
                 >
                   {tab.label}
@@ -309,7 +434,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   </p>
                   <p className="text-text-secondary leading-relaxed mt-4">
                     This premium fabric is perfect for creating beautiful custom outfits.
-                    Whether you're designing a kurti, dress, or any other garment, this
+                    Whether you&apos;re designing a kurti, dress, or any other garment, this
                     fabric offers the perfect blend of comfort and elegance. The quality
                     ensures durability while maintaining a soft, luxurious feel against
                     your skin.
