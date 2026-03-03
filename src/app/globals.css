@@ -6,17 +6,28 @@
   html {
     scroll-behavior: smooth;
   }
-  
+
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
-  
-  h1, h2, h3, h4, h5, h6 {
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-serif;
   }
 
+  /* Admin panel: override serif to use clean sans-serif */
+  [data-admin] * {
+    font-family: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif !important;
+  }
+
   /* Add explicit cursor pointer to all inherently interactive elements */
-  a, button {
+  a,
+  button {
     @apply cursor-pointer;
   }
 }
@@ -25,27 +36,23 @@
   .container-premium {
     @apply max-w-7xl mx-auto px-6 lg:px-8;
   }
-  
+
   .section-padding {
     @apply py-section-sm lg:py-section;
   }
-  
+
   .btn-primary {
-    @apply inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-medium 
-           tracking-wide transition-all duration-[400ms] ease-premium hover:bg-accent/90 
-           hover:shadow-premium-hover hover:tracking-wider;
+    @apply inline-flex items-center justify-center px-8 py-4 bg-accent text-white font-medium tracking-wide transition-all duration-[400ms] ease-premium hover:bg-accent/90 hover:shadow-premium-hover hover:tracking-wider;
   }
-  
+
   .btn-secondary {
-    @apply inline-flex items-center justify-center px-8 py-4 border border-border text-foreground 
-           font-medium tracking-wide transition-all duration-[400ms] ease-premium bg-transparent
-           hover:border-foreground hover:bg-background-secondary hover:tracking-wider;
+    @apply inline-flex items-center justify-center px-8 py-4 border border-border text-foreground font-medium tracking-wide transition-all duration-[400ms] ease-premium bg-transparent hover:border-foreground hover:bg-background-secondary hover:tracking-wider;
   }
-  
+
   .card-premium {
     @apply bg-white transition-all duration-[500ms] ease-premium hover:shadow-premium-hover;
   }
-  
+
   .text-gradient {
     @apply bg-gradient-to-r from-accent to-accent/80 bg-clip-text text-transparent;
   }
@@ -54,5 +61,35 @@
 @layer utilities {
   .text-balance {
     text-wrap: balance;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 0.3s ease-out;
+  }
+
+  @keyframes slide-in-left {
+    from {
+      transform: translateX(-100%);
+    }
+
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.2s ease-out;
   }
 }
