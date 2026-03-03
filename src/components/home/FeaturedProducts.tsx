@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useRef, useState, useEffect } from "react";
@@ -5,16 +6,63 @@ import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import { formatPrice } from "@/lib/utils";
-import productsData from "@/data/products.json";
+import { supabase } from "@/lib/supabase";
+
+interface FeaturedProduct {
+  id: string;
+  name: string;
+  slug: string;
+  price: number;
+  originalPrice: number;
+  unit: string;
+  category: string;
+  image: string;
+}
 
 export default function FeaturedProducts() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Take all featured products
-  const featuredProducts = productsData.filter((p) => p.featured);
-  // For mobile grid, show max 4 products
+  useEffect(() => {
+    async function fetchFeatured() {
+      const { data } = await supabase
+        .from("products")
+        .select(`
+          id, name, slug, sell_mode,
+          categories ( name ),
+          product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
+        `)
+        .eq("is_featured", true)
+        .eq("is_active", true);
+
+      if (data) {
+        const formatted = data.map((p: any) => {
+          const defaultVariant = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
+          const primaryImage = defaultVariant?.variant_images?.find((img: any) => img.is_primary)?.image_url
+            || defaultVariant?.variant_images?.[0]?.image_url
+            || "";
+
+          return {
+            id: p.id,
+            name: p.name,
+            slug: p.slug,
+            price: defaultVariant?.price || 0,
+            originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
+            unit: p.sell_mode === "meter" ? "meter" : "pc",
+            category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
+            image: primaryImage
+          };
+        });
+        setFeaturedProducts(formatted);
+      }
+      setLoading(false);
+    }
+    fetchFeatured();
+  }, []);
+
   const mobileProducts = featuredProducts.slice(0, 4);
 
   const checkScroll = () => {
@@ -29,12 +77,10 @@ export default function FeaturedProducts() {
     checkScroll();
     window.addEventListener("resize", checkScroll);
     return () => window.removeEventListener("resize", checkScroll);
-  }, []);
+  }, [featuredProducts]);
 
   const scroll = (direction: "left" | "right") => {
     if (scrollRef.current) {
-      // Find the width of one card + gap. Since each card is 25% of the container:
-      // Let's scroll by roughly the container width to show 4 new items
       const scrollAmount = scrollRef.current.clientWidth;
       const newScrollLeft = scrollRef.current.scrollLeft + (direction === "left" ? -scrollAmount : scrollAmount);
       scrollRef.current.scrollTo({
@@ -44,7 +90,7 @@ export default function FeaturedProducts() {
     }
   };
 
-  const ProductCardView = ({ product }: { product: typeof productsData[0] }) => (
+  const ProductCardView = ({ product }: { product: FeaturedProduct }) => (
     <Link
       href={`/shop/${product.slug}`}
       className="group cursor-pointer block h-full"

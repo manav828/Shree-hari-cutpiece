@@ -1,21 +1,28 @@
 import { Metadata } from "next";
-import productsData from "@/data/products.json";
 import ProductDetailClient from "@/components/shop/ProductDetailClient";
+import { supabase } from "@/lib/supabase";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
 }
 
 export async function generateStaticParams() {
-  return productsData.map((product) => ({
+  const { data } = await supabase.from("products").select("slug").eq("is_active", true);
+  if (!data) return [];
+
+  return data.map((product) => ({
     slug: product.slug,
   }));
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const product = productsData.find((p) => p.slug === slug);
-  
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, description")
+    .eq("slug", slug)
+    .single();
+
   if (!product) {
     return {
       title: "Product Not Found | Shree Hari Cutpiece",

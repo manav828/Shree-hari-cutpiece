@@ -18,51 +18,26 @@ const orderStatusConfig = {
         label: "Order Placed",
         color: "bg-yellow-100 text-yellow-700 border-yellow-200",
         dot: "bg-yellow-400",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-        ),
     },
     confirmed: {
         label: "Confirmed",
         color: "bg-blue-100 text-blue-700 border-blue-200",
         dot: "bg-blue-400",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-        ),
     },
     shipped: {
         label: "Shipped",
         color: "bg-purple-100 text-purple-700 border-purple-200",
         dot: "bg-purple-400",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-            </svg>
-        ),
     },
     delivered: {
         label: "Delivered",
         color: "bg-green-100 text-green-700 border-green-200",
         dot: "bg-green-400",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
-            </svg>
-        ),
     },
     cancelled: {
         label: "Cancelled",
         color: "bg-red-100 text-red-700 border-red-200",
         dot: "bg-red-400",
-        icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-        ),
     },
 };
 
@@ -81,7 +56,9 @@ function OrderTimeline({ currentStatus }: { currentStatus: Order["status"] }) {
         return (
             <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
                 <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                    {orderStatusConfig.cancelled.icon}
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
                 </div>
                 <div>
                     <p className="font-medium text-red-700 text-sm">Order Cancelled</p>
@@ -96,7 +73,6 @@ function OrderTimeline({ currentStatus }: { currentStatus: Order["status"] }) {
     return (
         <div className="relative">
             <div className="flex items-start justify-between relative">
-                {/* Connecting line */}
                 <div className="absolute top-4 left-4 right-4 h-0.5 bg-border" />
                 <div
                     className="absolute top-4 left-4 h-0.5 bg-accent transition-all duration-700"
@@ -157,12 +133,12 @@ export default function OrderDetailPage() {
         if (!order) return;
         order.items.forEach((item) => {
             addToCart({
-                id: item.id,
-                name: item.name,
-                slug: item.id,
-                image: item.image,
-                price: item.price,
-                meters: item.meters,
+                id: item.variant_id || item.id,
+                name: item.product_name,
+                image: item.image_url || "",
+                price: item.price_per_unit,
+                meters: item.quantity_or_meters,
+                slug: "",
             });
         });
         setReorderedAll(true);
@@ -171,14 +147,14 @@ export default function OrderDetailPage() {
 
     const handleReorderItem = (item: Order["items"][0]) => {
         addToCart({
-            id: item.id,
-            name: item.name,
-            slug: item.id,
-            image: item.image,
-            price: item.price,
-            meters: item.meters,
+            id: item.variant_id || item.id,
+            name: item.product_name,
+            image: item.image_url || "",
+            price: item.price_per_unit,
+            meters: item.quantity_or_meters,
+            slug: "",
         });
-        setReorderedItems((prev) => new Set([...Array.from(prev), item.id]));
+        setReorderedItems((prev) => new Set(prev).add(item.id));
         setTimeout(() => {
             setReorderedItems((prev) => {
                 const next = new Set(prev);
@@ -191,9 +167,9 @@ export default function OrderDetailPage() {
     const handleWhatsAppReorder = () => {
         if (!order || !user) return;
         const itemsList = order.items
-            .map((i) => `• ${i.name}: ${i.meters}m`)
+            .map((i) => `• ${i.product_name}: ${i.quantity_or_meters}`)
             .join("%0A");
-        const msg = `Hi, I'd like to reorder items from my Order %23${order.id}:%0A%0A${itemsList}%0A%0ATotal was: ${formatPrice(order.total)}`;
+        const msg = `Hi, I'd like to reorder items from my Order %23${order.order_number}:%0A%0A${itemsList}%0A%0ATotal was: ${formatPrice(order.total)}`;
         window.open(`https://wa.me/91XXXXXXXXXX?text=${msg}`, "_blank");
     };
 
@@ -251,7 +227,7 @@ export default function OrderDetailPage() {
                     <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-10">
                         <div>
                             <p className="text-accent text-xs tracking-[0.3em] uppercase mb-2 font-medium">Order Details</p>
-                            <h1 className="font-serif text-3xl lg:text-4xl text-foreground">#{order.id}</h1>
+                            <h1 className="font-serif text-3xl lg:text-4xl text-foreground">#{order.order_number}</h1>
                             <p className="text-text-secondary text-sm mt-1">
                                 Placed on{" "}
                                 {new Date(order.date).toLocaleDateString("en-IN", {
@@ -280,7 +256,7 @@ export default function OrderDetailPage() {
                                 <OrderTimeline currentStatus={order.status} />
                             </div>
 
-                            {/* Tracking Card (only if trackingUrl is set) */}
+                            {/* Tracking Card */}
                             {order.trackingUrl && (
                                 <div className="bg-accent/5 border border-accent/20 rounded-2xl p-6 sm:p-8">
                                     <div className="flex items-start gap-4">
@@ -342,24 +318,31 @@ export default function OrderDetailPage() {
                                     {order.items.map((item) => (
                                         <div key={item.id} className="flex items-center gap-4 py-5 first:pt-0 last:pb-0">
                                             {/* Image */}
-                                            <Link href="/shop" className="w-16 h-20 relative flex-shrink-0 rounded-lg overflow-hidden bg-background-secondary border border-border group">
-                                                <Image
-                                                    src={item.image}
-                                                    alt={item.name}
-                                                    fill
-                                                    className="object-cover transition-transform duration-500 group-hover:scale-105"
-                                                />
-                                            </Link>
+                                            <div className="w-16 h-20 relative flex-shrink-0 rounded-lg overflow-hidden bg-background-secondary border border-border">
+                                                {item.image_url ? (
+                                                    <Image
+                                                        src={item.image_url}
+                                                        alt={item.product_name}
+                                                        fill
+                                                        className="object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="w-full h-full bg-border" />
+                                                )}
+                                            </div>
                                             {/* Details */}
                                             <div className="flex-1 min-w-0">
                                                 <h3 className="font-medium text-foreground text-sm leading-tight mb-1 truncate">
-                                                    {item.name}
+                                                    {item.product_name}
                                                 </h3>
+                                                {item.color_name && (
+                                                    <p className="text-text-secondary text-xs mb-0.5">{item.color_name}</p>
+                                                )}
                                                 <p className="text-text-secondary text-xs">
-                                                    {item.meters}m × {formatPrice(item.price)}/m
+                                                    {item.quantity_or_meters} × {formatPrice(item.price_per_unit)}
                                                 </p>
                                                 <p className="font-medium text-foreground text-sm mt-1">
-                                                    {formatPrice(item.price * item.meters)}
+                                                    {formatPrice(item.price_per_unit * item.quantity_or_meters)}
                                                 </p>
                                             </div>
                                             {/* Reorder single item */}
@@ -478,7 +461,7 @@ export default function OrderDetailPage() {
                                     For any queries regarding this order, contact us on WhatsApp with your order ID.
                                 </p>
                                 <a
-                                    href={`https://wa.me/91XXXXXXXXXX?text=Hi, I have a query about Order %23${order.id}`}
+                                    href={`https://wa.me/91XXXXXXXXXX?text=Hi, I have a query about Order %23${order.order_number}`}
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2 text-sm text-green-600 font-medium hover:text-green-700 transition-colors"

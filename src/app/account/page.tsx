@@ -35,7 +35,7 @@ function OrderCard({ order }: { order: Order }) {
             >
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-medium text-foreground text-sm">#{order.id}</span>
+                        <span className="font-medium text-foreground text-sm">#{order.order_number}</span>
                         <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${status.color}`}>
                             {status.label}
                         </span>
@@ -50,7 +50,7 @@ function OrderCard({ order }: { order: Order }) {
                     <div className="flex -space-x-2">
                         {order.items.slice(0, 3).map((item) => (
                             <div key={item.id} className="w-9 h-9 rounded-md border-2 border-white overflow-hidden relative bg-background-secondary">
-                                <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                {item.image_url ? <Image src={item.image_url} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
                             </div>
                         ))}
                         {order.items.length > 3 && (
@@ -81,14 +81,14 @@ function OrderCard({ order }: { order: Order }) {
                         {order.items.map((item) => (
                             <div key={item.id} className="flex items-center gap-4">
                                 <div className="w-14 h-16 relative bg-white flex-shrink-0 rounded-lg border border-border overflow-hidden">
-                                    <Image src={item.image} alt={item.name} fill className="object-cover" />
+                                    {item.image_url ? <Image src={item.image_url} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{item.name}</p>
-                                    <p className="text-xs text-text-secondary mt-0.5">{item.meters}m × {formatPrice(item.price)}/m</p>
+                                    <p className="text-sm font-medium text-foreground truncate">{item.product_name}</p>
+                                    <p className="text-xs text-text-secondary mt-0.5">{item.quantity_or_meters} × {formatPrice(item.price_per_unit)}</p>
                                 </div>
                                 <p className="text-sm font-medium text-foreground flex-shrink-0">
-                                    {formatPrice(item.price * item.meters)}
+                                    {formatPrice(item.price_per_unit * item.quantity_or_meters)}
                                 </p>
                             </div>
                         ))}
