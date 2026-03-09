@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -7,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
     Star, Sparkles, CircleHelp, ExternalLink, Check, FileText, Palette,
-    ShoppingBag, List, GripVertical
+    ShoppingBag, List
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 

@@ -5,6 +5,7 @@ const config: Config = {
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/themes/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -30,12 +31,17 @@ const config: Config = {
         "slide-prompt": {
           "0%, 100%": { transform: "translateX(0)" },
           "50%": { transform: "translateX(8px)" },
+        },
+        "marquee": {
+          "0%": { transform: "translateX(0%)" },
+          "100%": { transform: "translateX(-100%)" }
         }
       },
       animation: {
         "fade-in-up": "fade-in-up 0.8s ease-out forwards",
         "fade-in": "fade-in 0.5s ease-out forwards",
         "slide-prompt": "slide-prompt 2s ease-in-out infinite",
+        "marquee": "marquee 25s linear infinite",
       },
       fontFamily: {
         serif: ["var(--font-playfair)", "Georgia", "serif"],

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
-import ProductDetailClient from "@/components/shop/ProductDetailClient";
 import { supabase } from "@/lib/supabase";
+import { getActiveTheme } from "@/lib/theme";
+import themes from "@/themes/registry";
 
 interface ProductPageProps {
   params: Promise<{ slug: string }>;
@@ -35,7 +36,13 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   };
 }
 
-export default async function ProductPage({ params }: ProductPageProps) {
+export default async function ProductAppPage({ params }: ProductPageProps) {
   const { slug } = await params;
-  return <ProductDetailClient slug={slug} />;
+  const activeTheme = await getActiveTheme();
+
+  // Resolve the active theme's product page component
+  const themeConfig = themes[activeTheme] || themes["classic"];
+  const ThemeProductPage = themeConfig.ProductPage;
+
+  return <ThemeProductPage slug={slug} />;
 }

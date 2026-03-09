@@ -23,7 +23,12 @@ const statusConfig = {
 
 function OrderCard({ order }: { order: Order }) {
     const [isExpanded, setIsExpanded] = useState(false);
-    const status = statusConfig[order.status];
+
+    // Provide a fallback for statuses that might not be in statusConfig (like 'pending')
+    const status = statusConfig[order.status as keyof typeof statusConfig] || {
+        label: order.status.charAt(0).toUpperCase() + order.status.slice(1),
+        color: "bg-gray-100 text-gray-700 border-gray-200"
+    };
 
     return (
         <div className="bg-white border border-border rounded-xl overflow-hidden transition-shadow hover:shadow-md">
@@ -125,13 +130,14 @@ function OrderCard({ order }: { order: Order }) {
 }
 
 export default function AccountPage() {
-    const { user, orders, logout, updateProfile, isLoading } = useAuth();
+    const { user, orders, logout, updateProfile, isLoading, refreshOrders } = useAuth();
     const router = useRouter();
     const [activeTab, setActiveTab] = useState<Tab>("orders");
     const [editName, setEditName] = useState("");
     const [editPhone, setEditPhone] = useState("");
     const [saveSuccess, setSaveSuccess] = useState(false);
 
+    // Initial auth redirect and sync local state
     useEffect(() => {
         if (!isLoading && !user) {
             router.push("/login");
@@ -141,6 +147,14 @@ export default function AccountPage() {
             setEditPhone(user.phone || "");
         }
     }, [user, isLoading, router]);
+
+    // Force an initial refresh of orders when the page mounts so new checkouts appear
+    useEffect(() => {
+        if (user) {
+            refreshOrders();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [user?.id]);
 
     if (isLoading || !user) {
         return (

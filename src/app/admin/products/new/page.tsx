@@ -6,7 +6,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
-    Star, Sparkles, CircleHelp, Check
+    Star, Sparkles, CircleHelp
 } from "lucide-react";
 
 /* ─── Types ─── */

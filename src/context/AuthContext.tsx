@@ -80,9 +80,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     /* Fetch orders from Supabase */
     const fetchOrders = useCallback(async () => {
+        const { data: authData } = await supabase.auth.getSession();
+        const currentUserId = authData.session?.user?.id;
+
+        if (!currentUserId) {
+            setOrders([]);
+            return;
+        }
+
         const { data: ordersData } = await supabase
             .from("orders")
             .select("*")
+            .eq("user_id", currentUserId)
             .order("created_at", { ascending: false });
 
         if (!ordersData || ordersData.length === 0) {
@@ -91,14 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
 
         // Fetch items for all orders
-        const orderIds = ordersData.map((o) => o.id);
+        const ordersDataList = ordersData as any[];
+        const orderIds = ordersDataList.map((o) => o.id);
         const { data: itemsData } = await supabase
             .from("order_items")
             .select("*")
             .in("order_id", orderIds);
 
         const itemsByOrder: Record<string, OrderItem[]> = {};
-        (itemsData || []).forEach((item) => {
+        const itemsDataList = (itemsData as any[]) || [];
+        itemsDataList.forEach((item) => {
             if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
             itemsByOrder[item.order_id].push({
                 id: item.id,
@@ -111,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             });
         });
 
-        const mapped: Order[] = ordersData.map((o) => ({
+        const mapped: Order[] = ordersDataList.map((o) => ({
             id: o.id,
             order_number: o.order_number,
             date: o.created_at,
@@ -132,10 +143,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     /* Listen for auth state changes */
     useEffect(() => {
         // Get the initial session
-        supabase.auth.getSession().then(({ data: { session } }) => {
+        supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session?.user) {
-                fetchProfile(session.user);
-                fetchOrders();
+                await fetchProfile(session.user);
+                await fetchOrders();
             }
             setIsLoading(false);
         });
@@ -183,10 +194,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const updateProfile = async (data: Partial<User>) => {
         if (!user) return;
-        const updates: Record<string, string> = {};
+        const updates: any = {};
         if (data.name) updates.full_name = data.name;
         if (data.phone) updates.phone = data.phone;
 
+        // @ts-ignore - bypassing never compilation inference
         await supabase.from("profiles").update(updates).eq("id", user.id);
 
         setUser((prev) => (prev ? { ...prev, ...data } : prev));

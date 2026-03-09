@@ -3,10 +3,10 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { supabaseAdmin as supabase } from "@/lib/supabaseAdminClient";
 import {
     Plus, Search, SlidersHorizontal, Trash2, Pencil, ExternalLink,
-    Eye, EyeOff, ChevronDown, Package, AlertTriangle, Loader2, X
+    Package, AlertTriangle, Loader2
 } from "lucide-react";
 
 /* ─── Types ─── */
@@ -74,17 +74,38 @@ export default function AdminProducts() {
     const [togglingId, setTogglingId] = useState<string | null>(null);
 
     const fetchProducts = async () => {
-        setLoading(true);
-        const { data } = await supabase.from("products").select(`
-            id, name, slug, sell_mode, fabric, width, is_active, is_featured, is_new_arrival, created_at,
-            categories ( name ),
-            product_variants (
-                id, color_name, color_hex, price, original_price, stock, is_default,
-                variant_images ( image_url, is_primary )
-            )
-        `).order("sort_order", { ascending: true });
-        if (data) setProducts(data as unknown as Product[]);
-        setLoading(false);
+        const executeFetch = async (retries = 3): Promise<any> => {
+            const { data, error } = await supabase.from("products").select(`
+                id, name, slug, sell_mode, fabric, width, is_active, is_featured, is_new_arrival, created_at,
+                categories ( name ),
+                product_variants (
+                    id, color_name, color_hex, price, original_price, stock, is_default,
+                    variant_images ( image_url, is_primary )
+                )
+            `).order("sort_order", { ascending: true });
+
+            if (error) {
+                if (error.message?.includes("AbortError") && retries > 0) {
+                    console.log(`Retrying fetch due to AbortError... (${retries} retries left)`);
+                    await new Promise(r => setTimeout(r, 500));
+                    return executeFetch(retries - 1);
+                }
+                throw error;
+            }
+            return data;
+        };
+
+        try {
+            setLoading(true);
+            const data = await executeFetch(3);
+            if (data) {
+                setProducts(data as unknown as Product[]);
+            }
+        } catch (err) {
+            console.error("Unexpected error fetching products:", err);
+        } finally {
+            setLoading(false);
+        }
     };
 
     useEffect(() => {

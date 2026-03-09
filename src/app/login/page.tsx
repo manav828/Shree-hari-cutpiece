@@ -184,13 +184,13 @@ export default function LoginPage() {
                         {/* Divider */}
                         <div className="my-8 flex items-center gap-4">
                             <div className="flex-1 h-px bg-border" />
-                            <span className="text-text-secondary text-xs tracking-wide">OR</span>
+                            <span className="text-text-secondary text-xs tracking-wide">NEW TO SHREE HARI?</span>
                             <div className="flex-1 h-px bg-border" />
                         </div>
 
-                        {/* Continue as Guest */}
-                        <Link href="/shop" className="btn-secondary w-full justify-center py-4 text-sm">
-                            Continue Browsing as Guest
+                        {/* Continue to Signup */}
+                        <Link href="/signup" className="btn-secondary w-full justify-center py-4 text-sm">
+                            Create an Account
                         </Link>
 
                         {/* Back to home */}

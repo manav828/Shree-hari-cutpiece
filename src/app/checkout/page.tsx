@@ -10,11 +10,20 @@ import CartSidebar from "@/components/cart/CartSidebar";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import SlideToOrder from "@/components/checkout/SlideToOrder";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import confetti from "canvas-confetti";
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
+  const { user, isLoading } = useAuth();
+  const router = useRouter();
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -30,48 +39,121 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!user) {
+      setErrorMsg("Please sign in or create an account to place your order.");
+      setTimeout(() => router.push("/login"), 2000);
+      return;
+    }
+
     setIsSubmitting(true);
+    setErrorMsg("");
 
-    // Create WhatsApp message with order details
-    const orderItems = items.map((item) =>
-      `- ${item.name}: ${item.meters}m x ${formatPrice(item.price)} = ${formatPrice(item.price * item.meters)}`
-    ).join("\n");
+    try {
+      // 1. Calculate values
+      const shipping_amount = totalPrice >= 999 ? 0 : 99; // Using standard frontend logic
+      const subtotal = totalPrice;
+      const total_amount = subtotal + shipping_amount;
 
-    const message = `
-*New Order from Shree Hari Cutpiece Website*
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
+      const order_number = `SH-${dateStr}-${randomSuffix}`;
 
-*Customer Details:*
-Name: ${formData.name}
-Phone: ${formData.phone}
-Email: ${formData.email}
-Address: ${formData.address}
-City: ${formData.city}
-State: ${formData.state}
-Pincode: ${formData.pincode}
+      // 2. Insert Order
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert({
+          order_number,
+          user_id: user.id,
+          status: 'pending',
+          payment_status: 'pending',
+          payment_method: 'cod',
+          subtotal,
+          shipping_amount,
+          total_amount,
+          notes: formData.notes,
+          delivery_address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
+          contact_phone: formData.phone
+        })
+        .select()
+        .single();
 
-*Order Items:*
-${orderItems}
+      if (orderError || !orderData) throw new Error(orderError?.message || "Failed to create order");
 
-*Total: ${formatPrice(totalPrice)}*
+      // 3. Insert Address
+      const { error: addressError } = await supabase
+        .from('order_addresses')
+        .insert({
+          order_id: orderData.id,
+          type: 'shipping',
+          full_name: formData.name,
+          phone: formData.phone,
+          address_line1: formData.address,
+          city: formData.city,
+          state: formData.state,
+          pincode: formData.pincode,
+          country: 'India'
+        });
 
-${formData.notes ? `*Notes:* ${formData.notes}` : ""}
-    `.trim();
+      if (addressError) console.error("Failed to save address:", addressError);
 
-    // Encode message for WhatsApp URL
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/91XXXXXXXXXX?text=${encodedMessage}`;
+      // 4. Insert Items
+      const orderItems = items.map(item => ({
+        order_id: orderData.id,
+        product_name: item.name,
+        image_url: item.image,
+        selling_mode: 'meter', // currently cart only does meters mostly
+        quantity_or_meters: item.meters,
+        price_per_unit: item.price,
+        total_price: item.price * item.meters,
+      }));
 
-    // Show success and open WhatsApp
-    setTimeout(() => {
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(orderItems);
+
+      if (itemsError) throw new Error("Failed to save order items");
+
+      // 5. Insert Status History
+      await supabase
+        .from('order_status_history')
+        .insert({
+          order_id: orderData.id,
+          from_status: null,
+          to_status: 'pending',
+          note: 'Order placed by customer via website'
+        });
+
+      // Firecracker/confetti animation
+      const duration = 3 * 1000;
+      const animationEnd = Date.now() + duration;
+      const defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+      const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
+
+      const interval: any = setInterval(function () {
+        const timeLeft = animationEnd - Date.now();
+
+        if (timeLeft <= 0) {
+          return clearInterval(interval);
+        }
+
+        const particleCount = 50 * (timeLeft / duration);
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+        confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+      }, 250);
+
+      // Success
       setIsSubmitting(false);
       setIsSuccess(true);
       clearCart();
-
-      // Open WhatsApp in new tab
-      window.open(whatsappUrl, "_blank");
-    }, 1500);
+    } catch (err: unknown) {
+      console.error("Checkout Error:", err);
+      const errorMessage = err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      setErrorMsg(errorMessage);
+      setIsSubmitting(false);
+    }
   };
 
   if (items.length === 0 && !isSuccess) {
@@ -113,8 +195,7 @@ ${formData.notes ? `*Notes:* ${formData.notes}` : ""}
               </div>
               <h1 className="font-serif text-3xl text-foreground mb-4">Order Placed Successfully!</h1>
               <p className="text-text-secondary mb-4">
-                Thank you for your order. We&apos;ve opened WhatsApp with your order details.
-                Please send the message to confirm your order.
+                Thank you for your order. Your order has been placed successfully and is being processed.
               </p>
               <p className="text-text-secondary mb-8">
                 Our team will reach out to you shortly to confirm your order and arrange delivery.
@@ -146,6 +227,29 @@ ${formData.notes ? `*Notes:* ${formData.notes}` : ""}
           </div>
 
           <h1 className="font-serif text-4xl text-foreground mb-12">Checkout</h1>
+
+          {errorMsg && (
+            <div className="mb-8 p-4 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+              {errorMsg}
+            </div>
+          )}
+
+          {!user && !isLoading && (
+            <div className="mb-8 p-6 bg-amber-50 border border-amber-200 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <h3 className="text-amber-800 font-semibold mb-1">Authentication Required</h3>
+                <p className="text-amber-700 text-sm">Please sign in or create an account to proceed with your order.</p>
+              </div>
+              <div className="flex gap-3">
+                <Link href="/login" className="px-5 py-2.5 bg-amber-600 text-white text-sm font-medium rounded hover:bg-amber-700 transition">
+                  Sign In
+                </Link>
+                <Link href="/signup" className="px-5 py-2.5 bg-white text-amber-700 text-sm font-medium rounded border border-amber-300 hover:bg-amber-100 transition">
+                  Create Account
+                </Link>
+              </div>
+            </div>
+          )}
 
           <div className="flex flex-col lg:grid lg:grid-cols-3 gap-12 lg:gap-16">
             {/* Form */}
@@ -312,7 +416,7 @@ ${formData.notes ? `*Notes:* ${formData.notes}` : ""}
                   />
                   <p className="text-text-secondary text-[11px] sm:text-xs text-center mt-6">
                     By placing this order, you agree to our terms and conditions.
-                    Our team will confirm your order and payment details via WhatsApp.
+                    You will receive an order confirmation email shortly.
                   </p>
                 </div>
               </form>
