@@ -15,50 +15,59 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     async function fetchData() {
-      // Fetch categories
-      const { data: catData } = await supabase
-        .from("categories")
-        .select("id, name, slug")
-        .order("sort_order", { ascending: true });
+      try {
+        setLoadError("");
+        const { data: catData, error: catError } = await supabase
+          .from("categories")
+          .select("id, name, slug")
+          .order("sort_order", { ascending: true });
 
-      if (catData) setCategories(catData);
+        if (catError) throw catError;
+        if (catData) setCategories(catData);
 
-      // Fetch active products
-      const { data: prodData } = await supabase
-        .from("products")
-        .select(`
-          id, name, slug, sell_mode, is_featured,
-          categories ( name, slug ),
-          product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
-        `)
-        .eq("is_active", true);
+        const { data: prodData, error: prodError } = await supabase
+          .from("products")
+          .select(`
+            id, name, slug, sell_mode, is_featured,
+            categories ( name, slug ),
+            product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
+          `)
+          .eq("is_active", true);
 
-      if (prodData) {
-        const formatted = prodData.map((p: any) => {
-          const defaultVariant = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
-          const primaryImage = defaultVariant?.variant_images?.find((img: any) => img.is_primary)?.image_url
-            || defaultVariant?.variant_images?.[0]?.image_url
-            || "";
+        if (prodError) throw prodError;
 
-          return {
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            price: defaultVariant?.price || 0,
-            originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
-            unit: p.sell_mode === "meter" ? "meter" : "pc",
-            category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
-            categorySlug: Array.isArray(p.categories) ? p.categories[0]?.slug : p.categories?.slug || "",
-            image: primaryImage,
-            featured: p.is_featured
-          };
-        });
-        setProducts(formatted);
+        if (prodData) {
+          const formatted = prodData.map((p: any) => {
+            const defaultVariant = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
+            const primaryImage = defaultVariant?.variant_images?.find((img: any) => img.is_primary)?.image_url
+              || defaultVariant?.variant_images?.[0]?.image_url
+              || "";
+
+            return {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              price: defaultVariant?.price || 0,
+              originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
+              unit: p.sell_mode === "meter" ? "meter" : "pc",
+              category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
+              categorySlug: Array.isArray(p.categories) ? p.categories[0]?.slug : p.categories?.slug || "",
+              image: primaryImage,
+              featured: p.is_featured
+            };
+          });
+          setProducts(formatted);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load products";
+        setLoadError(message);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchData();
   }, []);
@@ -145,6 +154,9 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
       </div>
 
       {/* Results Count */}
+      {loadError && (
+        <p className="text-red-600 text-sm mb-4">{loadError}</p>
+      )}
       <p className="text-text-secondary text-sm mb-8">
         Showing {filteredProducts.length} {filteredProducts.length === 1 ? "product" : "products"}
       </p>

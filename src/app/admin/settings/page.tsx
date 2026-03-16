@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Loader2, Check, Monitor, LayoutTemplate } from "lucide-react";
+import CustomStatusManager from "@/components/admin/orders/CustomStatusManager";
 
 type ThemeOption = "classic" | "luxury";
 
@@ -30,14 +31,15 @@ export default function AdminSettings() {
     useEffect(() => {
         const fetchSettings = async () => {
             const { data, error } = await supabase
-                .from("site_settings")
+                .from("site_settings" as any)
                 .select("value")
                 .eq("key", "active_theme")
                 .single();
 
-            if (data && data.value) {
+            const rec = data as { value?: string } | null;
+            if (rec && rec.value) {
                 // Ensure it's a string, supabase JSONB can occasionally return strings with quotes
-                const themeVal = typeof data.value === "string" ? data.value.replace(/"/g, "") : data.value;
+                const themeVal = typeof rec.value === "string" ? rec.value.replace(/"/g, "") : rec.value;
                 setActiveTheme(themeVal as ThemeOption);
             }
             if (error && error.code !== "PGRST116") {
@@ -53,9 +55,9 @@ export default function AdminSettings() {
         setSaving(true);
         try {
             const { error } = await supabase
-                .from("site_settings")
+                .from("site_settings" as any)
                 .upsert(
-                    { key: "active_theme", value: themeId },
+                    { key: "active_theme", value: themeId } as any,
                     { onConflict: "key" }
                 );
 
@@ -140,6 +142,10 @@ export default function AdminSettings() {
                         )}
                     </div>
                     {/* END THEME SELECTOR */}
+
+                    {/* CUSTOM ORDER STATUSES */}
+                    <CustomStatusManager />
+                    {/* END CUSTOM ORDER STATUSES */}
                 </div>
 
                 <div className="lg:col-span-1 space-y-6">

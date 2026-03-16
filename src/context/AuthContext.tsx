@@ -27,7 +27,7 @@ export interface Order {
     id: string;
     order_number: string;
     date: string;
-    status: "placed" | "confirmed" | "shipped" | "delivered" | "cancelled";
+    status: "placed" | "confirmed" | "shipped" | "delivered" | "cancelled" | "returning" | "returned" | "replacing" | "replaced";
     paymentStatus: "pending" | "paid" | "refunded";
     paymentMethod: string;
     trackingUrl?: string;
@@ -79,9 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, []);
 
     /* Fetch orders from Supabase */
-    const fetchOrders = useCallback(async () => {
-        const { data: authData } = await supabase.auth.getSession();
-        const currentUserId = authData.session?.user?.id;
+    const fetchOrdersByUserId = useCallback(async (currentUserId: string | null) => {
 
         if (!currentUserId) {
             setOrders([]);
@@ -146,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         supabase.auth.getSession().then(async ({ data: { session } }) => {
             if (session?.user) {
                 await fetchProfile(session.user);
-                await fetchOrders();
+                await fetchOrdersByUserId(session.user.id);
             }
             setIsLoading(false);
         });
@@ -156,7 +154,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             async (event, session) => {
                 if (session?.user) {
                     await fetchProfile(session.user);
-                    await fetchOrders();
+                    await fetchOrdersByUserId(session.user.id);
                 } else {
                     setUser(null);
                     setOrders([]);
@@ -165,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         );
 
         return () => subscription.unsubscribe();
-    }, [fetchProfile, fetchOrders]);
+    }, [fetchProfile, fetchOrdersByUserId]);
 
     /* ─── Auth Methods ─── */
     const login = async (email: string, password: string) => {
@@ -205,7 +203,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const refreshOrders = async () => {
-        await fetchOrders();
+        await fetchOrdersByUserId(user?.id || null);
     };
 
     return (

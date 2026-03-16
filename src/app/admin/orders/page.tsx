@@ -58,6 +58,10 @@ const ORDER_STATUSES: { value: OrderStatus | "all"; label: string }[] = [
     { value: "delivered", label: "Delivered" },
     { value: "cancelled", label: "Cancelled" },
     { value: "refunded", label: "Refunded" },
+    { value: "returning", label: "Return Requested" },
+    { value: "returned", label: "Returned" },
+    { value: "replacing", label: "Replace Requested" },
+    { value: "replaced", label: "Replaced" },
 ];
 
 const PAYMENT_STATUSES: { value: PaymentStatus | "all"; label: string }[] = [

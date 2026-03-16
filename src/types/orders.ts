@@ -1,14 +1,16 @@
 // Order & related TypeScript types — aligned with actual Supabase schema
 
-export type OrderStatus =
-    | "pending"
-    | "confirmed"
-    | "processing"
-    | "packed"
-    | "shipped"
-    | "delivered"
-    | "cancelled"
-    | "refunded";
+// Supports custom admin-defined statuses in addition to built-ins
+export type OrderStatus = string;
+
+// Custom status created by admin in settings
+export interface CustomOrderStatus {
+    id: string;
+    label: string;
+    color: string; // hex color, e.g. "#6366f1"
+    sort_order: number;
+    created_at: string;
+}
 
 export type PaymentStatus =
     | "pending"
@@ -102,6 +104,7 @@ export interface OrderWithDetails extends Order {
     shipping_address?: OrderAddress | null;
     billing_address?: OrderAddress | null;
     status_history: OrderStatusHistory[];
+    user_email?: string | null;
 }
 
 /** Filters for listing page */

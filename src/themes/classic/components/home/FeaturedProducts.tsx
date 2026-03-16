@@ -24,38 +24,47 @@ export default function FeaturedProducts() {
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([]);
+  const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
     async function fetchFeatured() {
-      const { data } = await supabase
-        .from("products")
-        .select(`
-          id, name, slug, sell_mode,
-          categories ( name ),
-          product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
-        `)
-        .eq("is_featured", true)
-        .eq("is_active", true);
+      try {
+        setLoadError("");
+        const { data, error } = await supabase
+          .from("products")
+          .select(`
+            id, name, slug, sell_mode,
+            categories ( name ),
+            product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
+          `)
+          .eq("is_featured", true)
+          .eq("is_active", true);
 
-      if (data) {
-        const formatted = data.map((p: any) => {
-          const defaultVariant = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
-          const primaryImage = defaultVariant?.variant_images?.find((img: any) => img.is_primary)?.image_url
-            || defaultVariant?.variant_images?.[0]?.image_url
-            || "";
+        if (error) throw error;
 
-          return {
-            id: p.id,
-            name: p.name,
-            slug: p.slug,
-            price: defaultVariant?.price || 0,
-            originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
-            unit: p.sell_mode === "meter" ? "meter" : "pc",
-            category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
-            image: primaryImage
-          };
-        });
-        setFeaturedProducts(formatted);
+        if (data) {
+          const formatted = data.map((p: any) => {
+            const defaultVariant = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
+            const primaryImage = defaultVariant?.variant_images?.find((img: any) => img.is_primary)?.image_url
+              || defaultVariant?.variant_images?.[0]?.image_url
+              || "";
+
+            return {
+              id: p.id,
+              name: p.name,
+              slug: p.slug,
+              price: defaultVariant?.price || 0,
+              originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
+              unit: p.sell_mode === "meter" ? "meter" : "pc",
+              category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
+              image: primaryImage
+            };
+          });
+          setFeaturedProducts(formatted);
+        }
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Failed to load featured products";
+        setLoadError(message);
       }
     }
     fetchFeatured();
@@ -147,6 +156,9 @@ export default function FeaturedProducts() {
     <section className="section-padding bg-background-secondary border-t border-border/40">
       <Container>
         {/* Section Header */}
+        {loadError && (
+          <p className="text-sm text-red-600 text-center md:text-left mb-6">{loadError}</p>
+        )}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6 mb-12 sm:mb-16">
           <div className="max-w-xl text-center md:text-left mx-auto md:mx-0">
             <p className="text-accent text-xs md:text-sm tracking-[0.3em] uppercase mb-4 font-medium flex items-center justify-center md:justify-start gap-3">

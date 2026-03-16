@@ -15,13 +15,23 @@ import {
     CheckCircle2,
     Circle,
 } from "lucide-react";
-import { fetchOrderById } from "@/lib/orders";
-import type { OrderWithDetails } from "@/types/orders";
+import { fetchOrderById, fetchOrderUserEmail } from "@/lib/orders";
+import type { OrderWithDetails, CustomOrderStatus } from "@/types/orders";
 import OrderStatusBadge from "@/components/admin/orders/OrderStatusBadge";
 import PaymentStatusBadge from "@/components/admin/orders/PaymentStatusBadge";
 import OrderActions from "@/components/admin/orders/OrderActions";
 
-// ─── Helpers ─────────────────────────────────────────────────────────────────
+async function loadCustomStatuses(): Promise<CustomOrderStatus[]> {
+    try {
+        const res = await fetch("/api/admin/custom-statuses");
+        if (!res.ok) return [];
+        return res.json();
+    } catch {
+        return [];
+    }
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function fp(n: number) {
     return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -86,6 +96,8 @@ export default function OrderDetailPage() {
     const id = params?.id as string;
 
     const [order, setOrder] = useState<OrderWithDetails | null>(null);
+    const [userEmail, setUserEmail] = useState<string | null>(null);
+    const [customStatuses, setCustomStatuses] = useState<CustomOrderStatus[]>([]);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
 
@@ -93,9 +105,20 @@ export default function OrderDetailPage() {
         if (!id) return;
         (async () => {
             try {
-                const data = await fetchOrderById(id);
-                if (!data) setNotFound(true);
-                else setOrder(data);
+                const [data, statuses] = await Promise.all([
+                    fetchOrderById(id),
+                    loadCustomStatuses(),
+                ]);
+                if (!data) {
+                    setNotFound(true);
+                } else {
+                    setOrder(data);
+                    setCustomStatuses(statuses);
+                    // Fetch email if order has a user_id
+                    if (data.user_id) {
+                        fetchOrderUserEmail(data.user_id).then(setUserEmail);
+                    }
+                }
             } catch (err) {
                 console.error(err);
                 setNotFound(true);
@@ -135,6 +158,11 @@ export default function OrderDetailPage() {
     const hasDiscount = order.discount_amount > 0;
     const hasCoupon = !!order.coupon_code;
 
+    // Find custom color for current status
+    const matchedStatus = customStatuses.find(
+        (s) => s.label.toLowerCase() === order.status.toLowerCase()
+    );
+
     return (
         <div className="space-y-6 max-w-6xl">
             {/* Header */}
@@ -157,8 +185,12 @@ export default function OrderDetailPage() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
-                        <OrderStatusBadge status={order.status} size="md" />
-                        <PaymentStatusBadge status={order.payment_status} size="md" />
+                        {/* Single status badge only */}
+                        <OrderStatusBadge
+                            status={matchedStatus?.label ?? order.status}
+                            customColor={matchedStatus?.color}
+                            size="md"
+                        />
                         {order.label_printed && (
                             <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
                                 <Printer className="w-3 h-3" />
@@ -167,7 +199,7 @@ export default function OrderDetailPage() {
                         )}
                     </div>
 
-                    {/* Phase 2 printable button */}
+                    {/* Print label button */}
                     <div className="ml-auto flex gap-2">
                         <Link
                             href={`/admin/orders/${order.id}/print`}
@@ -187,41 +219,42 @@ export default function OrderDetailPage() {
                 {/* ──── LEFT: Main Content (2 cols) ──── */}
                 <div className="lg:col-span-2 space-y-5">
 
-                    {/* Customer Info */}
-                    <Card title="Customer Information" icon={User}>
-                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                            <InfoRow label="Full Name" value={addr?.full_name} />
-                            <InfoRow label="Phone" value={addr?.phone} />
-                            <InfoRow
-                                label="Email"
-                                value="—" // email stored separately (future: from user profile)
-                            />
-                        </div>
-                    </Card>
-
-                    {/* Shipping Address */}
-                    <Card title="Shipping Address" icon={MapPin}>
-                        {addr ? (
-                            <div className="space-y-1">
-                                <p className="text-[13px] font-semibold text-gray-800">{addr.full_name}</p>
-                                <p className="text-[13px] text-gray-600">{addr.address_line1}</p>
-                                {addr.address_line2 && (
-                                    <p className="text-[13px] text-gray-600">{addr.address_line2}</p>
-                                )}
-                                <p className="text-[13px] text-gray-600">
-                                    {addr.city} – {addr.pincode}
-                                </p>
-                                <p className="text-[13px] text-gray-600">
-                                    {addr.state}, {addr.country}
-                                </p>
-                                <p className="text-[13px] text-gray-600 mt-1">📞 {addr.phone}</p>
+                    {/* Customer Info + Shipping Address SIDE BY SIDE */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                        {/* Customer Info */}
+                        <Card title="Customer Information" icon={User}>
+                            <div className="space-y-3">
+                                <InfoRow label="Full Name" value={addr?.full_name} />
+                                <InfoRow label="Phone" value={addr?.phone} />
+                                <InfoRow
+                                    label="Email"
+                                    value={userEmail ?? (order.user_id ? "Loading…" : "—")}
+                                />
                             </div>
-                        ) : (
-                            <p className="text-[13px] text-gray-400 italic">
-                                No address on file
-                            </p>
-                        )}
-                    </Card>
+                        </Card>
+
+                        {/* Shipping Address */}
+                        <Card title="Shipping Address" icon={MapPin}>
+                            {addr ? (
+                                <div className="space-y-1">
+                                    <p className="text-[13px] font-semibold text-gray-800">{addr.full_name}</p>
+                                    <p className="text-[13px] text-gray-600">{addr.address_line1}</p>
+                                    {addr.address_line2 && (
+                                        <p className="text-[13px] text-gray-600">{addr.address_line2}</p>
+                                    )}
+                                    <p className="text-[13px] text-gray-600">
+                                        {addr.city}, {addr.state} – {addr.pincode}
+                                    </p>
+                                    <p className="text-[13px] text-gray-600">{addr.country}</p>
+                                    <p className="text-[13px] text-gray-600 mt-1">📞 {addr.phone}</p>
+                                </div>
+                            ) : (
+                                <p className="text-[13px] text-gray-400 italic">
+                                    No address on file
+                                </p>
+                            )}
+                        </Card>
+                    </div>
 
                     {/* Order Items */}
                     <Card title="Order Items" icon={Package}>

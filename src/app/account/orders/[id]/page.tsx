@@ -13,7 +13,7 @@ import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 
 /* ─── Status Configurations ─── */
-const orderStatusConfig = {
+const orderStatusConfig: Record<Order["status"], { label: string; color: string; dot: string }> = {
     placed: {
         label: "Order Placed",
         color: "bg-yellow-100 text-yellow-700 border-yellow-200",
@@ -39,6 +39,26 @@ const orderStatusConfig = {
         color: "bg-red-100 text-red-700 border-red-200",
         dot: "bg-red-400",
     },
+    returning: {
+        label: "Returning",
+        color: "bg-orange-100 text-orange-700 border-orange-200",
+        dot: "bg-orange-400",
+    },
+    returned: {
+        label: "Returned",
+        color: "bg-gray-100 text-gray-700 border-gray-200",
+        dot: "bg-gray-400",
+    },
+    replacing: {
+        label: "Replacing",
+        color: "bg-indigo-100 text-indigo-700 border-indigo-200",
+        dot: "bg-indigo-400",
+    },
+    replaced: {
+        label: "Replaced",
+        color: "bg-teal-100 text-teal-700 border-teal-200",
+        dot: "bg-teal-400",
+    },
 };
 
 const paymentStatusConfig = {
@@ -47,22 +67,31 @@ const paymentStatusConfig = {
     refunded: { label: "Refunded", color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
-// Timeline steps in order
+// Timeline steps in order for normal flow
 const TIMELINE_STEPS: Order["status"][] = ["placed", "confirmed", "shipped", "delivered"];
+const EXCEPTION_STATUSES: Order["status"][] = ["cancelled", "returning", "returned", "replacing", "replaced"];
 
 /* ─── Order Progress Timeline ─── */
 function OrderTimeline({ currentStatus }: { currentStatus: Order["status"] }) {
-    if (currentStatus === "cancelled") {
+    if (EXCEPTION_STATUSES.includes(currentStatus)) {
+        const isCancelled = currentStatus === "cancelled";
+        const cfg = orderStatusConfig[currentStatus];
         return (
-            <div className="flex items-center gap-3 p-4 bg-red-50 border border-red-200 rounded-xl">
-                <div className="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center text-red-600">
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
+            <div className={`flex items-center gap-3 p-4 border rounded-xl ${isCancelled ? "bg-red-50 border-red-200" : "bg-gray-50 border-gray-200"}`}>
+                <div className={`w-8 h-8 rounded-full flex items-center justify-center ${isCancelled ? "bg-red-100 text-red-600" : "bg-gray-200 text-gray-700"}`}>
+                    {isCancelled ? (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    ) : (
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    )}
                 </div>
                 <div>
-                    <p className="font-medium text-red-700 text-sm">Order Cancelled</p>
-                    <p className="text-red-500 text-xs">This order has been cancelled.</p>
+                    <p className={`font-medium text-sm ${isCancelled ? "text-red-700" : "text-gray-800"}`}>Order {cfg.label}</p>
+                    <p className={`${isCancelled ? "text-red-500" : "text-gray-500"} text-xs`}>This order is currently marked as {cfg.label.toLowerCase()}.</p>
                 </div>
             </div>
         );

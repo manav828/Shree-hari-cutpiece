@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabaseAdmin as supabase } from "@/lib/supabaseAdminClient";
+import { supabase } from "@/lib/supabase";
 import {
     Plus, Search, SlidersHorizontal, Trash2, Pencil, ExternalLink,
     Package, AlertTriangle, Loader2

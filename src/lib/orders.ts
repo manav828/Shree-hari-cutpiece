@@ -1,4 +1,4 @@
-import { supabaseAdmin as supabase } from "@/lib/supabaseAdminClient";
+import { supabase } from "@/lib/supabase";
 import type {
     Order,
     OrderFilters,
@@ -215,14 +215,32 @@ export async function fetchOrderById(id: string): Promise<OrderWithDetails | nul
             };
         }
 
+        let user_email = null;
+        if (order.user_id) {
+            user_email = await fetchOrderUserEmail(order.user_id);
+        }
+
         return {
             ...order,
             items,
             shipping_address,
             billing_address: addresses.find((a) => a.type === "billing") ?? null,
             status_history: history,
+            user_email,
         };
     });
+}
+
+// ─── Fetch user email for an order ───────────────────────────────────────────
+
+export async function fetchOrderUserEmail(userId: string): Promise<string | null> {
+    try {
+        const { data, error } = await supabase.auth.admin.getUserById(userId);
+        if (error || !data?.user) return null;
+        return data.user.email ?? null;
+    } catch {
+        return null;
+    }
 }
 
 // ─── Shipping fee from settings table ────────────────────────────────────────
@@ -235,3 +253,5 @@ export async function getShippingFee(): Promise<number> {
         .single();
     return parseFloat(data?.value ?? "50");
 }
+
+

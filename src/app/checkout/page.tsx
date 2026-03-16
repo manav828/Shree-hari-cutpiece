@@ -15,6 +15,19 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import confetti from "canvas-confetti";
 
+type CheckoutCoupon = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  discount_type: "percentage" | "fixed";
+  discount_value: number;
+  min_cart_subtotal: number | null;
+  max_completed_orders_for_eligibility: number | null;
+  ends_at: string | null;
+  discount_preview: number;
+};
+
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCart();
   const { user, isLoading } = useAuth();
@@ -23,6 +36,13 @@ export default function CheckoutPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [couponCodeInput, setCouponCodeInput] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState<CheckoutCoupon | null>(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [couponMessage, setCouponMessage] = useState("");
+  const [isCouponModalOpen, setIsCouponModalOpen] = useState(false);
+  const [availableCoupons, setAvailableCoupons] = useState<CheckoutCoupon[]>([]);
+  const [isCouponLoading, setIsCouponLoading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: "",
@@ -39,6 +59,77 @@ export default function CheckoutPage() {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const subtotal = totalPrice;
+  const shippingAmount = subtotal >= 999 ? 0 : 99;
+  const discountedSubtotal = Math.max(subtotal - couponDiscount, 0);
+  const payableTotal = discountedSubtotal + shippingAmount;
+
+  const fetchAvailableCoupons = async () => {
+    setIsCouponLoading(true);
+    setCouponMessage("");
+    try {
+      const res = await fetch("/api/coupons/eligible", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id,
+          subtotal,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to load coupons");
+      setAvailableCoupons(json.coupons || []);
+      setIsCouponModalOpen(true);
+    } catch (err: unknown) {
+      setCouponMessage(err instanceof Error ? err.message : "Failed to fetch coupons");
+    } finally {
+      setIsCouponLoading(false);
+    }
+  };
+
+  const applyCouponByCode = async (code: string) => {
+    const trimmed = code.trim();
+    if (!trimmed) {
+      setCouponMessage("Please enter a coupon code.");
+      return;
+    }
+
+    setCouponMessage("");
+    try {
+      const res = await fetch("/api/coupons/validate-apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          code: trimmed,
+          subtotal,
+          userId: user?.id,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok || !json.valid) {
+        throw new Error(json.message || "Coupon is not valid for this order");
+      }
+
+      setAppliedCoupon(json.coupon);
+      setCouponDiscount(json.discountAmount || 0);
+      setCouponCodeInput(json.coupon?.code || trimmed.toUpperCase());
+      setCouponMessage("Coupon applied successfully.");
+      setIsCouponModalOpen(false);
+    } catch (err: unknown) {
+      setAppliedCoupon(null);
+      setCouponDiscount(0);
+      setCouponMessage(err instanceof Error ? err.message : "Failed to apply coupon");
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponDiscount(0);
+    setCouponCodeInput("");
+    setCouponMessage("Coupon removed.");
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
@@ -51,79 +142,30 @@ export default function CheckoutPage() {
     setErrorMsg("");
 
     try {
-      // 1. Calculate values
-      const shipping_amount = totalPrice >= 999 ? 0 : 99; // Using standard frontend logic
-      const subtotal = totalPrice;
-      const total_amount = subtotal + shipping_amount;
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
 
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      const randomSuffix = Math.floor(Math.random() * 10000).toString().padStart(4, "0");
-      const order_number = `SH-${dateStr}-${randomSuffix}`;
+      if (!accessToken) {
+        throw new Error("Your session has expired. Please sign in again.");
+      }
 
-      // 2. Insert Order
-      const { data: orderData, error: orderError } = await supabase
-        .from('orders')
-        .insert({
-          order_number,
-          user_id: user.id,
-          status: 'pending',
-          payment_status: 'pending',
-          payment_method: 'cod',
-          subtotal,
-          shipping_amount,
-          total_amount,
-          notes: formData.notes,
-          delivery_address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
-          contact_phone: formData.phone
-        })
-        .select()
-        .single();
+      const res = await fetch("/api/checkout/place-order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({
+          formData,
+          items,
+          couponCode: appliedCoupon?.code || "",
+        }),
+      });
 
-      if (orderError || !orderData) throw new Error(orderError?.message || "Failed to create order");
-
-      // 3. Insert Address
-      const { error: addressError } = await supabase
-        .from('order_addresses')
-        .insert({
-          order_id: orderData.id,
-          type: 'shipping',
-          full_name: formData.name,
-          phone: formData.phone,
-          address_line1: formData.address,
-          city: formData.city,
-          state: formData.state,
-          pincode: formData.pincode,
-          country: 'India'
-        });
-
-      if (addressError) console.error("Failed to save address:", addressError);
-
-      // 4. Insert Items
-      const orderItems = items.map(item => ({
-        order_id: orderData.id,
-        product_name: item.name,
-        image_url: item.image,
-        selling_mode: 'meter', // currently cart only does meters mostly
-        quantity_or_meters: item.meters,
-        price_per_unit: item.price,
-        total_price: item.price * item.meters,
-      }));
-
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
-      if (itemsError) throw new Error("Failed to save order items");
-
-      // 5. Insert Status History
-      await supabase
-        .from('order_status_history')
-        .insert({
-          order_id: orderData.id,
-          from_status: null,
-          to_status: 'pending',
-          note: 'Order placed by customer via website'
-        });
+      const json = await res.json();
+      if (!res.ok) {
+        throw new Error(json.error || "Failed to place order");
+      }
 
       // Firecracker/confetti animation
       const duration = 3 * 1000;
@@ -132,7 +174,7 @@ export default function CheckoutPage() {
 
       const randomInRange = (min: number, max: number) => Math.random() * (max - min) + min;
 
-      const interval: any = setInterval(function () {
+      const interval: ReturnType<typeof setInterval> = setInterval(function () {
         const timeLeft = animationEnd - Date.now();
 
         if (timeLeft <= 0) {
@@ -456,27 +498,80 @@ export default function CheckoutPage() {
 
                 {/* Totals */}
                 <div className="border-t border-border pt-4 space-y-3">
+                  <div>
+                    <label className="text-sm text-text-secondary block mb-2">Coupon Code</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={couponCodeInput}
+                        onChange={(e) => setCouponCodeInput(e.target.value.toUpperCase())}
+                        placeholder="Enter coupon"
+                        className="flex-1 px-3 py-2 text-sm border border-border bg-white focus:outline-none"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => applyCouponByCode(couponCodeInput)}
+                        className="px-3 py-2 text-sm bg-foreground text-background hover:opacity-90 transition-opacity"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fetchAvailableCoupons}
+                      disabled={isCouponLoading}
+                      className="mt-2 text-xs text-accent underline disabled:opacity-60"
+                    >
+                      {isCouponLoading ? "Loading coupons..." : "Show Available Coupons"}
+                    </button>
+
+                    {appliedCoupon && (
+                      <div className="mt-2 flex items-center justify-between text-xs text-green-700 bg-green-50 border border-green-200 px-2 py-1">
+                        <span>{appliedCoupon.code} applied</span>
+                        <button type="button" onClick={removeCoupon} className="underline text-green-800">
+                          Remove
+                        </button>
+                      </div>
+                    )}
+
+                    {couponMessage && (
+                      <p className={`mt-2 text-xs ${appliedCoupon ? "text-green-700" : "text-red-600"}`}>
+                        {couponMessage}
+                      </p>
+                    )}
+                  </div>
+
                   <div className="flex justify-between text-sm">
                     <span className="text-text-secondary">Subtotal</span>
-                    <span className="text-foreground">{formatPrice(totalPrice)}</span>
+                    <span className="text-foreground">{formatPrice(subtotal)}</span>
+                  </div>
+                  {couponDiscount > 0 && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-text-secondary">Coupon Discount</span>
+                      <span className="text-green-700">- {formatPrice(couponDiscount)}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-sm">
+                    <span className="text-text-secondary">Subtotal After Discount</span>
+                    <span className="text-foreground">{formatPrice(discountedSubtotal)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
                     <span className="text-text-secondary">Shipping</span>
                     <span className="text-foreground">
-                      {totalPrice >= 999 ? "FREE" : formatPrice(99)}
+                      {subtotal >= 999 ? "FREE" : formatPrice(99)}
                     </span>
                   </div>
                   <div className="flex justify-between text-lg font-medium pt-3 border-t border-border">
                     <span className="text-foreground">Total</span>
                     <span className="text-foreground">
-                      {formatPrice(totalPrice >= 999 ? totalPrice : totalPrice + 99)}
+                      {formatPrice(payableTotal)}
                     </span>
                   </div>
                 </div>
 
-                {totalPrice < 999 && (
+                {subtotal < 999 && (
                   <p className="text-accent text-sm mt-4">
-                    Add {formatPrice(999 - totalPrice)} more for FREE delivery!
+                    Add {formatPrice(999 - subtotal)} more for FREE delivery!
                   </p>
                 )}
               </div>
@@ -484,6 +579,63 @@ export default function CheckoutPage() {
           </div>
         </Container>
       </main>
+
+      {isCouponModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-lg max-h-[80vh] overflow-auto p-5 border border-border">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-serif text-xl text-foreground">Available Coupons</h3>
+              <button
+                type="button"
+                onClick={() => setIsCouponModalOpen(false)}
+                className="text-sm text-text-secondary hover:text-foreground"
+              >
+                Close
+              </button>
+            </div>
+
+            {availableCoupons.length === 0 ? (
+              <p className="text-sm text-text-secondary">No coupons available for your cart right now.</p>
+            ) : (
+              <div className="space-y-3">
+                {availableCoupons.map((coupon) => (
+                  <div key={coupon.id} className="border border-border p-3 bg-background-secondary">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-medium text-foreground">{coupon.code}</p>
+                        <p className="text-sm text-text-secondary mt-0.5">
+                          {coupon.discount_type === "percentage"
+                            ? `${coupon.discount_value}% OFF`
+                            : `${formatPrice(coupon.discount_value)} OFF`}
+                        </p>
+                        {coupon.description && (
+                          <p className="text-xs text-text-secondary mt-1">{coupon.description}</p>
+                        )}
+                        {coupon.min_cart_subtotal && (
+                          <p className="text-xs text-text-secondary mt-1">Min order: {formatPrice(coupon.min_cart_subtotal)}</p>
+                        )}
+                        {coupon.max_completed_orders_for_eligibility !== null && (
+                          <p className="text-xs text-text-secondary mt-1">
+                            Eligible for users with up to {coupon.max_completed_orders_for_eligibility} completed orders
+                          </p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => applyCouponByCode(coupon.code)}
+                        className="px-3 py-1.5 text-xs bg-foreground text-background hover:opacity-90"
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

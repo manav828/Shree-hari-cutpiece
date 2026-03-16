@@ -12,10 +12,11 @@ export const supabase =
     globalForSupabase.supabase ??
     createClient(supabaseUrl, supabaseAnonKey, {
         auth: {
-            detectSessionInUrl: true,
+            detectSessionInUrl: false,
             persistSession: true,
-            // Temporarily use a custom lock identifier to prevent hot-reload steals
-            storageKey: 'supabase.auth.token'
+            autoRefreshToken: true,
+            multiTab: false,
+            storageKey: "shreehari.auth.token",
         },
     });
 
