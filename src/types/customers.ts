@@ -27,9 +27,16 @@ export interface CustomerOrderSummary {
     created_at: string;
     status: string;
     payment_status: string;
+    subtotal: number;
+    shipping_amount: number;
     total_amount: number;
     discount_amount: number;
     coupon_code: string | null;
+    item_lines: number;
+    units_count: number;
+    shipping_city: string | null;
+    shipping_state: string | null;
+    shipping_pincode: string | null;
 }
 
 export interface CustomerAddress {

@@ -1,21 +1,12 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { AdminCustomerListItem, AdminCustomersListResponse } from "@/types/customers";
+import CustomersFilters from "@/components/admin/customers/CustomersFilters";
+import CustomersListTable from "@/components/admin/customers/CustomersListTable";
+import type { ExtraFilterKey } from "@/components/admin/customers/CustomersFilters";
 
-function formatDate(value: string | null) {
-    if (!value) return "—";
-    return new Date(value).toLocaleDateString("en-IN", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-    });
-}
-
-function formatInr(value: number) {
-    return `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
-}
+const CUSTOMER_FILTER_PREFS_KEY = "admin_customers_extra_filters";
 
 export default function AdminCustomers() {
     const [customers, setCustomers] = useState<AdminCustomerListItem[]>([]);
@@ -23,10 +14,62 @@ export default function AdminCustomers() {
     const [error, setError] = useState("");
     const [search, setSearch] = useState("");
     const [status, setStatus] = useState("all");
+    const [registeredAfter, setRegisteredAfter] = useState("");
+    const [registeredBefore, setRegisteredBefore] = useState("");
+    const [lastOrderAfter, setLastOrderAfter] = useState("");
+    const [lastOrderBefore, setLastOrderBefore] = useState("");
+    const [orderCount, setOrderCount] = useState("all");
+    const [ltvMin, setLtvMin] = useState("");
+    const [ltvMax, setLtvMax] = useState("");
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(20);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
+    const [visibleExtraFilters, setVisibleExtraFilters] = useState({
+        registeredDate: false,
+        lastOrderDate: false,
+        ltv: false,
+    });
+
+    const applyExtraFilters = (next: Record<ExtraFilterKey, boolean>) => {
+        const prev = visibleExtraFilters;
+        setVisibleExtraFilters(next);
+        setPage(1);
+
+        if (prev.registeredDate && !next.registeredDate) {
+            setRegisteredAfter("");
+            setRegisteredBefore("");
+        }
+        if (prev.lastOrderDate && !next.lastOrderDate) {
+            setLastOrderAfter("");
+            setLastOrderBefore("");
+        }
+        if (prev.ltv && !next.ltv) {
+            setLtvMin("");
+            setLtvMax("");
+        }
+    };
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        try {
+            const raw = window.sessionStorage.getItem(CUSTOMER_FILTER_PREFS_KEY);
+            if (!raw) return;
+            const parsed = JSON.parse(raw) as Record<ExtraFilterKey, boolean>;
+            setVisibleExtraFilters({
+                registeredDate: Boolean(parsed.registeredDate),
+                lastOrderDate: Boolean(parsed.lastOrderDate),
+                ltv: Boolean(parsed.ltv),
+            });
+        } catch {
+            // Ignore malformed session data.
+        }
+    }, []);
+
+    useEffect(() => {
+        if (typeof window === "undefined") return;
+        window.sessionStorage.setItem(CUSTOMER_FILTER_PREFS_KEY, JSON.stringify(visibleExtraFilters));
+    }, [visibleExtraFilters]);
 
     const params = useMemo(() => {
         const query = new URLSearchParams();
@@ -35,8 +78,56 @@ export default function AdminCustomers() {
         query.set("sortBy", "joined");
         if (search.trim()) query.set("search", search.trim());
         if (status !== "all") query.set("status", status);
+        if (registeredAfter) query.set("registeredAfter", registeredAfter);
+        if (registeredBefore) query.set("registeredBefore", registeredBefore);
+        if (lastOrderAfter) query.set("lastOrderAfter", lastOrderAfter);
+        if (lastOrderBefore) query.set("lastOrderBefore", lastOrderBefore);
+        if (orderCount !== "all") query.set("orderCount", orderCount);
+        if (ltvMin.trim()) query.set("ltvMin", ltvMin.trim());
+        if (ltvMax.trim()) query.set("ltvMax", ltvMax.trim());
         return query.toString();
-    }, [limit, page, search, status]);
+    }, [
+        limit,
+        page,
+        search,
+        status,
+        registeredAfter,
+        registeredBefore,
+        lastOrderAfter,
+        lastOrderBefore,
+        orderCount,
+        ltvMin,
+        ltvMax,
+    ]);
+
+    const exportQuery = useMemo(() => {
+        const query = new URLSearchParams();
+        query.set("sortBy", "joined");
+        if (search.trim()) query.set("search", search.trim());
+        if (status !== "all") query.set("status", status);
+        if (registeredAfter) query.set("registeredAfter", registeredAfter);
+        if (registeredBefore) query.set("registeredBefore", registeredBefore);
+        if (lastOrderAfter) query.set("lastOrderAfter", lastOrderAfter);
+        if (lastOrderBefore) query.set("lastOrderBefore", lastOrderBefore);
+        if (orderCount !== "all") query.set("orderCount", orderCount);
+        if (ltvMin.trim()) query.set("ltvMin", ltvMin.trim());
+        if (ltvMax.trim()) query.set("ltvMax", ltvMax.trim());
+        return query.toString();
+    }, [
+        search,
+        status,
+        registeredAfter,
+        registeredBefore,
+        lastOrderAfter,
+        lastOrderBefore,
+        orderCount,
+        ltvMin,
+        ltvMax,
+    ]);
+
+    const triggerExport = () => {
+        window.open(`/api/admin/customers/export?${exportQuery}`, "_blank");
+    };
 
     useEffect(() => {
         let isMounted = true;
@@ -90,119 +181,72 @@ export default function AdminCustomers() {
             )}
 
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex flex-col sm:flex-row gap-3 mb-4">
-                    <input
-                        type="text"
-                        placeholder="Search by name, email or phone"
-                        value={search}
-                        onChange={(e) => {
-                            setSearch(e.target.value);
-                            setPage(1);
-                        }}
-                        className="w-full sm:w-80 px-3 py-2 rounded-md border border-gray-300 text-sm"
-                    />
+                <CustomersFilters
+                    search={search}
+                    status={status}
+                    orderCount={orderCount}
+                    limit={limit}
+                    registeredAfter={registeredAfter}
+                    registeredBefore={registeredBefore}
+                    lastOrderAfter={lastOrderAfter}
+                    lastOrderBefore={lastOrderBefore}
+                    ltvMin={ltvMin}
+                    ltvMax={ltvMax}
+                    visibleExtra={visibleExtraFilters}
+                    onSearchChange={(value) => {
+                        setSearch(value);
+                        setPage(1);
+                    }}
+                    onStatusChange={(value) => {
+                        setStatus(value);
+                        setPage(1);
+                    }}
+                    onOrderCountChange={(value) => {
+                        setOrderCount(value);
+                        setPage(1);
+                    }}
+                    onLimitChange={(value) => {
+                        setLimit(value);
+                        setPage(1);
+                    }}
+                    onRegisteredAfterChange={(value) => {
+                        setRegisteredAfter(value);
+                        setPage(1);
+                    }}
+                    onRegisteredBeforeChange={(value) => {
+                        setRegisteredBefore(value);
+                        setPage(1);
+                    }}
+                    onLastOrderAfterChange={(value) => {
+                        setLastOrderAfter(value);
+                        setPage(1);
+                    }}
+                    onLastOrderBeforeChange={(value) => {
+                        setLastOrderBefore(value);
+                        setPage(1);
+                    }}
+                    onLtvMinChange={(value) => {
+                        setLtvMin(value);
+                        setPage(1);
+                    }}
+                    onLtvMaxChange={(value) => {
+                        setLtvMax(value);
+                        setPage(1);
+                    }}
+                    onApplyExtraFilters={applyExtraFilters}
+                    onExport={triggerExport}
+                />
+            </div>
 
-                    <select
-                        value={status}
-                        onChange={(e) => {
-                            setStatus(e.target.value);
-                            setPage(1);
-                        }}
-                        className="px-3 py-2 rounded-md border border-gray-300 text-sm bg-white"
-                    >
-                        <option value="all">All Status</option>
-                        <option value="active">Active</option>
-                        <option value="suspended">Suspended</option>
-                        <option value="blocked">Blocked</option>
-                    </select>
-
-                    <select
-                        value={limit}
-                        onChange={(e) => {
-                            setLimit(Number(e.target.value));
-                            setPage(1);
-                        }}
-                        className="px-3 py-2 rounded-md border border-gray-300 text-sm bg-white"
-                    >
-                        <option value={20}>20 / page</option>
-                        <option value={50}>50 / page</option>
-                        <option value={100}>100 / page</option>
-                    </select>
-                </div>
-
-                {loading ? (
-                    <p className="text-sm text-gray-500">Loading customers...</p>
-                ) : customers.length === 0 ? (
-                    <p className="text-sm text-gray-500">No customers found.</p>
-                ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left text-gray-500 border-b border-gray-200">
-                                    <th className="py-2 pr-4">Name</th>
-                                    <th className="py-2 pr-4">Email</th>
-                                    <th className="py-2 pr-4">Phone</th>
-                                    <th className="py-2 pr-4">Join Date</th>
-                                    <th className="py-2 pr-4">Last Order</th>
-                                    <th className="py-2 pr-4">Orders</th>
-                                    <th className="py-2 pr-4">LTV</th>
-                                    <th className="py-2">Status</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {customers.map((customer) => (
-                                    <tr key={customer.id} className="border-b border-gray-100">
-                                        <td className="py-3 pr-4 font-medium text-gray-900">
-                                            <Link href={`/admin/customers/${customer.id}`} className="hover:underline">
-                                                {customer.full_name || customer.email || "View Customer"}
-                                            </Link>
-                                        </td>
-                                        <td className="py-3 pr-4 text-gray-700">{customer.email || "—"}</td>
-                                        <td className="py-3 pr-4 text-gray-700">{customer.phone || "—"}</td>
-                                        <td className="py-3 pr-4 text-gray-700">{formatDate(customer.created_at)}</td>
-                                        <td className="py-3 pr-4 text-gray-700">{formatDate(customer.last_order_date)}</td>
-                                        <td className="py-3 pr-4 text-gray-700">{customer.total_orders}</td>
-                                        <td className="py-3 pr-4 text-gray-700">{formatInr(customer.lifetime_value)}</td>
-                                        <td className="py-3">
-                                            <span
-                                                className={`px-2 py-1 rounded text-xs font-medium ${customer.account_status === "blocked"
-                                                    ? "bg-red-100 text-red-700"
-                                                    : customer.account_status === "suspended"
-                                                        ? "bg-amber-100 text-amber-700"
-                                                        : "bg-green-100 text-green-700"
-                                                    }`}
-                                            >
-                                                {customer.account_status || "active"}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                )}
-
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                    <p>
-                        Page {page} of {totalPages}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={page <= 1 || loading}
-                            className="px-3 py-1.5 rounded border border-gray-300 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <button
-                            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                            disabled={page >= totalPages || loading}
-                            className="px-3 py-1.5 rounded border border-gray-300 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
-                    </div>
-                </div>
+            <div className="mt-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
+                <CustomersListTable
+                    customers={customers}
+                    loading={loading}
+                    page={page}
+                    totalPages={totalPages}
+                    onPrevPage={() => setPage((prev) => Math.max(prev - 1, 1))}
+                    onNextPage={() => setPage((prev) => Math.min(prev + 1, totalPages))}
+                />
             </div>
         </div>
     );

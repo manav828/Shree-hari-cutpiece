@@ -2,7 +2,7 @@
 
 **Project:** EcomShriHari  
 **Module:** Customer Management  
-**Last Updated:** 2026-03-16
+**Last Updated:** 2026-03-17
 
 ---
 
@@ -32,7 +32,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 
 4. **Admin customer list page**
    - File: `src/app/admin/customers/page.tsx`
-   - Features: live API data, search, status filter, pagination, row link to details
+   - Features: live API data, search, status filter, advanced filters (registered/last-order ranges, order-count buckets, LTV min/max), pagination, row link to details, export action
 
 5. **Admin customer details page**
    - File: `src/app/admin/customers/[id]/page.tsx`
@@ -44,25 +44,61 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 7. **Tracker updated**
    - File: `customer_management_implementation_tracker.md`
 
+8. **Dedicated notes API added**
+   - File: `src/app/api/admin/customers/[id]/notes/route.ts`
+
+9. **Dedicated interactions API added**
+   - File: `src/app/api/admin/customers/[id]/interactions/route.ts`
+
+10. **Customer CSV export API added**
+   - File: `src/app/api/admin/customers/export/route.ts`
+   - Export is now wired from list page with active filters
+
+11. **Add Note action wired in details page**
+   - File: `src/app/admin/customers/[id]/page.tsx`
+
+12. **Admin address CRUD API added**
+   - File: `src/app/api/admin/customers/[id]/addresses/route.ts`
+   - Methods: `POST`, `PATCH`, `DELETE`
+
+13. **Address CRUD UI wired in details page**
+   - File: `src/app/admin/customers/[id]/page.tsx`
+   - Features: add/edit/delete address, set default shipping/billing
+
+14. **Order panel drilldown upgraded**
+   - Files:
+     - `src/app/admin/customers/[id]/page.tsx`
+     - `src/app/api/admin/customers/[id]/route.ts`
+     - `src/types/customers.ts`
+   - Features: expandable order rows, item/units context, amount breakdown, shipping snapshot, quick links (open order + invoice/print)
+
+15. **Storefront account APIs implemented**
+    - Files:
+       - `src/app/api/account/profile/route.ts`
+       - `src/app/api/account/addresses/route.ts`
+       - `src/app/api/account/addresses/[id]/route.ts`
+       - `src/app/api/account/preferences/route.ts`
+       - `src/lib/apiAuth.ts`
+
+16. **Storefront account pages implemented**
+    - Files:
+       - `src/app/account/profile/page.tsx`
+       - `src/app/account/addresses/page.tsx`
+       - `src/app/account/preferences/page.tsx`
+    - Account dashboard now links to these pages.
+
 ---
 
 ## 3) What is still pending (Phase 1)
 
 ### High priority (next)
-1. `POST /api/admin/customers/[id]/notes`
-2. `GET /api/admin/customers/[id]/interactions`
-3. Add dedicated **Add Note** form/action on details page (not only inline notes field)
-4. `GET /api/admin/customers/export` (CSV)
+1. Polish storefront account UX and complete remaining profile/preferences requirements
 
 ### Medium priority
-5. Improve list filters (date ranges, order-count buckets, LTV min/max)
-6. Address CRUD in admin details page
+1. Add account status quick actions (flag/block shortcuts) in admin details
 
 ### Later (still Phase 1)
-7. Storefront account APIs/pages:
-   - `/api/account/profile`
-   - `/api/account/addresses` (+ `[id]`)
-   - `/api/account/preferences`
+1. Order history enhancements (reorder/invoice/support actions)
 
 ---
 
@@ -100,53 +136,75 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 
 ## 6) Known caveats
 
-1. `POST notes` and dedicated `GET interactions` endpoints are not yet separate; interactions are currently embedded in details `GET`.
-2. CSV export endpoint is not implemented yet.
+1. Details GET currently still includes interactions; can be simplified later to rely only on dedicated interactions endpoint.
+2. CSV export is wired, but selectable columns and large dataset streaming support are still pending.
 3. `npm run dev` last observed exit code was `1` in terminal context (customer files themselves currently show no diagnostics errors).
 
 ---
 
 ## 7) Immediate next tasks (do in this order)
 
-### Task A — Add notes API
-- Create: `src/app/api/admin/customers/[id]/notes/route.ts`
-- Implement:
-  - `POST`: `{ note, event_type? }` inserts into `customer_interaction_logs`
-  - validate non-empty `note`
-  - default `event_type = "note_added"`
+### Task A — Upgrade customer list filters
+- Status: ✅ Completed
+- Implemented in:
+   - `src/app/admin/customers/page.tsx`
+   - `src/app/api/admin/customers/route.ts`
 
-### Task B — Add interactions API
-- Create: `src/app/api/admin/customers/[id]/interactions/route.ts`
-- Implement:
-  - `GET`: supports `limit` and `offset`
-  - returns `{ data, total }`
+### Task B — Add export button in list page
+- Status: ✅ Completed
+- Implemented in:
+   - `src/app/admin/customers/page.tsx`
+   - `src/app/api/admin/customers/export/route.ts`
 
-### Task C — Wire Add Note UI
-- Update: `src/app/admin/customers/[id]/page.tsx`
-- Add:
-  - dedicated note textarea + submit button
-  - calls new `POST /notes`
-  - reloads interactions list after submit
+### Task C — Improve details order panel
+- Status: ✅ Completed
+- Implemented in:
+   - `src/app/admin/customers/[id]/page.tsx`
+   - `src/app/api/admin/customers/[id]/route.ts`
+   - `src/types/customers.ts`
 
-### Task D — Add CSV export API
-- Create: `src/app/api/admin/customers/export/route.ts`
-- Implement:
-  - reuse filters from list API
-  - return `text/csv` with key fields
+### Task D — Address CRUD (admin details)
+- Status: ✅ Completed
+- Implemented in:
+   - `src/app/api/admin/customers/[id]/addresses/route.ts`
+   - `src/app/admin/customers/[id]/page.tsx`
 
-### Task E — Validation + tracker update
+### Task E — Phase 2 storefront account APIs/pages
+- Status: ✅ Completed
+- Implemented APIs:
+   - `/api/account/profile`
+   - `/api/account/addresses` (+ `[id]`)
+   - `/api/account/preferences`
+- Implemented pages:
+   - `/account/profile`
+   - `/account/addresses`
+   - `/account/preferences`
+
+### Task F — Validation + tracker update
 - Run diagnostics for new/edited files
 - Update `customer_management_implementation_tracker.md` checkboxes + changelog
+
+### Task G — Remaining account UX polish
+- Status: ✅ Completed
+- Done:
+   - Added read-only email and member metadata in `/account/profile`
+   - Added transactional-email notice in `/account/preferences`
+   - Added quick links in `/account/page` to profile/addresses/preferences pages
+
+### Task H — Next implementation focus
+- Add account status quick actions in admin customer details (`flag/block` actions).
+- Extend account dashboard with quick stat cards from profile/order APIs.
 
 ---
 
 ## 8) Acceptance criteria for next session
 
-1. Admin can add a note from details page without using profile-save flow.
-2. Interactions can be fetched independently with pagination.
-3. Admin can download customer list as CSV from API endpoint.
-4. No TypeScript/diagnostic errors in touched files.
-5. Tracker reflects completed items accurately.
+1. Customer details order panel is richer and supports drilldown.
+2. Admin address CRUD works end-to-end from details page.
+3. Phase 2 account APIs and pages are implemented and connected.
+4. Remaining account page polish requirements are completed.
+5. No TypeScript/diagnostic errors in touched files.
+6. Tracker reflects completed items accurately.
 
 ---
 
@@ -154,4 +212,12 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 Use this exact instruction in next session:
 
 > Read `customer_management_resume.md` and continue implementation from Section 7, Task A onward. Update tracker after each completed task.
+
+Use this updated instruction now:
+
+> Read `customer_management_resume.md` and continue implementation from Section 7, Task E onward. Update tracker after each completed task.
+
+Updated for current state:
+
+> Read `customer_management_resume.md` and continue implementation from Section 7, Task G onward. Update tracker after each completed task.
 

@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Mail, Phone, MapPin, Package, User, StickyNote } from "lucide-react";
-import type { AdminCustomerDetails, CustomerAccountStatus } from "@/types/customers";
+import { ArrowLeft, Mail, Phone, MapPin, Package, User, StickyNote, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
+import type { AdminCustomerDetails, CustomerAccountStatus, CustomerInteraction } from "@/types/customers";
 
 function formatDate(value: string | null) {
     if (!value) return "—";
@@ -54,9 +54,43 @@ export default function AdminCustomerDetailPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
+    const [addingNote, setAddingNote] = useState(false);
     const [statusInput, setStatusInput] = useState<CustomerAccountStatus>("active");
     const [notesInput, setNotesInput] = useState("");
+    const [noteInput, setNoteInput] = useState("");
+    const [interactions, setInteractions] = useState<CustomerInteraction[]>([]);
     const [success, setSuccess] = useState("");
+    const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
+    const [savingAddress, setSavingAddress] = useState(false);
+    const [editingAddressId, setEditingAddressId] = useState<string | null>(null);
+    const [addressForm, setAddressForm] = useState({
+        full_name: "",
+        phone: "",
+        address_line1: "",
+        address_line2: "",
+        city: "",
+        state: "",
+        pincode: "",
+        country: "India",
+        is_default_shipping: false,
+        is_default_billing: false,
+    });
+
+    const resetAddressForm = () => {
+        setEditingAddressId(null);
+        setAddressForm({
+            full_name: "",
+            phone: "",
+            address_line1: "",
+            address_line2: "",
+            city: "",
+            state: "",
+            pincode: "",
+            country: "India",
+            is_default_shipping: false,
+            is_default_billing: false,
+        });
+    };
 
     const loadDetails = async () => {
         if (!id) return;
@@ -78,8 +112,21 @@ export default function AdminCustomerDetailPage() {
         }
     };
 
+    const loadInteractions = async () => {
+        if (!id) return;
+        try {
+            const res = await fetch(`/api/admin/customers/${id}/interactions?limit=20&offset=0`);
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to fetch interactions");
+            setInteractions((json.data || []) as CustomerInteraction[]);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to fetch interactions");
+        }
+    };
+
     useEffect(() => {
         loadDetails();
+        loadInteractions();
     }, [id]);
 
     const displayName = useMemo(() => {
@@ -106,10 +153,175 @@ export default function AdminCustomerDetailPage() {
 
             setSuccess("Customer profile updated.");
             await loadDetails();
+            await loadInteractions();
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to update customer");
         } finally {
             setSaving(false);
+        }
+    };
+
+    const quickUpdateStatus = async (nextStatus: CustomerAccountStatus) => {
+        if (!id || statusInput === nextStatus) return;
+        setSaving(true);
+        setError("");
+        setSuccess("");
+        try {
+            const res = await fetch(`/api/admin/customers/${id}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    account_status: nextStatus,
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to update status");
+
+            setStatusInput(nextStatus);
+            setSuccess(`Account status updated to ${nextStatus}.`);
+            await loadDetails();
+            await loadInteractions();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to update status");
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const addNote = async () => {
+        if (!id) return;
+        const note = noteInput.trim();
+        if (!note) {
+            setError("Please enter a note before submitting.");
+            return;
+        }
+
+        setAddingNote(true);
+        setError("");
+        setSuccess("");
+        try {
+            const res = await fetch(`/api/admin/customers/${id}/notes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    note,
+                    event_type: "note_added",
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to add note");
+
+            setNoteInput("");
+            setSuccess("Note added successfully.");
+            await loadInteractions();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to add note");
+        } finally {
+            setAddingNote(false);
+        }
+    };
+
+    const saveAddress = async () => {
+        if (!id) return;
+        if (!addressForm.full_name || !addressForm.phone || !addressForm.address_line1 || !addressForm.city || !addressForm.state || !addressForm.pincode) {
+            setError("Please fill all required address fields.");
+            return;
+        }
+
+        setSavingAddress(true);
+        setError("");
+        setSuccess("");
+
+        try {
+            const method = editingAddressId ? "PATCH" : "POST";
+            const res = await fetch(`/api/admin/customers/${id}/addresses`, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    ...(editingAddressId ? { address_id: editingAddressId } : {}),
+                    ...addressForm,
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to save address");
+
+            setSuccess(editingAddressId ? "Address updated." : "Address added.");
+            resetAddressForm();
+            await loadDetails();
+            await loadInteractions();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to save address");
+        } finally {
+            setSavingAddress(false);
+        }
+    };
+
+    const removeAddress = async (addressId: string) => {
+        if (!id) return;
+        setError("");
+        setSuccess("");
+        setSavingAddress(true);
+        try {
+            const res = await fetch(`/api/admin/customers/${id}/addresses`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ address_id: addressId }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to delete address");
+
+            setSuccess("Address deleted.");
+            if (editingAddressId === addressId) resetAddressForm();
+            await loadDetails();
+            await loadInteractions();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to delete address");
+        } finally {
+            setSavingAddress(false);
+        }
+    };
+
+    const editAddress = (addressId: string) => {
+        const address = details?.addresses.find((item) => item.id === addressId);
+        if (!address) return;
+        setEditingAddressId(address.id);
+        setAddressForm({
+            full_name: address.full_name,
+            phone: address.phone,
+            address_line1: address.address_line1,
+            address_line2: address.address_line2 || "",
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            country: address.country,
+            is_default_shipping: address.is_default_shipping,
+            is_default_billing: address.is_default_billing,
+        });
+    };
+
+    const setAddressDefault = async (addressId: string, type: "shipping" | "billing") => {
+        if (!id) return;
+        setSavingAddress(true);
+        setError("");
+        setSuccess("");
+        try {
+            const res = await fetch(`/api/admin/customers/${id}/addresses`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    address_id: addressId,
+                    ...(type === "shipping" ? { is_default_shipping: true } : { is_default_billing: true }),
+                }),
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to set default address");
+
+            setSuccess(`Default ${type} address updated.`);
+            await loadDetails();
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : "Failed to set default address");
+        } finally {
+            setSavingAddress(false);
         }
     };
 
@@ -219,28 +431,95 @@ export default function AdminCustomerDetailPage() {
                                 <table className="w-full text-sm">
                                     <thead>
                                         <tr className="text-left text-gray-500 border-b border-gray-200">
+                                            <th className="py-2 pr-4"> </th>
                                             <th className="py-2 pr-4">Order #</th>
                                             <th className="py-2 pr-4">Date</th>
                                             <th className="py-2 pr-4">Status</th>
                                             <th className="py-2 pr-4">Payment</th>
+                                            <th className="py-2 pr-4">Items</th>
                                             <th className="py-2 pr-4">Coupon</th>
+                                            <th className="py-2 pr-4">Discount</th>
                                             <th className="py-2">Total</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         {details.orders.map((order) => (
-                                            <tr key={order.id} className="border-b border-gray-100">
-                                                <td className="py-3 pr-4 font-medium text-gray-900">
-                                                    <Link href={`/admin/orders/${order.id}`} className="hover:underline">
-                                                        {order.order_number}
-                                                    </Link>
-                                                </td>
-                                                <td className="py-3 pr-4 text-gray-700">{formatDate(order.created_at)}</td>
-                                                <td className="py-3 pr-4 text-gray-700">{order.status}</td>
-                                                <td className="py-3 pr-4 text-gray-700">{order.payment_status}</td>
-                                                <td className="py-3 pr-4 text-gray-700">{order.coupon_code || "—"}</td>
-                                                <td className="py-3 text-gray-700">{formatInr(order.total_amount)}</td>
-                                            </tr>
+                                            <Fragment key={order.id}>
+                                                <tr className="border-b border-gray-100">
+                                                    <td className="py-3 pr-2">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => setExpandedOrderId((prev) => (prev === order.id ? null : order.id))}
+                                                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                                                            title={expandedOrderId === order.id ? "Collapse order details" : "Expand order details"}
+                                                        >
+                                                            {expandedOrderId === order.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                        </button>
+                                                    </td>
+                                                    <td className="py-3 pr-4 font-medium text-gray-900">
+                                                        <Link href={`/admin/orders/${order.id}`} className="hover:underline">
+                                                            {order.order_number}
+                                                        </Link>
+                                                    </td>
+                                                    <td className="py-3 pr-4 text-gray-700">{formatDate(order.created_at)}</td>
+                                                    <td className="py-3 pr-4 text-gray-700 capitalize">{order.status}</td>
+                                                    <td className="py-3 pr-4 text-gray-700 capitalize">{order.payment_status}</td>
+                                                    <td className="py-3 pr-4 text-gray-700">
+                                                        {order.item_lines} lines · {order.units_count} units
+                                                    </td>
+                                                    <td className="py-3 pr-4 text-gray-700">{order.coupon_code || "—"}</td>
+                                                    <td className="py-3 pr-4 text-gray-700">
+                                                        {order.discount_amount > 0 ? formatInr(order.discount_amount) : "—"}
+                                                    </td>
+                                                    <td className="py-3 text-gray-700 font-medium">{formatInr(order.total_amount)}</td>
+                                                </tr>
+
+                                                {expandedOrderId === order.id && (
+                                                    <tr className="border-b border-gray-100 bg-gray-50/50">
+                                                        <td colSpan={9} className="py-3 pl-12 pr-4">
+                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-700">
+                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                    <p className="text-[11px] uppercase text-gray-500 mb-1">Amount Breakdown</p>
+                                                                    <p>Subtotal: {formatInr(order.subtotal)}</p>
+                                                                    <p>Shipping: {formatInr(order.shipping_amount)}</p>
+                                                                    <p>Discount: {formatInr(order.discount_amount)}</p>
+                                                                    <p className="font-semibold text-gray-900 mt-1">Total: {formatInr(order.total_amount)}</p>
+                                                                </div>
+                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                    <p className="text-[11px] uppercase text-gray-500 mb-1">Delivery Snapshot</p>
+                                                                    <p>
+                                                                        {order.shipping_city || "—"}
+                                                                        {order.shipping_state ? `, ${order.shipping_state}` : ""}
+                                                                    </p>
+                                                                    <p>{order.shipping_pincode || "—"}</p>
+                                                                    <p className="mt-1">Placed: {formatDateTime(order.created_at)}</p>
+                                                                </div>
+                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                    <p className="text-[11px] uppercase text-gray-500 mb-2">Quick Actions</p>
+                                                                    <div className="flex items-center gap-2">
+                                                                        <Link
+                                                                            href={`/admin/orders/${order.id}`}
+                                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
+                                                                        >
+                                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                                            Open Order
+                                                                        </Link>
+                                                                        <Link
+                                                                            href={`/admin/orders/${order.id}/print`}
+                                                                            target="_blank"
+                                                                            rel="noopener noreferrer"
+                                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
+                                                                        >
+                                                                            <ExternalLink className="w-3.5 h-3.5" />
+                                                                            Invoice / Print
+                                                                        </Link>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </td>
+                                                    </tr>
+                                                )}
+                                            </Fragment>
                                         ))}
                                     </tbody>
                                 </table>
@@ -272,19 +551,145 @@ export default function AdminCustomerDetailPage() {
                     </Card>
 
                     <Card title="Addresses" icon={MapPin}>
+                        <div className="mb-4 rounded-lg border border-gray-200 p-3 space-y-2">
+                            <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                                {editingAddressId ? "Edit Address" : "Add Address"}
+                            </p>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                <input
+                                    value={addressForm.full_name}
+                                    onChange={(e) => setAddressForm((prev) => ({ ...prev, full_name: e.target.value }))}
+                                    placeholder="Full name *"
+                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                />
+                                <input
+                                    value={addressForm.phone}
+                                    onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
+                                    placeholder="Phone *"
+                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                />
+                            </div>
+                            <input
+                                value={addressForm.address_line1}
+                                onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line1: e.target.value }))}
+                                placeholder="Address line 1 *"
+                                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                            />
+                            <input
+                                value={addressForm.address_line2}
+                                onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line2: e.target.value }))}
+                                placeholder="Address line 2"
+                                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                            />
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                <input
+                                    value={addressForm.city}
+                                    onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))}
+                                    placeholder="City *"
+                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                />
+                                <input
+                                    value={addressForm.state}
+                                    onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                                    placeholder="State *"
+                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                />
+                                <input
+                                    value={addressForm.pincode}
+                                    onChange={(e) => setAddressForm((prev) => ({ ...prev, pincode: e.target.value }))}
+                                    placeholder="Pincode *"
+                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                />
+                            </div>
+                            <div className="flex items-center gap-4 text-xs text-gray-700">
+                                <label className="inline-flex items-center gap-1.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={addressForm.is_default_shipping}
+                                        onChange={(e) => setAddressForm((prev) => ({ ...prev, is_default_shipping: e.target.checked }))}
+                                    />
+                                    Default shipping
+                                </label>
+                                <label className="inline-flex items-center gap-1.5">
+                                    <input
+                                        type="checkbox"
+                                        checked={addressForm.is_default_billing}
+                                        onChange={(e) => setAddressForm((prev) => ({ ...prev, is_default_billing: e.target.checked }))}
+                                    />
+                                    Default billing
+                                </label>
+                            </div>
+                            <div className="flex gap-2">
+                                <button
+                                    type="button"
+                                    onClick={saveAddress}
+                                    disabled={savingAddress}
+                                    className="px-3 py-2 rounded-md bg-gray-900 text-white text-xs font-medium disabled:opacity-60"
+                                >
+                                    {savingAddress ? "Saving..." : editingAddressId ? "Update Address" : "Add Address"}
+                                </button>
+                                {editingAddressId && (
+                                    <button
+                                        type="button"
+                                        onClick={resetAddressForm}
+                                        className="px-3 py-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700"
+                                    >
+                                        Cancel
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+
                         {details.addresses.length === 0 ? (
                             <p className="text-sm text-gray-500">No saved addresses.</p>
                         ) : (
                             <div className="space-y-3">
                                 {details.addresses.map((address) => (
                                     <div key={address.id} className="rounded-lg border border-gray-200 p-3">
-                                        <p className="text-sm font-medium text-gray-900">{address.full_name}</p>
+                                        <div className="flex items-start justify-between gap-2 mb-1">
+                                            <p className="text-sm font-medium text-gray-900">{address.full_name}</p>
+                                            <div className="flex items-center gap-1">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => editAddress(address.id)}
+                                                    className="px-2 py-1 rounded border border-gray-300 text-[11px] text-gray-700"
+                                                >
+                                                    Edit
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => removeAddress(address.id)}
+                                                    disabled={savingAddress}
+                                                    className="px-2 py-1 rounded border border-red-300 text-[11px] text-red-700 disabled:opacity-60"
+                                                >
+                                                    Delete
+                                                </button>
+                                            </div>
+                                        </div>
                                         <p className="text-xs text-gray-600">{address.address_line1}</p>
                                         {address.address_line2 && <p className="text-xs text-gray-600">{address.address_line2}</p>}
                                         <p className="text-xs text-gray-600">
                                             {address.city}, {address.state} - {address.pincode}
                                         </p>
                                         <p className="text-xs text-gray-600">{address.phone}</p>
+                                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setAddressDefault(address.id, "shipping")}
+                                                disabled={savingAddress || address.is_default_shipping}
+                                                className="px-2 py-1 rounded border border-gray-300 text-[11px] text-gray-700 disabled:opacity-50"
+                                            >
+                                                {address.is_default_shipping ? "Default Shipping" : "Set Shipping Default"}
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => setAddressDefault(address.id, "billing")}
+                                                disabled={savingAddress || address.is_default_billing}
+                                                className="px-2 py-1 rounded border border-gray-300 text-[11px] text-gray-700 disabled:opacity-50"
+                                            >
+                                                {address.is_default_billing ? "Default Billing" : "Set Billing Default"}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
@@ -323,15 +728,67 @@ export default function AdminCustomerDetailPage() {
                             >
                                 {saving ? "Saving..." : "Save Profile"}
                             </button>
+
+                            <div className="pt-3 border-t border-gray-100 space-y-2">
+                                <p className="text-[11px] uppercase tracking-wide text-gray-500">Admin Quick Actions</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button
+                                        type="button"
+                                        onClick={() => quickUpdateStatus("active")}
+                                        disabled={saving || statusInput === "active"}
+                                        className="px-2.5 py-2 rounded-md border border-gray-300 text-xs font-medium text-gray-700 disabled:opacity-50"
+                                    >
+                                        Mark Active
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => quickUpdateStatus("suspended")}
+                                        disabled={saving || statusInput === "suspended"}
+                                        className="px-2.5 py-2 rounded-md border border-amber-300 text-xs font-medium text-amber-700 disabled:opacity-50"
+                                    >
+                                        Suspend
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => quickUpdateStatus("blocked")}
+                                        disabled={saving || statusInput === "blocked"}
+                                        className="px-2.5 py-2 rounded-md border border-red-300 text-xs font-medium text-red-700 disabled:opacity-50"
+                                    >
+                                        Block
+                                    </button>
+                                    <a
+                                        href={`mailto:${customer.email || ""}`}
+                                        className={`px-2.5 py-2 rounded-md border text-xs font-medium text-center ${customer.email ? "border-gray-300 text-gray-700 hover:bg-gray-50" : "border-gray-200 text-gray-400 pointer-events-none"}`}
+                                    >
+                                        Send Email
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </Card>
 
                     <Card title="Recent Interactions" icon={StickyNote}>
-                        {details.interactions.length === 0 ? (
+                        <div className="space-y-3 mb-4">
+                            <textarea
+                                value={noteInput}
+                                onChange={(e) => setNoteInput(e.target.value)}
+                                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                placeholder="Add a new interaction note"
+                            />
+                            <button
+                                onClick={addNote}
+                                disabled={addingNote}
+                                className="w-full px-3 py-2 rounded-md bg-gray-900 text-white text-sm font-medium disabled:opacity-60"
+                            >
+                                {addingNote ? "Adding Note..." : "Add Note"}
+                            </button>
+                        </div>
+
+                        {interactions.length === 0 ? (
                             <p className="text-sm text-gray-500">No interactions yet.</p>
                         ) : (
                             <div className="space-y-3">
-                                {details.interactions.map((entry) => (
+                                {interactions.map((entry) => (
                                     <div key={entry.id} className="border-b border-gray-100 pb-2 last:border-none last:pb-0">
                                         <p className="text-xs uppercase tracking-wide text-gray-400">{entry.event_type}</p>
                                         <p className="text-sm text-gray-700">{entry.note || "—"}</p>

@@ -74,6 +74,7 @@ export default function EditProductPage() {
     const handleSave = async () => {
         if (!form.name.trim()) return alert("Product name is required");
         setSaving(true);
+        const sb = supabase as any;
         console.log("🚀 --- STARTING SAVE PROCESS --- 🚀");
         console.log("📦 Product Form Data:", form);
         console.log("🎨 Variants Data:", variants);
@@ -81,7 +82,7 @@ export default function EditProductPage() {
         try {
             // Update Product
             console.log("➤ Sending Product Update API Call...");
-            const { data: pData, error: pErr } = await supabase.from("products").update({
+            const productUpdatePayload = {
                 name: form.name, slug: form.slug, category_id: form.category_id || null,
                 description: form.description, fabric: form.fabric, width: form.width,
                 care_instructions: form.care_instructions, sell_mode: form.sell_mode,
@@ -89,7 +90,13 @@ export default function EditProductPage() {
                 is_active: form.is_active, sort_order: form.sort_order,
                 discount_type: form.discount_type, discount_label: form.discount_label,
                 fabric_details: form.fabric_details.filter(r => r.key.trim() || r.value.trim()),
-            }).eq("id", productId).select(); // ADDED SELECT to force return data
+            };
+
+            const { data: pData, error: pErr } = await sb
+                .from("products")
+                .update(productUpdatePayload as never)
+                .eq("id", productId)
+                .select(); // ADDED SELECT to force return data
 
             console.log("✅ Product Update Response:", { data: pData, error: pErr });
             if (pErr) throw new Error("Products update err: " + pErr.message);
@@ -99,14 +106,14 @@ export default function EditProductPage() {
             }
 
             // Variants
-            const { data: ev } = await supabase.from("product_variants").select("id").eq("product_id", productId);
-            const existingVarIds = (ev || []).map(v => v.id);
+            const { data: ev } = await sb.from("product_variants").select("id").eq("product_id", productId);
+            const existingVarIds = ((ev || []) as Array<{ id: string }>).map((v) => v.id);
             const currentVarIds = new Set(variants.filter(v => v.id).map(v => v.id));
             for (const id of existingVarIds) {
                 if (!currentVarIds.has(id)) {
                     console.log(`🗑️ Deleting removed variant ${id}`);
-                    await supabase.from("variant_images").delete().eq("variant_id", id);
-                    await supabase.from("product_variants").delete().eq("id", id);
+                    await sb.from("variant_images").delete().eq("variant_id", id);
+                    await sb.from("product_variants").delete().eq("id", id);
                 }
             }
 
@@ -124,7 +131,7 @@ export default function EditProductPage() {
                 console.log(`➤ Processing Variant [${i}]: ${v.color_name}`);
 
                 if (vid) {
-                    const { data: vData, error: vErr } = await supabase.from("product_variants").update({
+                    const { data: vData, error: vErr } = await sb.from("product_variants").update({
                         color_name: v.color_name, color_hex: v.color_hex, material_label: v.material_label || null,
                         price: safePrice,
                         original_price: finalOriginalPrice,
@@ -138,7 +145,7 @@ export default function EditProductPage() {
                         console.error(`🚨 CRITICAL ERROR: Variant [${i}] update returned 0 rows! RLS Blocked it.`);
                     }
                 } else {
-                    const { data: iv, error: isvErr } = await supabase.from("product_variants").insert({
+                    const { data: iv, error: isvErr } = await sb.from("product_variants").insert({
                         product_id: productId, color_name: v.color_name, color_hex: v.color_hex,
                         material_label: v.material_label || null, price: safePrice,
                         original_price: finalOriginalPrice,
@@ -151,23 +158,23 @@ export default function EditProductPage() {
                 }
                 if (!vid) continue;
 
-                const { data: ei } = await supabase.from("variant_images").select("id").eq("variant_id", vid);
-                const existingImgIds = (ei || []).map(im => im.id);
+                const { data: ei } = await sb.from("variant_images").select("id").eq("variant_id", vid);
+                const existingImgIds = ((ei || []) as Array<{ id: string }>).map((im) => im.id);
                 const currentImgIds = new Set(v.images.filter(im => im.id).map(im => im.id));
                 for (const id of existingImgIds) {
-                    if (!currentImgIds.has(id)) await supabase.from("variant_images").delete().eq("id", id);
+                    if (!currentImgIds.has(id)) await sb.from("variant_images").delete().eq("id", id);
                 }
                 for (const img of v.images) {
-                    if (img.id) await supabase.from("variant_images").update({ is_primary: img.is_primary, sort_order: img.sort_order }).eq("id", img.id);
+                    if (img.id) await sb.from("variant_images").update({ is_primary: img.is_primary, sort_order: img.sort_order }).eq("id", img.id);
                 }
                 for (const img of v.images) {
                     if (img.file) {
                         const ext = img.file.name.split(".").pop();
                         const name = `${productId}/${vid}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-                        const { error: uErr } = await supabase.storage.from("product-images").upload(name, img.file);
+                        const { error: uErr } = await sb.storage.from("product-images").upload(name, img.file);
                         if (uErr) continue;
-                        const url = supabase.storage.from("product-images").getPublicUrl(name).data.publicUrl;
-                        await supabase.from("variant_images").insert({ variant_id: vid, image_url: url, is_primary: img.is_primary, sort_order: img.sort_order, media_type: img.media_type });
+                        const url = sb.storage.from("product-images").getPublicUrl(name).data.publicUrl;
+                        await sb.from("variant_images").insert({ variant_id: vid, image_url: url, is_primary: img.is_primary, sort_order: img.sort_order, media_type: img.media_type });
                     }
                 }
             }
@@ -185,7 +192,8 @@ export default function EditProductPage() {
     /* ─── Fetch ─── */
     const fetchProduct = useCallback(async () => {
         setLoading(true);
-        const { data: p } = await supabase.from("products")
+        const sb = supabase as any;
+        const { data: p } = await sb.from("products")
             .select(`*, product_variants ( *, variant_images ( * ) )`).eq("id", productId).single();
         if (p) {
             const rawDetails: FabricRow[] = Array.isArray(p.fabric_details) ? p.fabric_details : [];
@@ -268,9 +276,14 @@ export default function EditProductPage() {
 
 
     const handleDelete = async () => {
-        const { data: vs } = await supabase.from("product_variants").select("id").eq("product_id", productId);
-        if (vs?.length) { await supabase.from("variant_images").delete().in("variant_id", vs.map(v => v.id)); await supabase.from("product_variants").delete().eq("product_id", productId); }
-        await supabase.from("products").delete().eq("id", productId);
+        const sb = supabase as any;
+        const { data: vs } = await sb.from("product_variants").select("id").eq("product_id", productId);
+        const variantRows = (vs || []) as Array<{ id: string }>;
+        if (variantRows.length) {
+            await sb.from("variant_images").delete().in("variant_id", variantRows.map((v) => v.id));
+            await sb.from("product_variants").delete().eq("product_id", productId);
+        }
+        await sb.from("products").delete().eq("id", productId);
         router.push("/admin/products");
     };
 

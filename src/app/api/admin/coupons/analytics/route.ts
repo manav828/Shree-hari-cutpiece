@@ -7,34 +7,46 @@ export async function GET() {
             couponsRes,
             activeCouponsRes,
             redemptionsRes,
-            discountSpendRes,
-            influencedRevenueRes,
+            redemptionRowsRes,
         ] = await Promise.all([
             supabaseAdmin.from("coupons").select("id", { count: "exact", head: true }),
             supabaseAdmin.from("coupons").select("id", { count: "exact", head: true }).eq("status", "active"),
             supabaseAdmin.from("coupon_redemptions").select("id", { count: "exact", head: true }),
-            supabaseAdmin.from("coupon_redemptions").select("discount_amount"),
-            supabaseAdmin
-                .from("coupon_redemptions")
-                .select("order_id, orders(total_amount)")
-                .not("order_id", "is", null),
+            supabaseAdmin.from("coupon_redemptions").select("discount_amount, order_id"),
         ]);
 
         if (couponsRes.error) throw couponsRes.error;
         if (activeCouponsRes.error) throw activeCouponsRes.error;
         if (redemptionsRes.error) throw redemptionsRes.error;
-        if (discountSpendRes.error) throw discountSpendRes.error;
-        if (influencedRevenueRes.error) throw influencedRevenueRes.error;
+        if (redemptionRowsRes.error) throw redemptionRowsRes.error;
 
-        const discountSpend = (discountSpendRes.data ?? []).reduce((sum, row) => {
+        const redemptionRows = redemptionRowsRes.data ?? [];
+
+        const discountSpend = redemptionRows.reduce((sum, row) => {
             const amount = Number((row as { discount_amount?: number }).discount_amount || 0);
             return sum + amount;
         }, 0);
 
-        const influencedRevenue = (influencedRevenueRes.data ?? []).reduce((sum, row) => {
-            const orderValue = Number((row as { orders?: { total_amount?: number } | null }).orders?.total_amount || 0);
-            return sum + orderValue;
-        }, 0);
+        const orderIds = Array.from(new Set(
+            redemptionRows
+                .map((row) => (row as { order_id?: string | null }).order_id)
+                .filter((orderId): orderId is string => Boolean(orderId)),
+        ));
+
+        let influencedRevenue = 0;
+        if (orderIds.length > 0) {
+            const { data: orderRows, error: ordersError } = await supabaseAdmin
+                .from("orders")
+                .select("id, total_amount")
+                .in("id", orderIds);
+
+            if (ordersError) throw ordersError;
+
+            influencedRevenue = (orderRows ?? []).reduce((sum, row) => {
+                const total = Number((row as { total_amount?: number }).total_amount || 0);
+                return sum + total;
+            }, 0);
+        }
 
         return NextResponse.json({
             totalCoupons: couponsRes.count ?? 0,

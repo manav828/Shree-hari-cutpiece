@@ -32,7 +32,7 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
                 .maybeSingle(),
             supabaseAdmin
                 .from("orders")
-                .select("id, order_number, created_at, status, payment_status, total_amount, discount_amount, coupon_code")
+                .select("id, order_number, created_at, status, payment_status, subtotal, shipping_amount, total_amount, discount_amount, coupon_code")
                 .eq("user_id", customerId)
                 .order("created_at", { ascending: false })
                 .limit(100),
@@ -64,6 +64,47 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
         if (interactionsRes.error) throw interactionsRes.error;
         if (customersWithRepeatRes.error) throw customersWithRepeatRes.error;
 
+        const orderIds = (ordersRes.data ?? []).map((row) => row.id);
+
+        let orderItemsByOrderId: Record<string, { item_lines: number; units_count: number }> = {};
+        let shippingAddressByOrderId: Record<string, { shipping_city: string | null; shipping_state: string | null; shipping_pincode: string | null }> = {};
+
+        if (orderIds.length > 0) {
+            const [orderItemsRes, shippingAddressesRes] = await Promise.all([
+                supabaseAdmin
+                    .from("order_items")
+                    .select("order_id, quantity")
+                    .in("order_id", orderIds),
+                supabaseAdmin
+                    .from("order_addresses")
+                    .select("order_id, city, state, pincode, type")
+                    .in("order_id", orderIds)
+                    .eq("type", "shipping"),
+            ]);
+
+            if (orderItemsRes.error) throw orderItemsRes.error;
+            if (shippingAddressesRes.error) throw shippingAddressesRes.error;
+
+            orderItemsByOrderId = (orderItemsRes.data ?? []).reduce((acc, row) => {
+                const existing = acc[row.order_id] ?? { item_lines: 0, units_count: 0 };
+                existing.item_lines += 1;
+                existing.units_count += Number(row.quantity ?? 0);
+                acc[row.order_id] = existing;
+                return acc;
+            }, {} as Record<string, { item_lines: number; units_count: number }>);
+
+            shippingAddressByOrderId = (shippingAddressesRes.data ?? []).reduce((acc, row) => {
+                if (!acc[row.order_id]) {
+                    acc[row.order_id] = {
+                        shipping_city: row.city ?? null,
+                        shipping_state: row.state ?? null,
+                        shipping_pincode: row.pincode ?? null,
+                    };
+                }
+                return acc;
+            }, {} as Record<string, { shipping_city: string | null; shipping_state: string | null; shipping_pincode: string | null }>);
+        }
+
         const summary = summaryRes.data as JsonMap;
 
         const customer: AdminCustomerListItem = {
@@ -85,9 +126,16 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
             created_at: row.created_at,
             status: row.status,
             payment_status: row.payment_status,
+            subtotal: toNumber(row.subtotal),
+            shipping_amount: toNumber(row.shipping_amount),
             total_amount: toNumber(row.total_amount),
             discount_amount: toNumber(row.discount_amount),
             coupon_code: row.coupon_code,
+            item_lines: orderItemsByOrderId[row.id]?.item_lines ?? 0,
+            units_count: orderItemsByOrderId[row.id]?.units_count ?? 0,
+            shipping_city: shippingAddressByOrderId[row.id]?.shipping_city ?? null,
+            shipping_state: shippingAddressByOrderId[row.id]?.shipping_state ?? null,
+            shipping_pincode: shippingAddressByOrderId[row.id]?.shipping_pincode ?? null,
         }));
 
         const addresses: CustomerAddress[] = (addressesRes.data ?? []).map((row) => ({

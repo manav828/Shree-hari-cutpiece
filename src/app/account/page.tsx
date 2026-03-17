@@ -199,6 +199,11 @@ export default function AccountPage() {
         { id: "settings", label: "Settings" },
     ];
 
+    const totalSpent = orders.reduce((sum, order) => sum + Number(order.total || 0), 0);
+    const lastOrder = orders.length > 0 ? orders[0] : null;
+    const memberSince = orders.length > 0 ? orders[orders.length - 1].date : null;
+    const recentOrders = orders.slice(0, 5);
+
     return (
         <>
             <Navbar />
@@ -256,6 +261,45 @@ export default function AccountPage() {
 
                         {/* Content Area */}
                         <div className="lg:col-span-3">
+                            <div className="mb-6 bg-[#F7F0F1] border border-border rounded-2xl p-6">
+                                <p className="text-xs uppercase tracking-[0.2em] text-text-secondary mb-2">Welcome back</p>
+                                <h2 className="font-serif text-2xl text-foreground">{user.name}</h2>
+                                <p className="text-sm text-text-secondary mt-1">Manage your profile, addresses, and order journey from one place.</p>
+
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
+                                    <div className="bg-white border border-border rounded-lg p-3">
+                                        <p className="text-[11px] uppercase text-text-secondary">Total Orders</p>
+                                        <p className="text-lg font-semibold text-foreground mt-1">{orders.length}</p>
+                                    </div>
+                                    <div className="bg-white border border-border rounded-lg p-3">
+                                        <p className="text-[11px] uppercase text-text-secondary">Total Spent</p>
+                                        <p className="text-lg font-semibold text-foreground mt-1">{formatPrice(totalSpent)}</p>
+                                    </div>
+                                    <div className="bg-white border border-border rounded-lg p-3">
+                                        <p className="text-[11px] uppercase text-text-secondary">Member Since</p>
+                                        <p className="text-sm font-semibold text-foreground mt-1">
+                                            {memberSince
+                                                ? new Date(memberSince).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+                                                : "-"}
+                                        </p>
+                                    </div>
+                                    <div className="bg-white border border-border rounded-lg p-3">
+                                        <p className="text-[11px] uppercase text-text-secondary">Last Order</p>
+                                        <p className="text-sm font-semibold text-foreground mt-1">
+                                            {lastOrder
+                                                ? new Date(lastOrder.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
+                                                : "-"}
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-wrap gap-2 mt-4">
+                                    <Link href="/account/profile" className="btn-secondary text-xs py-2">Edit Profile</Link>
+                                    <Link href="/account/addresses" className="btn-secondary text-xs py-2">Address Book</Link>
+                                    <Link href="/account/preferences" className="btn-secondary text-xs py-2">Preferences</Link>
+                                </div>
+                            </div>
+
                             {/* My Orders Tab */}
                             {activeTab === "orders" && (
                                 <div>
@@ -263,6 +307,35 @@ export default function AccountPage() {
                                         <h2 className="font-serif text-2xl text-foreground">My Orders</h2>
                                         <p className="text-text-secondary text-sm">{orders.length} orders</p>
                                     </div>
+
+                                    <div className="mb-6 bg-white border border-border rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <h3 className="text-sm font-semibold text-foreground">Recent Orders</h3>
+                                            <span className="text-xs text-text-secondary">Last 5</span>
+                                        </div>
+                                        {recentOrders.length === 0 ? (
+                                            <p className="text-sm text-text-secondary">No recent orders yet.</p>
+                                        ) : (
+                                            <div className="space-y-2">
+                                                {recentOrders.map((order) => (
+                                                    <Link
+                                                        key={`recent-${order.id}`}
+                                                        href={`/account/orders/${order.id}`}
+                                                        className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-background-secondary"
+                                                    >
+                                                        <div>
+                                                            <p className="text-sm font-medium text-foreground">#{order.order_number}</p>
+                                                            <p className="text-xs text-text-secondary">
+                                                                {new Date(order.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
+                                                            </p>
+                                                        </div>
+                                                        <p className="text-sm font-medium text-foreground">{formatPrice(order.total)}</p>
+                                                    </Link>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+
                                     {orders.length === 0 ? (
                                         <div className="text-center py-20 bg-[#F7F0F1] rounded-2xl">
                                             <svg className="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -286,16 +359,19 @@ export default function AccountPage() {
                             {/* Addresses Tab */}
                             {activeTab === "addresses" && (
                                 <div>
-                                    <div className="flex items-center justify-between mb-6">
+                                    <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
                                         <h2 className="font-serif text-2xl text-foreground">Saved Addresses</h2>
+                                        <Link href="/account/addresses" className="btn-secondary text-sm py-2.5">
+                                            Manage Addresses
+                                        </Link>
                                     </div>
                                     <div className="bg-[#F7F0F1] rounded-2xl p-8 text-center">
                                         <svg className="w-12 h-12 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
-                                        <p className="text-text-secondary text-sm mb-4">Address management will be available after Firebase integration.</p>
-                                        <p className="text-xs text-text-secondary">Your delivery address from past orders will appear here.</p>
+                                        <p className="text-text-secondary text-sm mb-4">Address management is now available with add, edit, delete, and default selection.</p>
+                                        <Link href="/account/addresses" className="btn-primary text-sm py-2.5 inline-block">Open Address Book</Link>
                                     </div>
                                 </div>
                             )}
@@ -303,7 +379,13 @@ export default function AccountPage() {
                             {/* Settings Tab */}
                             {activeTab === "settings" && (
                                 <div>
-                                    <h2 className="font-serif text-2xl text-foreground mb-6">Account Settings</h2>
+                                    <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
+                                        <h2 className="font-serif text-2xl text-foreground">Account Settings</h2>
+                                        <div className="flex items-center gap-2 flex-wrap">
+                                            <Link href="/account/profile" className="btn-secondary text-sm py-2.5">Profile Page</Link>
+                                            <Link href="/account/preferences" className="btn-secondary text-sm py-2.5">Preferences Page</Link>
+                                        </div>
+                                    </div>
                                     <div className="bg-white border border-border rounded-xl p-6 sm:p-8 space-y-5">
                                         <div className="relative">
                                             <input

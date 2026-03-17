@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
-import type { AdminCustomerListItem } from "@/types/customers";
 
 const SORT_MAP = {
     joined: "created_at",
@@ -9,12 +8,18 @@ const SORT_MAP = {
     name: "full_name",
 } as const;
 
+function csvCell(value: unknown) {
+    const str = String(value ?? "");
+    if (str.includes(",") || str.includes("\n") || str.includes("\"")) {
+        return `"${str.replace(/\"/g, '""')}"`;
+    }
+    return str;
+}
+
 export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
 
-        const page = Math.max(Number(searchParams.get("page") || "1"), 1);
-        const limit = Math.min(Math.max(Number(searchParams.get("limit") || "20"), 1), 100);
         const status = (searchParams.get("status") || "all").trim();
         const search = (searchParams.get("search") || "").trim();
         const registeredAfter = (searchParams.get("registeredAfter") || "").trim();
@@ -28,12 +33,11 @@ export async function GET(req: NextRequest) {
         const sortField = SORT_MAP[sortBy] ?? SORT_MAP.joined;
         const ascending = sortBy === "name";
 
-        const from = (page - 1) * limit;
-        const to = from + limit - 1;
-
         let query = supabaseAdmin
             .from("admin_customer_summary")
-            .select("*", { count: "exact" });
+            .select("*")
+            .order(sortField, { ascending, nullsFirst: false })
+            .limit(10000);
 
         if (status !== "all") {
             query = query.eq("account_status", status);
@@ -81,37 +85,52 @@ export async function GET(req: NextRequest) {
             ].join(","));
         }
 
-        const { data, count, error } = await query
-            .order(sortField, { ascending, nullsFirst: false })
-            .range(from, to);
-
+        const { data, error } = await query;
         if (error) throw error;
 
-        const customers: AdminCustomerListItem[] = (data ?? []).map((row) => ({
-            id: row.id,
-            email: row.email,
-            full_name: row.full_name,
-            phone: row.phone,
-            created_at: row.created_at,
-            last_sign_in_at: row.last_sign_in_at,
-            account_status: row.account_status,
-            total_orders: Number(row.total_orders ?? 0),
-            lifetime_value: Number(row.lifetime_value ?? 0),
-            last_order_date: row.last_order_date,
-        }));
+        const rows = data ?? [];
+        const headers = [
+            "id",
+            "full_name",
+            "email",
+            "phone",
+            "account_status",
+            "total_orders",
+            "lifetime_value",
+            "last_order_date",
+            "last_sign_in_at",
+            "created_at",
+        ];
 
-        const total = count ?? 0;
-        const totalPages = Math.max(Math.ceil(total / limit), 1);
+        const csvLines = [
+            headers.join(","),
+            ...rows.map((row) => [
+                csvCell(row.id),
+                csvCell(row.full_name),
+                csvCell(row.email),
+                csvCell(row.phone),
+                csvCell(row.account_status),
+                csvCell(row.total_orders),
+                csvCell(row.lifetime_value),
+                csvCell(row.last_order_date),
+                csvCell(row.last_sign_in_at),
+                csvCell(row.created_at),
+            ].join(",")),
+        ];
 
-        return NextResponse.json({
-            customers,
-            page,
-            limit,
-            total,
-            total_pages: totalPages,
+        const csv = csvLines.join("\n");
+        const fileName = `customers-export-${new Date().toISOString().slice(0, 10)}.csv`;
+
+        return new NextResponse(csv, {
+            status: 200,
+            headers: {
+                "Content-Type": "text/csv; charset=utf-8",
+                "Content-Disposition": `attachment; filename=\"${fileName}\"`,
+                "Cache-Control": "no-store",
+            },
         });
     } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Failed to fetch customers";
+        const message = err instanceof Error ? err.message : "Failed to export customers";
         return NextResponse.json({ error: message }, { status: 500 });
     }
 }
