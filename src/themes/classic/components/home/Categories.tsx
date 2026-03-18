@@ -2,9 +2,28 @@ import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
 import categoriesData from "@/data/categories.json";
+import { getActiveCmsCategories } from "@/lib/cms";
 
-export default function Categories() {
-  const bentoCategories = categoriesData.slice(0, 3);
+export default async function Categories() {
+  const dbCategories = await getActiveCmsCategories();
+
+  const categories = dbCategories.length > 0
+    ? dbCategories
+    : categoriesData.map((item, idx) => ({
+      id: String(item.id),
+      name: item.name,
+      slug: item.slug,
+      description: item.description,
+      image: item.image,
+      sort_order: idx,
+      is_active: true,
+    }));
+
+  const bentoCategories = categories.slice(0, 3);
+
+  if (bentoCategories.length < 3) {
+    return null;
+  }
 
   return (
     <>
@@ -93,7 +112,7 @@ export default function Categories() {
 
           {/* Categories Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
-            {categoriesData.map((category) => (
+            {categories.map((category) => (
               <Link
                 key={category.id}
                 href={`/shop?category=${category.slug}`}

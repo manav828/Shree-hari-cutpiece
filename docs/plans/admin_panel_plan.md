@@ -72,7 +72,7 @@ This document outlines the core features needed for the E-Commerce Admin Panel. 
 ## 8. Customer Management
 *   **List View:** Table of registered users (Name, Email, Join Date, Total Orders).
 *   **Customer Details:** View their complete order history and lifetime value.
-*   ***See detailed PRD in `customer_management_prd.md` for full scope and requirements.***
+*   ***See detailed PRD in `docs/customer/customer_management_prd.md` for full scope and requirements.***
 
 ## 9. Content & Banner Management (CMS)
 *   **Homepage Sections:** Control visibility (show/hide), positioning (where to show), and ordering of different sections on the homepage.

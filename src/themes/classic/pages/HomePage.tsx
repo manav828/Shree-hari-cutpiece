@@ -1,5 +1,3 @@
-"use client";
-
 import OfferBanner from "../components/home/OfferBanner";
 import Navbar from "../components/layout/Navbar";
 import CartSidebar from "../components/cart/CartSidebar";

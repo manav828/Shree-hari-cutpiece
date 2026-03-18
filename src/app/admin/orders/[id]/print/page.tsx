@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { formatPrice } from "@/lib/utils";
 import PrintButton from "./PrintButton";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default async function PrintOrderPage({ params }: { params: { id: string } }) {
     const order = await fetchOrderById(params.id);
     if (!order) return notFound();

@@ -2,6 +2,8 @@
 ALTER TABLE public.order_status_history ENABLE ROW LEVEL SECURITY;
 
 -- Allow users to view the status history of their own orders
+DROP POLICY IF EXISTS "Users can view their own order status history" ON public.order_status_history;
+
 CREATE POLICY "Users can view their own order status history"
     ON public.order_status_history FOR SELECT
     USING (

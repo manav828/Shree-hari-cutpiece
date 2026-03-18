@@ -16,7 +16,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 
 ### ✅ Completed (working)
 1. **DB migration created and executed**
-   - File: `supabase_customers_migration.sql`
+   - File: `db/migrations/supabase_customers_migration.sql`
    - Includes: `user_profiles`, `user_addresses`, `customer_interaction_logs`, indexes, RLS policies, `admin_customer_summary` view
    - Execution confirmed: `CUSTOMERS_MIGRATION_EXECUTED`
 
@@ -42,7 +42,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
    - File: `src/types/customers.ts`
 
 7. **Tracker updated**
-   - File: `customer_management_implementation_tracker.md`
+   - File: `docs/trackers/customer_management_implementation_tracker.md`
 
 8. **Dedicated notes API added**
    - File: `src/app/api/admin/customers/[id]/notes/route.ts`
@@ -105,7 +105,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 ## 4) Files touched for customer module
 
 ### Database
-- `supabase_customers_migration.sql`
+- `db/migrations/supabase_customers_migration.sql`
 
 ### API
 - `src/app/api/admin/customers/route.ts`
@@ -120,7 +120,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 
 ### Planning / docs
 - `customer_management_prd.md`
-- `customer_management_implementation_tracker.md`
+- `docs/trackers/customer_management_implementation_tracker.md`
 
 ---
 
@@ -182,7 +182,7 @@ If asked to continue, start from **Section 7 (Immediate Next Tasks)**.
 
 ### Task F — Validation + tracker update
 - Run diagnostics for new/edited files
-- Update `customer_management_implementation_tracker.md` checkboxes + changelog
+- Update `docs/trackers/customer_management_implementation_tracker.md` checkboxes + changelog
 
 ### Task G — Remaining account UX polish
 - Status: ✅ Completed

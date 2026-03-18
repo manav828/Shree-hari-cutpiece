@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import {
     LayoutDashboard,
+    Layout,
     Package,
     ShoppingCart,
     Users,
@@ -46,6 +47,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
         { name: "Customers", href: "/admin/customers", icon: Users },
         { name: "Coupons", href: "/admin/coupons", icon: Tags },
+        { name: "Content & Banners", href: "/admin/cms", icon: Layout },
         { name: "Documentation", href: "/admin/documentation", icon: BookOpen },
         { name: "Blog", href: "/admin/blog", icon: FileText },
         { name: "Reports", href: "/admin/reports", icon: BarChart },

@@ -7,7 +7,7 @@ sys.path.insert(0, skill_path)
 try:
     from design_system import generate_design_system
     result = generate_design_system("ecommerce luxury premium elegant", "Ecom Shrihari", "markdown")
-    with open(r"d:\Manav\website\ecomshrihari\design_system.md", "w", encoding="utf-8") as f:
+    with open(r"d:\Manav\website\ecomshrihari\docs\design\design_system.md", "w", encoding="utf-8") as f:
         f.write(result)
     print("SUCCESS")
 except Exception as e:

@@ -4,7 +4,7 @@
 **Status:** Phase 1 In Progress  
 **Last Updated:** March 16, 2026
 
-**Next-session handoff file:** `customer_management_resume.md`
+**Next-session handoff file:** `docs/customer/customer_management_resume.md`
 
 ---
 
