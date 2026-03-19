@@ -37,6 +37,7 @@ export default function CategoriesManager() {
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
     const [createOpen, setCreateOpen] = useState(false);
     const [editId, setEditId] = useState<string | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [draft, setDraft] = useState<Draft>({
         name: "",
         slug: "",
@@ -194,6 +195,30 @@ export default function CategoriesManager() {
         setCreateOpen(true);
     };
 
+    const uploadCategoryImage = async (file: File) => {
+        setUploadingImage(true);
+        setMessage(null);
+        try {
+            const form = new FormData();
+            form.append("file", file);
+
+            const res = await fetch("/api/admin/cms/categories", {
+                method: "POST",
+                body: form,
+            });
+            const json = await res.json();
+            if (!res.ok) throw new Error(json.error || "Failed to upload category image");
+
+            setDraft((prev) => ({ ...prev, image: String(json.imageUrl || "") }));
+            setMessage({ type: "success", text: "Category image uploaded." });
+        } catch (err: unknown) {
+            const text = err instanceof Error ? err.message : "Failed to upload category image";
+            setMessage({ type: "error", text });
+        } finally {
+            setUploadingImage(false);
+        }
+    };
+
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -247,6 +272,23 @@ export default function CategoriesManager() {
                             placeholder="Image URL"
                             className="px-3 py-2 rounded-md border border-gray-300 text-sm md:col-span-2"
                         />
+                        <div className="md:col-span-2 space-y-2">
+                            <input
+                                type="file"
+                                accept="image/*"
+                                onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) uploadCategoryImage(file);
+                                }}
+                                className="block w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-gray-900 file:text-white"
+                            />
+                            {uploadingImage ? <p className="text-xs text-indigo-600">Uploading image...</p> : null}
+                            {draft.image ? (
+                                <div className="w-28 h-28 rounded-md overflow-hidden border border-gray-200 bg-gray-100">
+                                    <img src={draft.image} alt="Category preview" className="w-full h-full object-cover" />
+                                </div>
+                            ) : null}
+                        </div>
                     </div>
 
                     <label className="inline-flex items-center gap-2 text-sm text-gray-700">

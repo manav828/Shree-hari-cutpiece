@@ -42,6 +42,36 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const contentType = req.headers.get("content-type") || "";
+
+        if (contentType.includes("multipart/form-data")) {
+            const formData = await req.formData();
+            const file = formData.get("file");
+
+            if (!(file instanceof File)) {
+                return NextResponse.json({ error: "Missing file for image upload." }, { status: 400 });
+            }
+
+            const ext = file.name.includes(".") ? file.name.split(".").pop() : "jpg";
+            const safeExt = (ext || "jpg").replace(/[^a-zA-Z0-9]/g, "").toLowerCase() || "jpg";
+            const filePath = `categories/category-${Date.now()}.${safeExt}`;
+
+            const { error: uploadError } = await supabaseAdmin.storage
+                .from("cms-assets")
+                .upload(filePath, file, {
+                    upsert: false,
+                    contentType: file.type || "application/octet-stream",
+                });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabaseAdmin.storage
+                .from("cms-assets")
+                .getPublicUrl(filePath);
+
+            return NextResponse.json({ success: true, imageUrl: publicUrlData.publicUrl });
+        }
+
         const body = await req.json();
         const action = String(body?.action || "create");
 

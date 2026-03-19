@@ -6,6 +6,7 @@ import { getActiveCmsCategories } from "@/lib/cms";
 
 export default async function Categories() {
   const dbCategories = await getActiveCmsCategories();
+  const fallbackCategoryImage = "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=900&q=80";
 
   const categories = dbCategories.length > 0
     ? dbCategories
@@ -46,10 +47,10 @@ export default async function Categories() {
             {/* Left large card */}
             <Link
               href={`/shop?category=${bentoCategories[0].slug}`}
-              className="group relative h-[300px] md:h-[600px] rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
+              className="group relative h-[240px] sm:h-[280px] md:h-[460px] rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
             >
               <Image
-                src={bentoCategories[0].image}
+                src={bentoCategories[0].image?.trim() || fallbackCategoryImage}
                 alt={bentoCategories[0].name}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -67,15 +68,15 @@ export default async function Categories() {
             </Link>
 
             {/* Right smaller cards */}
-            <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-4 lg:gap-6 h-auto md:h-[600px]">
+            <div className="grid grid-cols-2 md:grid-cols-1 md:grid-rows-2 gap-4 lg:gap-6 h-auto md:h-[460px]">
               {bentoCategories.slice(1, 3).map((category) => (
                 <Link
                   key={category.id}
                   href={`/shop?category=${category.slug}`}
-                  className="group relative h-[200px] sm:h-[250px] md:h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
+                  className="group relative h-[170px] sm:h-[200px] md:h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
                 >
                   <Image
-                    src={category.image}
+                    src={category.image?.trim() || fallbackCategoryImage}
                     alt={category.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 50vw"
@@ -116,10 +117,10 @@ export default async function Categories() {
               <Link
                 key={category.id}
                 href={`/shop?category=${category.slug}`}
-                className="group relative aspect-[4/5] sm:aspect-auto sm:h-[60vh] md:h-[500px] overflow-hidden bg-background-secondary block"
+                className="group relative aspect-[4/5] sm:aspect-auto sm:h-[46vh] md:h-[380px] overflow-hidden bg-background-secondary block"
               >
                 <Image
-                  src={category.image}
+                  src={category.image?.trim() || fallbackCategoryImage}
                   alt={category.name}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"

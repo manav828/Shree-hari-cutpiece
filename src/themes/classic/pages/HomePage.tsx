@@ -11,15 +11,30 @@ import TrustSection from "../components/home/TrustSection";
 import Inspiration from "../components/home/Inspiration";
 import StoreSection from "../components/home/StoreSection";
 import Footer from "../components/layout/Footer";
+import PopupBannerGate from "../components/home/PopupBannerGate";
+import HeroBannerCarousel from "../components/home/HeroBannerCarousel";
+import { getActiveCmsBannersByPlacement, getSiteConfigMap } from "@/lib/cms";
 
-export default function ClassicHomePage() {
+export default async function ClassicHomePage() {
+    const [heroBanners, siteConfig] = await Promise.all([
+        getActiveCmsBannersByPlacement("homepage_hero"),
+        getSiteConfigMap(),
+    ]);
+
+    const heroBannerLayout = siteConfig.hero_banner_layout === "full_width"
+        ? "full_width"
+        : "contained";
+
     return (
         <>
             <OfferBanner />
+            <PopupBannerGate />
             <Navbar />
             <CartSidebar />
             <main>
-                <Hero />
+                {heroBanners.length > 0 ? (
+                    <HeroBannerCarousel banners={heroBanners} layoutMode={heroBannerLayout} />
+                ) : <Hero />}
                 <Categories />
                 <TrendingProjects />
                 <DescriptionSection />

@@ -4,8 +4,19 @@ import Footer from "@/themes/classic/components/layout/Footer";
 import Container from "@/components/ui/Container";
 import ProductGrid from "@/themes/classic/components/shop/ProductGrid";
 import CartSidebar from "@/themes/classic/components/cart/CartSidebar";
+import ShopTopBanner from "@/themes/classic/components/shop/ShopTopBanner";
 
-export default function ShopPage() {
+type ShopPageProps = {
+    searchParams?: {
+        category?: string;
+    };
+};
+
+export default function ShopPage({ searchParams }: ShopPageProps) {
+    const initialCategory = typeof searchParams?.category === "string"
+        ? searchParams.category.trim().toLowerCase()
+        : "all";
+
     return (
         <>
             <Navbar />
@@ -27,8 +38,9 @@ export default function ShopPage() {
                     </div>
 
                     {/* Product Grid */}
+                    <ShopTopBanner />
                     <Suspense fallback={<div className="text-center py-20">Loading products...</div>}>
-                        <ProductGrid />
+                        <ProductGrid initialCategory={initialCategory || "all"} />
                     </Suspense>
                 </Container>
             </main>

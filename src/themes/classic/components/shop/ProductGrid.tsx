@@ -18,12 +18,18 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
   const [loadError, setLoadError] = useState("");
 
   useEffect(() => {
+    setSelectedCategory(initialCategory || "all");
+  }, [initialCategory]);
+
+  useEffect(() => {
     async function fetchData() {
       try {
         setLoadError("");
         const { data: catData, error: catError } = await supabase
           .from("categories")
           .select("id, name, slug")
+          .eq("is_active", true)
+          .is("deleted_at", null)
           .order("sort_order", { ascending: true });
 
         if (catError) throw catError;

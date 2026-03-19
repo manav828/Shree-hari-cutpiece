@@ -1,11 +1,17 @@
 "use client";
 
-export type SiteConfigFieldType = "text" | "textarea" | "number" | "url" | "image";
+export type SiteConfigFieldType = "text" | "textarea" | "number" | "url" | "image" | "select";
+
+type SiteConfigOption = {
+    label: string;
+    value: string;
+};
 
 export type SiteConfigField = {
     key: string;
     label: string;
     type: SiteConfigFieldType;
+    options?: SiteConfigOption[];
     required?: boolean;
     helpText?: string;
     group: "hero" | "description" | "store" | "stats";
@@ -100,6 +106,18 @@ export default function SiteConfigFormSection({
                                     rows={4}
                                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10"
                                 />
+                            ) : field.type === "select" ? (
+                                <select
+                                    value={value}
+                                    onChange={(e) => onChange(field.key, e.target.value)}
+                                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white"
+                                >
+                                    {(field.options || []).map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
                             ) : (
                                 <input
                                     type={field.type === "number" ? "number" : "text"}

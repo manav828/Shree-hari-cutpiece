@@ -186,13 +186,13 @@ export default function FeaturedProducts() {
         </div>
 
         {/* ----------------- DESKTOP SLIDER ----------------- */}
-        <div className="hidden md:block relative -mx-4 px-4 group">
+        <div className="hidden md:block relative -mx-4 px-4 group/slider">
 
           <button
             onClick={() => scroll("left")}
             disabled={!canScrollLeft}
             className={`absolute left-0 top-[40%] -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur rounded-full border border-border flex items-center justify-center transition-all duration-[400ms] shadow-premium ${canScrollLeft
-              ? "text-foreground hover:bg-white opacity-0 group-hover:opacity-100"
+              ? "text-foreground hover:bg-white opacity-0 group-hover/slider:opacity-100"
               : "opacity-0 pointer-events-none"
               }`}
             aria-label="Scroll left"
@@ -204,7 +204,7 @@ export default function FeaturedProducts() {
             onClick={() => scroll("right")}
             disabled={!canScrollRight}
             className={`absolute right-0 top-[40%] -translate-y-1/2 z-10 w-12 h-12 bg-white/95 backdrop-blur rounded-full border border-border flex items-center justify-center transition-all duration-[400ms] shadow-premium ${canScrollRight
-              ? "text-foreground hover:bg-white opacity-0 group-hover:opacity-100"
+              ? "text-foreground hover:bg-white opacity-0 group-hover/slider:opacity-100"
               : "opacity-0 pointer-events-none"
               }`}
             aria-label="Scroll right"

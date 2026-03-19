@@ -3,7 +3,7 @@
 Project: Shree Hari Cutpiece
 Module: Content & Banners (/admin/cms)
 Source PRD: cms_prd.md (v2, 2026-03-18)
-Status: Not Started
+Status: Code Complete (Pending Supabase SQL execution + QA verification)
 
 ## Decision Lock (Confirmed)
 - [x] Use existing localStorage admin auth (shreehari_admin_auth)
@@ -16,10 +16,10 @@ Status: Not Started
 - [x] Categories: migrate from categories.json to Supabase categories table
 
 ## Progress Snapshot
-- Phase 1: 27/35
-- Phase 2: 25/33
-- Phase 3: 0/42
-- Total: 52/110
+- Phase 1: 28/35
+- Phase 2: 29/33
+- Phase 3: 33/42
+- Total: 90/110
 
 ---
 
@@ -32,7 +32,7 @@ Status: Not Started
 - [ ] Run seed and verify rows
 
 ### Storage
-- [ ] Create cms-assets bucket with public read
+- [x] Create cms-assets bucket with public read
 - [ ] Create cms-assets/hero folder
 - [ ] Create cms-assets/description folder
 
@@ -85,10 +85,10 @@ Status: Not Started
 - [x] Add unique slug index excluding soft-deleted rows
 - [x] Add sort_order index excluding soft-deleted rows
 - [x] Add RLS policy: SELECT public, INSERT/UPDATE authenticated only
-- [ ] Migrate categories.json entries to Supabase with sort_order
+- [x] Migrate categories.json entries to Supabase with sort_order
 
 ### Storage
-- [ ] Create cms-assets/categories folder
+- [x] Create cms-assets/categories folder
 
 ### Admin UI
 - [x] Add Categories tab to /admin/cms
@@ -116,7 +116,7 @@ Status: Not Started
 - [x] Update src/components/home/Categories.tsx to read Supabase categories
 - [x] Add query filters: is_active = true AND deleted_at IS NULL ORDER BY sort_order ASC
 - [x] Add fallback to src/data/categories.json on empty/error
-- [ ] Keep src/data/categories.json as fallback source
+- [x] Keep src/data/categories.json as fallback source
 
 ### Testing
 - [ ] Add category and verify homepage visibility
@@ -130,48 +130,48 @@ Status: Not Started
 ## Phase 3: Banner Manager
 
 ### Database
-- [ ] Create banners table with deleted_at soft-delete
-- [ ] Add composite index idx_banners_active (placement, is_active, start_date, end_date, priority DESC) WHERE deleted_at IS NULL
-- [ ] Add RLS policy: SELECT public, INSERT/UPDATE authenticated only
+- [x] Create banners table with deleted_at soft-delete
+- [x] Add composite index idx_banners_active (placement, is_active, start_date, end_date, priority DESC) WHERE deleted_at IS NULL
+- [x] Add RLS policy: SELECT public, INSERT/UPDATE authenticated only
 
 ### Storage
 - [ ] Create cms-assets/banners folder
 
 ### Admin UI
-- [ ] Add Banners tab to /admin/cms
-- [ ] Build banners table with computed status badges (Scheduled/Active/Expired/Inactive)
-- [ ] Build BannerFormModal
-- [ ] Add title field (required)
-- [ ] Add placement dropdown
-- [ ] Add content text field
-- [ ] Add image upload field (versioned filename)
-- [ ] Add link URL field
-- [ ] Add background color picker
-- [ ] Add text color picker
-- [ ] Add start date picker (IST)
-- [ ] Add end date picker (IST)
-- [ ] Add priority input
-- [ ] Add active toggle
-- [ ] Implement create banner handler
-- [ ] Implement edit banner handler
-- [ ] Implement soft-delete handler with confirmation
-- [ ] Implement quick active/inactive toggle
+- [x] Add Banners tab to /admin/cms
+- [x] Build banners table with computed status badges (Scheduled/Active/Expired/Inactive)
+- [x] Build BannerFormModal
+- [x] Add title field (required)
+- [x] Add placement dropdown
+- [x] Add content text field
+- [x] Add image upload field (versioned filename)
+- [x] Add link URL field
+- [x] Add background color picker
+- [x] Add text color picker
+- [x] Add start date picker (IST)
+- [x] Add end date picker (IST)
+- [x] Add priority input
+- [x] Add active toggle
+- [x] Implement create banner handler
+- [x] Implement edit banner handler
+- [x] Implement soft-delete handler with confirmation
+- [x] Implement quick active/inactive toggle
 
 ### API and Validation
-- [ ] Create src/app/api/admin/cms/banners/route.ts
-- [ ] Validate link_url format or empty
-- [ ] Validate bg_color and text_color as #RRGGBB
-- [ ] Validate end_date >= start_date
-- [ ] Validate placement enum values
+- [x] Create src/app/api/admin/cms/banners/route.ts
+- [x] Validate link_url format or empty
+- [x] Validate bg_color and text_color as #RRGGBB
+- [x] Validate end_date >= start_date
+- [x] Validate placement enum values
 
 ### Frontend Integration
-- [ ] Update src/components/home/OfferBanner.tsx (and/or CouponAnnouncementBar) to read announcement_bar banners
-- [ ] Add fallback to existing coupon logic when no announcement banner exists
-- [ ] Create src/components/home/PopupBanner.tsx
-- [ ] Implement popup session key cms_popup_shown
-- [ ] Add PopupBanner to homepage
-- [ ] Create src/components/shop/ShopTopBanner.tsx (or project-appropriate path)
-- [ ] Add ShopTopBanner to /shop page
+- [x] Update src/components/home/OfferBanner.tsx (and/or CouponAnnouncementBar) to read announcement_bar banners
+- [x] Add fallback to existing coupon logic when no announcement banner exists
+- [x] Create src/components/home/PopupBanner.tsx
+- [x] Implement popup session key cms_popup_shown
+- [x] Add PopupBanner to homepage
+- [x] Create src/components/shop/ShopTopBanner.tsx (or project-appropriate path)
+- [x] Add ShopTopBanner to /shop page
 
 ### Testing
 - [ ] Create future-start banner and verify Scheduled + not visible
@@ -190,3 +190,9 @@ Status: Not Started
 - 2026-03-18: Phase 1 scaffolding added (CMS page, forms, site-config API, nav item, migration + seed files).
 - 2026-03-18: Classic homepage Hero, DescriptionSection, and StoreSection wired to site_config with cached reads and fallbacks.
 - 2026-03-18: Phase 2 categories delivered in code (CMS categories tab, API route, DB migration, storefront Supabase categories with JSON fallback).
+- 2026-03-18: Added direct category image upload to cms-assets/categories and created db/seeds/cms_categories_seed.sql for category migration.
+- 2026-03-18: Phase 3 banner system implemented in code (migration, admin banners tab + CRUD, announcement bar fallback logic, popup banner, shop-top banner).
+- 2026-03-18: Added db/seeds/cms_banners_seed.sql for quick banner data bootstrap.
+- 2026-03-19: Added db/cms_master_setup.sql to run full CMS schema + seeds in one execution.
+- 2026-03-19: Added db/cms_verification_queries.sql for post-run validation queries.
+- 2026-03-19: Verified storage bucket cms-assets exists and is public=true.

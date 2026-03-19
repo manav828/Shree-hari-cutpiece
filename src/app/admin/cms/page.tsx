@@ -6,9 +6,10 @@ import HeroConfigForm from "@/components/admin/cms/HeroConfigForm";
 import DescriptionConfigForm from "@/components/admin/cms/DescriptionConfigForm";
 import StoreConfigForm from "@/components/admin/cms/StoreConfigForm";
 import CategoriesManager from "@/components/admin/cms/CategoriesManager";
+import BannersManager from "@/components/admin/cms/BannersManager";
 import type { SiteConfigField } from "@/components/admin/cms/SiteConfigFormSection";
 
-type TabId = "hero" | "description" | "store" | "categories";
+type TabId = "hero" | "description" | "store" | "categories" | "banners";
 
 type ConfigType = "text" | "textarea" | "number" | "url";
 
@@ -26,9 +27,21 @@ const tabs: { id: TabId; label: string }[] = [
     { id: "description", label: "Description" },
     { id: "store", label: "Store Info" },
     { id: "categories", label: "Categories" },
+    { id: "banners", label: "Banners" },
 ];
 
 const heroFields: SiteConfigField[] = [
+    {
+        key: "hero_banner_layout",
+        label: "Homepage Hero Banner Layout",
+        type: "select",
+        group: "hero",
+        helpText: "Choose how homepage_hero banners render on website.",
+        options: [
+            { label: "Current (Contained)", value: "contained" },
+            { label: "Full Width", value: "full_width" },
+        ],
+    },
     { key: "hero_badge", label: "Hero Badge", type: "text", group: "hero", required: true },
     { key: "hero_headline", label: "Hero Headline", type: "text", group: "hero", required: true },
     { key: "hero_subheading", label: "Hero Subheading", type: "text", group: "hero", required: true },
@@ -80,7 +93,7 @@ function mapToSaveUpdates(fields: SiteConfigField[], values: Record<string, stri
         .map((f) => ({
             key: f.key,
             value: values[f.key] ?? "",
-            type: f.type as ConfigType,
+            type: (f.type === "select" ? "text" : f.type) as ConfigType,
             label: f.label,
             group: f.group,
             required: f.required,
@@ -121,6 +134,7 @@ export default function AdminCmsPage() {
         if (activeTab === "hero") return heroFields;
         if (activeTab === "description") return descriptionFields;
         if (activeTab === "categories") return [];
+        if (activeTab === "banners") return [];
         return storeFields;
     }, [activeTab]);
 
@@ -296,6 +310,10 @@ export default function AdminCmsPage() {
 
             {!loading && activeTab === "categories" ? (
                 <CategoriesManager />
+            ) : null}
+
+            {!loading && activeTab === "banners" ? (
+                <BannersManager />
             ) : null}
         </div>
     );
