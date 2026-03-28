@@ -96,6 +96,7 @@ export default function BannersManager() {
     const [bulkFiles, setBulkFiles] = useState<File[]>([]);
     const [bulkPreviews, setBulkPreviews] = useState<Array<{ name: string; url: string }>>([]);
     const [heroExistingBanners, setHeroExistingBanners] = useState<HeroExistingBanner[]>([]);
+    const [pendingHeroRemovals, setPendingHeroRemovals] = useState<string[]>([]);
     const [draft, setDraft] = useState<Draft>({
         title: "",
         content_text: "",
@@ -216,6 +217,7 @@ export default function BannersManager() {
     const resetBulk = () => {
         setBulkFiles([]);
         setHeroExistingBanners([]);
+        setPendingHeroRemovals([]);
         setBulkDraft({
             placement: "homepage_hero",
             hero_layout: "contained",
@@ -331,6 +333,7 @@ export default function BannersManager() {
     const startEdit = (banner: Banner) => {
         setEditId(banner.id);
         setCreateOpen(false);
+        setPendingHeroRemovals([]);
         if (banner.placement === "homepage_hero") {
             const existing = banners
                 .filter((b) => b.placement === "homepage_hero")
@@ -392,16 +395,65 @@ export default function BannersManager() {
         try {
             let payload = { ...draft };
             let extraCreated = 0;
+            let updatedPrimary = false;
+            const removalIds = payload.placement === "homepage_hero" ? [...pendingHeroRemovals] : [];
+
+            if (payload.placement === "homepage_hero" && payload.id && removalIds.includes(payload.id)) {
+                const fallback = banners.find(
+                    (b) => b.placement === "homepage_hero" && !removalIds.includes(b.id),
+                );
+                if (fallback) {
+                    payload = {
+                        ...payload,
+                        id: fallback.id,
+                        image_url: fallback.image_url || payload.image_url,
+                    };
+                } else {
+                    payload = {
+                        ...payload,
+                        id: undefined,
+                    };
+                }
+            }
 
             if (payload.placement === "homepage_hero" && bulkFiles.length > 0) {
                 const imageUrls = await uploadBulkImages(bulkFiles);
-                payload = { ...payload, image_url: imageUrls[0] };
 
-                const extraImageUrls = imageUrls.slice(1);
-                if (extraImageUrls.length > 0) {
+                if (payload.id) {
+                    payload = { ...payload, image_url: imageUrls[0] };
+                    const extraImageUrls = imageUrls.slice(1);
+                    if (extraImageUrls.length > 0) {
+                        const titlePrefix = bulkDraft.title_prefix.trim() || payload.title || "Hero Banner";
+                        const extraBanners = extraImageUrls.map((imageUrl, idx) => ({
+                            title: `${titlePrefix} ${idx + 2}`,
+                            content_text: payload.content_text,
+                            image_url: imageUrl,
+                            link_url: payload.link_url,
+                            placement: payload.placement,
+                            bg_color: payload.bg_color,
+                            text_color: payload.text_color,
+                            is_active: payload.is_active,
+                            start_date: payload.start_date || null,
+                            end_date: payload.end_date || null,
+                            priority: (payload.priority || 0) - (idx + 1),
+                        }));
+
+                        const createRes = await fetch("/api/admin/cms/banners", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                action: "bulk-create",
+                                banners: extraBanners,
+                            }),
+                        });
+                        const createJson = await createRes.json();
+                        if (!createRes.ok) throw new Error(createJson.error || "Failed to create extra hero banners");
+                        extraCreated = extraBanners.length;
+                    }
+                } else {
                     const titlePrefix = bulkDraft.title_prefix.trim() || payload.title || "Hero Banner";
-                    const extraBanners = extraImageUrls.map((imageUrl, idx) => ({
-                        title: `${titlePrefix} ${idx + 2}`,
+                    const newBanners = imageUrls.map((imageUrl, idx) => ({
+                        title: `${titlePrefix} ${idx + 1}`,
                         content_text: payload.content_text,
                         image_url: imageUrl,
                         link_url: payload.link_url,
@@ -411,7 +463,7 @@ export default function BannersManager() {
                         is_active: payload.is_active,
                         start_date: payload.start_date || null,
                         end_date: payload.end_date || null,
-                        priority: (payload.priority || 0) - (idx + 1),
+                        priority: (payload.priority || 0) - idx,
                     }));
 
                     const createRes = await fetch("/api/admin/cms/banners", {
@@ -419,28 +471,47 @@ export default function BannersManager() {
                         headers: { "Content-Type": "application/json" },
                         body: JSON.stringify({
                             action: "bulk-create",
-                            banners: extraBanners,
+                            banners: newBanners,
                         }),
                     });
                     const createJson = await createRes.json();
-                    if (!createRes.ok) throw new Error(createJson.error || "Failed to create extra hero banners");
-                    extraCreated = extraBanners.length;
+                    if (!createRes.ok) throw new Error(createJson.error || "Failed to create hero banners");
+                    extraCreated = newBanners.length;
                 }
             }
 
-            const res = await fetch("/api/admin/cms/banners", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload),
-            });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || "Failed to update banner");
+            if (removalIds.length > 0) {
+                for (const id of removalIds) {
+                    const deleteRes = await fetch("/api/admin/cms/banners", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ action: "soft-delete", id }),
+                    });
+                    const deleteJson = await deleteRes.json();
+                    if (!deleteRes.ok) throw new Error(deleteJson.error || "Failed to remove hero image(s)");
+                }
+            }
+
+            if (payload.id) {
+                const res = await fetch("/api/admin/cms/banners", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload),
+                });
+                const json = await res.json();
+                if (!res.ok) throw new Error(json.error || "Failed to update banner");
+                updatedPrimary = true;
+            }
 
             if (payload.placement === "homepage_hero") {
                 await saveHeroLayoutMode(bulkDraft.hero_layout);
             }
 
-            setMessage({ type: "success", text: extraCreated > 0 ? `Banner updated and ${extraCreated} additional hero banner(s) created.` : "Banner updated." });
+            const parts: string[] = [];
+            if (updatedPrimary) parts.push("Banner updated");
+            if (removalIds.length > 0) parts.push(`${removalIds.length} image(s) removed`);
+            if (extraCreated > 0) parts.push(`${extraCreated} new hero banner(s) created`);
+            setMessage({ type: "success", text: parts.length > 0 ? `${parts.join(" and ")}.` : "Changes saved." });
             setEditId(null);
             resetDraft();
             resetBulk();
@@ -572,63 +643,29 @@ export default function BannersManager() {
     };
 
     const removeHeroImage = async (bannerId: string) => {
-        const ok = window.confirm("Remove this hero image?");
-        if (!ok) return;
+        const nextHero = heroExistingBanners.filter((b) => b.id !== bannerId);
+        setHeroExistingBanners(nextHero);
+        setPendingHeroRemovals((prev) => (prev.includes(bannerId) ? prev : [...prev, bannerId]));
 
-        setSaving(true);
-        try {
-            const res = await fetch("/api/admin/cms/banners", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ action: "soft-delete", id: bannerId }),
-            });
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || "Failed to remove hero image");
-
-            let nextBanners: Banner[] = [];
-            setBanners((prev) => {
-                nextBanners = prev.filter((b) => b.id !== bannerId);
-                return nextBanners;
-            });
-
-            const nextHero = nextBanners
-                .filter((b) => b.placement === "homepage_hero")
-                .map((b) => ({ id: b.id, image_url: (b.image_url || "").trim() }))
-                .filter((b) => Boolean(b.image_url));
-            setHeroExistingBanners(nextHero);
-
-            if (editId === bannerId) {
-                const nextEditable = nextBanners.find((b) => b.placement === "homepage_hero");
-                if (nextEditable) {
-                    setEditId(nextEditable.id);
-                    setDraft({
-                        id: nextEditable.id,
-                        title: nextEditable.title,
-                        content_text: nextEditable.content_text || "",
-                        image_url: nextEditable.image_url || "",
-                        link_url: nextEditable.link_url || "",
-                        placement: nextEditable.placement,
-                        bg_color: nextEditable.bg_color,
-                        text_color: nextEditable.text_color,
-                        is_active: nextEditable.is_active,
-                        start_date: nextEditable.start_date || "",
-                        end_date: nextEditable.end_date || "",
-                        priority: nextEditable.priority || 0,
-                    });
-                } else {
-                    setCreateOpen(false);
-                    setEditId(null);
-                    resetDraft();
-                    resetBulk();
-                }
+        if (editId === bannerId) {
+            const nextEditable = banners.find((b) => b.id === nextHero[0]?.id);
+            if (nextEditable) {
+                setEditId(nextEditable.id);
+                setDraft({
+                    id: nextEditable.id,
+                    title: nextEditable.title,
+                    content_text: nextEditable.content_text || "",
+                    image_url: nextEditable.image_url || "",
+                    link_url: nextEditable.link_url || "",
+                    placement: nextEditable.placement,
+                    bg_color: nextEditable.bg_color,
+                    text_color: nextEditable.text_color,
+                    is_active: nextEditable.is_active,
+                    start_date: nextEditable.start_date || "",
+                    end_date: nextEditable.end_date || "",
+                    priority: nextEditable.priority || 0,
+                });
             }
-
-            setMessage({ type: "success", text: "Hero image removed." });
-        } catch (err: unknown) {
-            const text = err instanceof Error ? err.message : "Failed to remove hero image";
-            setMessage({ type: "error", text });
-        } finally {
-            setSaving(false);
         }
     };
 
@@ -872,6 +909,9 @@ export default function BannersManager() {
                                             ? "Select files to replace/add hero images for this set."
                                             : "Optional: select multiple files for one-click hero banner creation."}
                                 </p>
+                                {editId && pendingHeroRemovals.length > 0 ? (
+                                    <p className="text-xs text-amber-700">{pendingHeroRemovals.length} image(s) marked for removal. Click Save Changes to apply.</p>
+                                ) : null}
                                 {bulkFiles.length > 0 ? (
                                     <div className="max-h-44 overflow-auto border border-gray-200 rounded-md p-2 bg-white">
                                         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">

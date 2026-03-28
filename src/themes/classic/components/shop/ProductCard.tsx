@@ -142,8 +142,9 @@ export default function ProductCard({ product }: ProductCardProps) {
 
             <button
               onClick={handleAddToCart}
-              className="w-8 h-8 rounded-full border border-border flex items-center justify-center text-foreground hover:bg-foreground hover:text-white transition-colors duration-300"
+              className="w-9 h-9 rounded-full bg-accent text-white flex items-center justify-center shadow-sm hover:bg-accent/90 transition-colors duration-300"
               aria-label="Add to cart"
+              title="Add to cart"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />

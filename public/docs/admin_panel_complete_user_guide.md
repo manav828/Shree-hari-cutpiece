@@ -310,11 +310,48 @@ API + actions involved:
 
 ## 8) Blog Module (`/admin/blog`)
 
-Status: Placeholder
+Status: Implemented and functional
 
-Current behavior:
-- Shows static placeholder panel only.
-- No CRUD, editor, publish workflow, or API integration yet.
+### Blog list page
+Capabilities:
+- Summary cards: Published Posts, Views (last 30 days), Product Clicks (last 30 days), Top Post
+- Filters: search, status, language, category, tags, date range, rows per page
+- Row actions: Edit, View Live (published only)
+- Bulk actions: Publish, Unpublish, Delete
+- Inline updates: status changes, scheduled datetime (IST)
+- Health badges: Low Traffic, SEO Incomplete, Related Products Missing (when enabled)
+
+APIs used:
+- `GET /api/admin/blogs`
+- `PATCH /api/admin/blogs`
+- `GET /api/admin/blogs/analytics`
+- `GET /api/admin/blogs/notifications`
+
+### Blog editor page (`/admin/blog/new`, `/admin/blog/[id]`)
+Capabilities:
+- Metadata: title, slug, summary, cover image, category, tags, language, author, status, schedule (IST)
+- Display options: show header/title, show cover image, show share buttons
+- Code editor: HTML/CSS/JS with inline preview and popup preview
+- SEO: meta title/description, canonical, OG title/description/image, Twitter card, robots, schema toggle
+- Relations: language variants, related posts (max 5)
+- Recommended products: toggle, custom section title, searchable multi-select (max 10)
+- Media library for cover/OG images
+- Revision history and redirect history
+
+APIs used:
+- `GET /api/admin/blogs/[id]`
+- `POST /api/admin/blogs`
+- `PATCH /api/admin/blogs/[id]`
+- `GET /api/admin/blogs/[id]/revisions`
+- `POST /api/admin/blogs/[id]/revisions`
+- `GET /api/admin/blogs/[id]/validate`
+- `GET /api/admin/blogs/categories`
+- `GET /api/admin/blogs/tags`
+- `GET /api/admin/blogs/media`
+- `POST /api/admin/blogs/media`
+- `PATCH /api/admin/blogs/media`
+- `DELETE /api/admin/blogs/media`
+- `GET /api/admin/products/search`
 
 ## 9) Reports Module (`/admin/reports`)
 
@@ -342,6 +379,7 @@ Implemented:
 - Orders
 - Customers
 - Coupons
+- Blog
 - Settings (themes + custom statuses)
 - Admin shell/navigation
 
@@ -349,24 +387,24 @@ Partially implemented:
 - Dashboard (UI present, data mostly static)
 
 Not implemented (placeholder only):
-- Blog management
 - Reports/analytics dashboards
 
 ## 12) Known Risks and Limitations
 
 1. Admin authentication is localStorage-based and hardcoded in UI.
 2. Dashboard metrics are static placeholders.
-3. Blog/Reports are not yet functional.
+3. Reports module is not yet functional.
 4. Several admin screens use direct Supabase client calls from browser.
-5. Production hardening still needed for role-based access enforcement and audit controls.
+5. Blog editor supports custom HTML/CSS/JS; enforce review before publish.
+6. Production hardening still needed for role-based access enforcement and audit controls.
 
 ## 13) Suggested Next Build Priorities
 
 1. Replace hardcoded admin login with server-side auth + role checks.
 2. Connect dashboard cards/widgets to real analytics queries.
-3. Implement Blog CRUD (list/create/edit/delete/publish).
-4. Implement Reports module with date filters and export.
-5. Add stronger audit logs for admin actions across modules.
+3. Implement Reports module with date filters and export.
+4. Add stronger audit logs for admin actions across modules.
+5. Add approval workflow/permissions for blog publishing.
 
 ---
 

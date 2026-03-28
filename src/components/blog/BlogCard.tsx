@@ -1,44 +1,63 @@
 import Image from "next/image";
 import Link from "next/link";
 
+type BlogCardPost = {
+    id: string;
+    title: string;
+    slug: string;
+    excerpt?: string | null;
+    imageUrl?: string | null;
+    imageAlt?: string | null;
+    category?: string | null;
+    publishedAt?: string | null;
+    readTime?: string | null;
+};
+
 interface BlogCardProps {
-    post: {
-        id: string;
-        title: string;
-        slug: string;
-        excerpt: string;
-        image: string;
-        category: string;
-        date: string;
-        readTime: string;
-    };
+    post: BlogCardPost;
+    hrefBase?: string;
 }
 
-export default function BlogCard({ post }: BlogCardProps) {
+export default function BlogCard({ post, hrefBase = "/blogs" }: BlogCardProps) {
+    const formattedDate = post.publishedAt
+        ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        : "";
+    const showMeta = Boolean(formattedDate || post.readTime);
+
     return (
-        <Link href={`/blogs/${post.slug}`} className="group flex flex-col h-full card-premium">
+        <Link href={`${hrefBase}/${post.slug}`} className="group flex flex-col h-full card-premium">
             <div className="aspect-[16/9] relative overflow-hidden bg-background-secondary">
-                <Image
-                    src={post.image}
-                    alt={post.title}
-                    fill
-                    className="object-cover transition-transform duration-700 group-hover:scale-105"
-                />
-                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-foreground text-xs font-medium px-3 py-1 tracking-wider uppercase">
-                    {post.category}
-                </div>
+                {post.imageUrl ? (
+                    <Image
+                        src={post.imageUrl}
+                        alt={post.imageAlt || post.title}
+                        fill
+                        className="object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                ) : (
+                    <div className="h-full w-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
+                )}
+                {post.category && (
+                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm text-foreground text-xs font-medium px-3 py-1 tracking-wider uppercase">
+                        {post.category}
+                    </div>
+                )}
             </div>
             <div className="p-6 flex flex-col flex-grow">
-                <div className="flex justify-between items-center text-xs text-text-secondary mb-3">
-                    <span>{new Date(post.date).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-                    <span>{post.readTime}</span>
-                </div>
+                {showMeta && (
+                    <div className={`flex items-center text-xs text-text-secondary mb-3 ${post.readTime ? "justify-between" : "justify-start"}`}>
+                        {formattedDate && <span>{formattedDate}</span>}
+                        {post.readTime && <span>{post.readTime}</span>}
+                    </div>
+                )}
                 <h3 className="font-serif text-xl md:text-2xl text-foreground mb-3 group-hover:text-accent transition-colors line-clamp-2">
                     {post.title}
                 </h3>
-                <p className="text-text-secondary text-sm md:text-base leading-relaxed line-clamp-3 mb-6 flex-grow">
-                    {post.excerpt}
-                </p>
+                {post.excerpt && (
+                    <p className="text-text-secondary text-sm md:text-base leading-relaxed line-clamp-3 mb-6 flex-grow">
+                        {post.excerpt}
+                    </p>
+                )}
                 <span className="inline-flex items-center gap-2 text-accent text-sm font-medium group-hover:gap-3 transition-all mt-auto">
                     Read Article
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

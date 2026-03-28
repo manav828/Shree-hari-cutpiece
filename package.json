@@ -17,7 +17,8 @@
     "react-dom": "^18",
     "react-markdown": "^10.1.0",
     "rehype-slug": "^6.0.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "sharp": "^0.33.5"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

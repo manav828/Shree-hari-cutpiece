@@ -10,6 +10,7 @@ Use this guide to run operations safely and consistently:
 - Manage products and stock visibility
 - Support customers
 - Run coupon campaigns
+- Publish and maintain blog posts
 - Keep store theme and order statuses updated
 
 ## 2. Before you start (Daily Opening Checklist)
@@ -17,7 +18,7 @@ Use this guide to run operations safely and consistently:
 Complete this at the start of every shift.
 
 1. Open `/admin/login` and sign in.
-2. Confirm sidebar menu is visible (Dashboard, Products, Orders, Customers, Coupons, Settings).
+2. Confirm sidebar menu is visible (Dashboard, Products, Orders, Customers, Coupons, Blog, Settings).
 3. Open Orders and check:
    - Pending orders count
    - New paid orders
@@ -28,14 +29,17 @@ Complete this at the start of every shift.
 5. Open Coupons and check:
    - Active campaign coupons
    - Any coupon ending today
-6. Record shift start note in your operations log.
+6. Open Blog and check:
+   - Scheduled posts for today
+   - Drafts waiting for review
+7. Record shift start note in your operations log.
 
 ## 3. Dashboard SOP
 
 Current status: informational only (placeholder).
 
 Use Dashboard only for a quick glance. Do not make decisions only from Dashboard numbers.
-For operational decisions, always use module pages (Orders, Products, Customers, Coupons).
+For operational decisions, always use module pages (Orders, Products, Customers, Coupons, Blog).
 
 ## 4. Orders SOP
 
@@ -210,7 +214,48 @@ Before publishing campaign:
 - Destination URL opens correctly
 - Eligibility rules match marketing message
 
-## 8. Settings SOP
+## 8. Blog SOP
+
+Main page: `/admin/blog`
+
+### A) Create a new post
+
+1. Click `Create Blog Post`.
+2. Fill basics:
+   - Title (slug auto-fills)
+   - Summary
+   - Category and tags
+   - Language and author
+3. Set a cover image using `Select` and confirm preview.
+4. Choose display options (show header, cover image, share buttons).
+5. Add content in the HTML/CSS/JS editor.
+6. Click `Render Preview` and confirm layout.
+7. Fill SEO fields (meta title/description, OG fields, canonical, robots).
+8. Link language variants if required.
+9. Add related posts (max 5).
+10. Enable recommended products and select up to 10 items.
+11. `Save Draft`, then `Publish` or `Schedule`.
+
+### B) Edit an existing post
+
+1. Use search/filters to find the post.
+2. Click `Edit`.
+3. Update fields and `Save Draft`.
+4. For published posts, use `View Live` to confirm output.
+
+### C) Schedule a post
+
+1. Set Status to `scheduled`.
+2. Set the scheduled date/time (IST).
+3. Click `Schedule`.
+
+### D) Publish checks
+
+- Title and slug must be present.
+- Cover image is required only if "Show cover image" is enabled.
+- Custom JS requires the acknowledgment toggle.
+
+## 9. Settings SOP
 
 Main page: `/admin/settings`
 
@@ -232,15 +277,14 @@ Use only when business requires additional tracking labels.
 3. Avoid too many custom statuses.
 4. If no longer needed, remove unused status.
 
-## 9. Modules not operational yet
+## 10. Modules not operational yet
 
 Current placeholders:
-- Blog management (`/admin/blog`)
 - Reports and analytics (`/admin/reports`)
 
 Do not plan business operations around these pages yet.
 
-## 10. End-of-day closing checklist
+## 11. End-of-day closing checklist
 
 1. Orders:
    - No unreviewed pending orders left unintentionally.
@@ -250,10 +294,12 @@ Do not plan business operations around these pages yet.
    - No accidental inactive/active mistakes.
 4. Coupons:
    - Expired campaigns deactivated if needed.
-5. Log out from admin panel.
-6. Submit shift summary to manager.
+5. Blog:
+   - Review scheduled posts for the next day.
+6. Log out from admin panel.
+7. Submit shift summary to manager.
 
-## 11. Escalation rules
+## 12. Escalation rules
 
 Escalate immediately to manager/owner when:
 - Suspected fraud orders
@@ -268,7 +314,7 @@ Escalation note template:
 - Action already taken:
 - Required decision:
 
-## 12. Quick role split (recommended)
+## 13. Quick role split (recommended)
 
 - Order Operator:
   - Handles orders, tracking, dispatch updates
@@ -278,6 +324,8 @@ Escalation note template:
   - Handles customers, notes, account status, addresses
 - Campaign Operator:
   - Handles coupons and activation schedules
+- Content Operator:
+   - Handles blog posts, SEO, scheduled publishing
 
 For small teams, one person may do multiple roles, but still follow the same SOP steps.
 
@@ -285,4 +333,4 @@ For small teams, one person may do multiple roles, but still follow the same SOP
 
 Document type: SOP (Operations)
 Audience: Admin staff, support staff, store operators
-Last updated: 2026-03-17
+Last updated: 2026-03-29
