@@ -19,13 +19,34 @@ function formatPrice(n: number): string {
     return `₹${n.toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
 }
 
+function formatOptions(item: OrderItem): string | null {
+    const opts = item.selected_options_json || [];
+    if (!opts.length) return null;
+    const parts = opts
+        .map((opt) => {
+            const value = opt.value_labels?.join(", ") || opt.input_value;
+            if (!value) return null;
+            return `${opt.group_name}: ${value}`;
+        })
+        .filter(Boolean) as string[];
+    return parts.length ? parts.join(" | ") : null;
+}
+
 function ItemRow({ item }: { item: OrderItem }) {
+    const optionsText = formatOptions(item);
     return (
         <div className="flex items-start gap-1.5 text-[12px]">
-            <span className="text-gray-700 flex-1 line-clamp-1 leading-5">
-                {item.product_name}
-                {item.color_name && (
-                    <span className="text-gray-400"> · {item.color_name}</span>
+            <span className="text-gray-700 flex-1 leading-5">
+                <span className="line-clamp-1">
+                    {item.product_name}
+                    {item.color_name && (
+                        <span className="text-gray-400"> · {item.color_name}</span>
+                    )}
+                </span>
+                {optionsText && (
+                    <span className="block text-[11px] text-gray-400 mt-0.5">
+                        {optionsText}
+                    </span>
                 )}
             </span>
             <span className="text-gray-500 flex-shrink-0 ml-1">{formatQty(item)}</span>

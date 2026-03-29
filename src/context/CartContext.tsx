@@ -2,19 +2,33 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
+export interface CartItemOption {
+  group_id?: string;
+  group_name: string;
+  input_type: string;
+  value_ids?: string[];
+  value_labels?: string[];
+  input_value?: string | number;
+}
+
 export interface CartItem {
   id: string;
+  product_id?: string;
+  variant_id?: string;
   name: string;
   slug: string;
   price: number;
   image: string;
   quantity: number;
   meters: number;
+  selling_mode: "meter" | "piece";
+  selected_options?: CartItemOption[];
+  options_key?: string;
 }
 
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, "quantity"> & { meters: number }) => void;
+  addToCart: (item: Omit<CartItem, "quantity" | "id" | "options_key"> & { id: string; meters: number }) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, meters: number) => void;
   clearCart: () => void;
@@ -34,7 +48,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedCart = localStorage.getItem("shreehari-cart");
     if (savedCart) {
-      setItems(JSON.parse(savedCart));
+      const parsed = JSON.parse(savedCart) as CartItem[];
+      const normalized = parsed.map((item) => ({
+        ...item,
+        selling_mode: item.selling_mode || "meter",
+        selected_options: item.selected_options || [],
+      }));
+      setItems(normalized);
     }
   }, []);
 
@@ -43,17 +63,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.setItem("shreehari-cart", JSON.stringify(items));
   }, [items]);
 
-  const addToCart = (item: Omit<CartItem, "quantity"> & { meters: number }) => {
+  const buildOptionsKey = (options?: CartItemOption[]) => {
+    if (!options || options.length === 0) return "default";
+    return options
+      .map((opt) => {
+        const keyName = opt.group_name || opt.group_id || "option";
+        const values = opt.value_labels?.join("|") || "";
+        const input = opt.input_value !== undefined && opt.input_value !== null ? String(opt.input_value) : "";
+        return `${keyName}:${values || input}`;
+      })
+      .join(";");
+  };
+
+  const addToCart = (item: Omit<CartItem, "quantity" | "id" | "options_key"> & { id: string; meters: number }) => {
+    const optionsKey = item.options_key || buildOptionsKey(item.selected_options);
+    const lineId = `${item.id}::${optionsKey}`;
     setItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
+      const existing = prev.find((i) => i.id === lineId);
       if (existing) {
         return prev.map((i) =>
-          i.id === item.id
+          i.id === lineId
             ? { ...i, meters: i.meters + item.meters, quantity: i.quantity + 1 }
             : i
         );
       }
-      return [...prev, { ...item, quantity: 1 }];
+      return [...prev, { ...item, id: lineId, options_key: optionsKey, quantity: 1 }];
     });
     setIsCartOpen(true);
   };

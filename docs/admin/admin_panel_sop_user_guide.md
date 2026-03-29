@@ -83,32 +83,48 @@ Main page: `/admin/orders`
 
 Main page: `/admin/products`
 
+Reference example: [product setup example](product_setup_example.md)
+
 ### A) Create new product
 
 1. Go to `New Product`.
 2. Fill product basics:
-   - Name, slug, category, description
-3. Fill selling details:
+   - Name, slug, category, short description
+3. Fill product description (optional):
+   - Description HTML/CSS
+   - Fabric/care details (for Specifications)
+4. Fill selling details:
    - Sell mode (`meter` or `quantity`)
-   - Fabric/care details
-4. Add at least one variant:
+5. Add at least one variant:
    - Color
    - Price and original price
    - Stock
    - SKU
    - Images (set primary image)
-5. Set visibility options:
+6. Add product options (if needed):
+   - Create option groups (radio, multi-select, dropdown, input)
+   - Mark required fields and set defaults
+   - Set validation rules (min/max selection, input length/value)
+7. Fill SEO fields (optional):
+   - Meta title/description, canonical, OG fields, Twitter card
+8. Add product content:
+   - Long description
+   - Highlights list
+   - FAQs
+9. Select recommended products (optional):
+   - Choose 3-6 items for "You May Also Like"
+10. Set visibility options:
    - Active
    - Featured (optional)
    - New arrival (optional)
-6. Click `Publish`.
+11. Click `Publish`.
 
 ### B) Edit existing product
 
 1. Open product -> Edit.
-2. Update required fields (price, stock, media, status).
+2. Update required fields (price, stock, media, status, options as needed).
 3. Save changes.
-4. Open storefront preview link and verify display.
+4. Open storefront preview link and verify display (options, description, SEO content).
 
 ### C) Stock and visibility routine
 

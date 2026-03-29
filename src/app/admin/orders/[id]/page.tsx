@@ -51,6 +51,18 @@ function fDateTime(iso: string) {
     return `${fDate(iso)}, ${d.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })}`;
 }
 
+function formatOptionSummary(options?: Array<{ group_name?: string | null; value_labels?: string[] | null; input_value?: string | number | null; }> | null) {
+    if (!options || options.length === 0) return "";
+    const parts = options
+        .map((opt) => {
+            const value = opt.value_labels?.join(", ") || opt.input_value;
+            if (!value) return null;
+            return `${opt.group_name}: ${value}`;
+        })
+        .filter(Boolean) as string[];
+    return parts.join(" | ");
+}
+
 // ─── Card Shell ───────────────────────────────────────────────────────────────
 
 function Card({
@@ -291,6 +303,11 @@ export default function OrderDetailPage() {
                                                     <span className="text-[13px] font-medium text-gray-800">
                                                         {item.product_name}
                                                     </span>
+                                                    {formatOptionSummary(item.selected_options_json) && (
+                                                        <span className="text-[11px] text-gray-400 mt-0.5 block">
+                                                            {formatOptionSummary(item.selected_options_json)}
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-5 py-3 text-[13px] text-gray-600 whitespace-nowrap">

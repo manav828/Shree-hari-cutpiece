@@ -1,5 +1,6 @@
 import { Metadata } from "next";
 import { supabase } from "@/lib/supabase";
+import { getSiteUrl } from "@/lib/siteUrl";
 import { getActiveTheme } from "@/lib/theme";
 import themes from "@/themes/registry";
 
@@ -20,7 +21,7 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
   const { slug } = await params;
   const { data: product } = await supabase
     .from("products")
-    .select("name, description")
+    .select("name, description, short_description, meta_title, meta_description, canonical_url, og_title, og_description, og_image_url, twitter_card_type")
     .eq("slug", slug)
     .single();
 
@@ -30,9 +31,31 @@ export async function generateMetadata({ params }: ProductPageProps): Promise<Me
     };
   }
 
+  const siteUrl = getSiteUrl();
+  const title = product.meta_title || `${product.name} | Shree Hari Cutpiece`;
+  const description = product.meta_description || product.short_description || product.description || "";
+  const canonical = product.canonical_url || `${siteUrl}/shop/${slug}`;
+  const ogTitle = product.og_title || title;
+  const ogDescription = product.og_description || description;
+  const ogImage = product.og_image_url || undefined;
+  const twitterCard = product.twitter_card_type || "summary_large_image";
+
   return {
-    title: `${product.name} | Shree Hari Cutpiece`,
-    description: product.description,
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title: ogTitle,
+      description: ogDescription,
+      url: canonical,
+      images: ogImage ? [ogImage] : undefined,
+    },
+    twitter: {
+      card: twitterCard as "summary" | "summary_large_image",
+      title: ogTitle,
+      description: ogDescription,
+      images: ogImage ? [ogImage] : undefined,
+    },
   };
 }
 

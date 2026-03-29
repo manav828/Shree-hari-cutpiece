@@ -25,6 +25,18 @@ const statusConfig = {
     replaced: { label: "Replaced", color: "bg-teal-100 text-teal-700 border-teal-200" },
 };
 
+function formatOptionSummary(options?: Array<{ group_name?: string | null; value_labels?: string[] | null; input_value?: string | number | null; }> | null) {
+    if (!options || options.length === 0) return "";
+    const parts = options
+        .map((opt) => {
+            const value = opt.value_labels?.join(", ") || opt.input_value;
+            if (!value) return null;
+            return `${opt.group_name}: ${value}`;
+        })
+        .filter(Boolean) as string[];
+    return parts.join(" | ");
+}
+
 function OrderCard({ order }: { order: Order }) {
     const [isExpanded, setIsExpanded] = useState(false);
 
@@ -95,6 +107,11 @@ function OrderCard({ order }: { order: Order }) {
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground truncate">{item.product_name}</p>
                                     <p className="text-xs text-text-secondary mt-0.5">{item.quantity_or_meters} × {formatPrice(item.price_per_unit)}</p>
+                                    {formatOptionSummary(item.selected_options_json) && (
+                                        <p className="text-[11px] text-text-secondary mt-0.5">
+                                            {formatOptionSummary(item.selected_options_json)}
+                                        </p>
+                                    )}
                                 </div>
                                 <p className="text-sm font-medium text-foreground flex-shrink-0">
                                     {formatPrice(item.price_per_unit * item.quantity_or_meters)}

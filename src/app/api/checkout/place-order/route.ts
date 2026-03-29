@@ -5,10 +5,18 @@ import type { Coupon } from "@/types/coupons";
 
 type CheckoutItem = {
     id: string;
+    product_id?: string;
+    variant_id?: string;
     name: string;
     image: string;
     price: number;
     meters: number;
+    selling_mode?: "meter" | "piece";
+    selected_options?: Array<{
+        group_name?: string | null;
+        value_labels?: string[] | null;
+        input_value?: string | number | null;
+    }>;
 };
 
 type CheckoutFormData = {
@@ -203,12 +211,15 @@ export async function POST(req: NextRequest) {
 
         const orderItems = items.map((item) => ({
             order_id: orderData.id,
+            product_id: item.product_id || null,
+            variant_id: item.variant_id || null,
             product_name: item.name,
             image_url: item.image,
-            selling_mode: "meter",
+            selling_mode: item.selling_mode || "meter",
             quantity_or_meters: item.meters,
             price_per_unit: item.price,
             total_price: item.price * item.meters,
+            selected_options_json: item.selected_options || [],
         }));
 
         const { error: itemsError } = await supabaseAdmin

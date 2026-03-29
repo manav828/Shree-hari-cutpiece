@@ -29,15 +29,24 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const [relatedProducts, setRelatedProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [meters, setMeters] = useState(1);
-  const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews">("description");
+  const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews" | "faq">("description");
   const [activeMedia, setActiveMedia] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
+  const [selectedOptions, setSelectedOptions] = useState<Record<string, string | string[] | number>>({});
+  const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
     async function fetchProduct() {
       const { data, error } = await supabase
         .from("products")
-        .select(`id, name, slug, description, fabric, width, care_instructions, sell_mode, categories ( id, name, slug ), product_variants ( id, color_name, color_hex, material_label, price, original_price, stock, sku, is_default, variant_images ( image_url, is_primary, media_type ) )`)
+        .select(`
+          id, name, slug, description, short_description, long_description, description_html, description_css, use_custom_description, related_product_ids,
+          highlights, faqs, fabric, width, care_instructions, fabric_details,
+          sell_mode,
+          categories ( id, name, slug ),
+          product_variants ( id, color_name, color_hex, material_label, price, original_price, stock, sku, is_default, variant_images ( image_url, is_primary, media_type ) ),
+          product_option_groups ( id, name, input_type, input_data_type, required, min_selections, max_selections, placeholder, help_text, input_min_length, input_max_length, input_min_value, input_max_value, sort_order, is_active, product_option_values ( id, label, value, is_default, sort_order, is_active ) )
+        `)
         .eq("slug", slug)
         .single();
 
@@ -47,27 +56,49 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
       }
 
       setProduct(data);
+      const groups = Array.isArray(data.product_option_groups) ? data.product_option_groups : [];
+      const defaults: Record<string, string | string[]> = {};
+      groups.forEach((group: any) => {
+        if (group?.is_active === false) return;
+        const values = Array.isArray(group.product_option_values)
+          ? group.product_option_values.filter((v: any) => v.is_active !== false)
+          : [];
+        if (group.input_type === "multi") {
+          const def = values.filter((v: any) => v.is_default).map((v: any) => v.id);
+          if (def.length) defaults[group.id] = def;
+        } else if (group.input_type === "radio" || group.input_type === "dropdown") {
+          const def = values.find((v: any) => v.is_default);
+          if (def) defaults[group.id] = def.id;
+        }
+      });
+      setSelectedOptions(defaults);
+      setOptionErrors({});
       const defVariant = data.product_variants.find((v: any) => v.is_default) || data.product_variants[0];
       setSelectedVariant(defVariant);
 
-      const cats: any = data.categories;
-      const catId = Array.isArray(cats) ? cats[0]?.id : cats?.id;
-      if (catId) {
+      const relatedIds = Array.isArray(data.related_product_ids)
+        ? data.related_product_ids.filter((id: string) => id && id !== data.id)
+        : [];
+      if (relatedIds.length > 0) {
         const { data: related } = await supabase
           .from("products")
-          .select(`id, name, slug, sell_mode, categories!inner(id), product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )`)
-          .eq("categories.id", catId)
-          .neq("id", data.id)
-          .limit(4);
+          .select(`id, name, slug, sell_mode, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )`)
+          .in("id", relatedIds)
+          .limit(8);
 
         if (related) {
-          const formattedRelated = related.map((p: any) => {
-            const dv = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
-            const img = dv?.variant_images?.find((i: any) => i.is_primary)?.image_url || dv?.variant_images?.[0]?.image_url || "";
-            return { id: p.id, name: p.name, slug: p.slug, price: dv?.price || 0, unit: p.sell_mode === "meter" ? "meter" : "pc", image: img };
-          });
+          const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
+          const formattedRelated = related
+            .sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+            .map((p: any) => {
+              const dv = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
+              const img = dv?.variant_images?.find((i: any) => i.is_primary)?.image_url || dv?.variant_images?.[0]?.image_url || "";
+              return { id: p.id, name: p.name, slug: p.slug, price: dv?.price || 0, unit: p.sell_mode === "meter" ? "meter" : "pc", image: img };
+            });
           setRelatedProducts(formattedRelated);
         }
+      } else {
+        setRelatedProducts([]);
       }
       setLoading(false);
     }
@@ -100,25 +131,170 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
     );
   }
 
+  const optionGroups = Array.isArray(product.product_option_groups)
+    ? product.product_option_groups
+      .filter((g: any) => g.is_active !== false)
+      .sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+    : [];
+
+  const clearOptionError = (groupId: string) => {
+    setOptionErrors((prev) => {
+      if (!prev[groupId]) return prev;
+      const next = { ...prev };
+      delete next[groupId];
+      return next;
+    });
+  };
+
+  const validateOptions = () => {
+    const errors: Record<string, string> = {};
+    optionGroups.forEach((group: any) => {
+      const selection = selectedOptions[group.id];
+      if (group.input_type === "input") {
+        const raw = selection !== undefined && selection !== null ? String(selection).trim() : "";
+        if (group.required && !raw) {
+          errors[group.id] = "This field is required.";
+          return;
+        }
+        if (raw) {
+          if (group.input_data_type === "number") {
+            const num = Number(raw);
+            if (Number.isNaN(num)) {
+              errors[group.id] = "Enter a valid number.";
+              return;
+            }
+            if (group.input_min_value !== null && group.input_min_value !== undefined && num < group.input_min_value) {
+              errors[group.id] = `Minimum value is ${group.input_min_value}.`;
+              return;
+            }
+            if (group.input_max_value !== null && group.input_max_value !== undefined && num > group.input_max_value) {
+              errors[group.id] = `Maximum value is ${group.input_max_value}.`;
+              return;
+            }
+          } else {
+            if (group.input_min_length && raw.length < group.input_min_length) {
+              errors[group.id] = `Minimum length is ${group.input_min_length}.`;
+              return;
+            }
+            if (group.input_max_length && raw.length > group.input_max_length) {
+              errors[group.id] = `Maximum length is ${group.input_max_length}.`;
+              return;
+            }
+          }
+        }
+        return;
+      }
+
+      if (group.input_type === "multi") {
+        const list = Array.isArray(selection) ? selection : [];
+        if (group.required && list.length === 0) {
+          errors[group.id] = "Select at least one option.";
+          return;
+        }
+        if (group.min_selections && list.length < group.min_selections) {
+          errors[group.id] = `Select at least ${group.min_selections}.`;
+          return;
+        }
+        if (group.max_selections && list.length > group.max_selections) {
+          errors[group.id] = `Select up to ${group.max_selections}.`;
+          return;
+        }
+        return;
+      }
+
+      if (group.required && !selection) {
+        errors[group.id] = "Please select an option.";
+      }
+    });
+
+    setOptionErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const buildOptionSnapshots = () => {
+    return optionGroups.map((group: any) => {
+      const selection = selectedOptions[group.id];
+      if (group.input_type === "input") {
+        if (selection === undefined || selection === null || String(selection).trim() === "") return null;
+        return {
+          group_id: group.id,
+          group_name: group.name,
+          input_type: group.input_type,
+          input_value: group.input_data_type === "number" ? Number(selection) : String(selection),
+        };
+      }
+
+      const values = Array.isArray(group.product_option_values)
+        ? group.product_option_values.filter((v: any) => v.is_active !== false)
+        : [];
+
+      if (group.input_type === "multi") {
+        const ids = Array.isArray(selection) ? selection : [];
+        if (!ids.length) return null;
+        const selected = values.filter((v: any) => ids.includes(v.id));
+        return {
+          group_id: group.id,
+          group_name: group.name,
+          input_type: group.input_type,
+          value_ids: selected.map((v: any) => v.id),
+          value_labels: selected.map((v: any) => v.label),
+        };
+      }
+
+      if (!selection) return null;
+      const selected = values.find((v: any) => v.id === selection);
+      return {
+        group_id: group.id,
+        group_name: group.name,
+        input_type: group.input_type,
+        value_ids: [String(selection)],
+        value_labels: selected ? [selected.label] : [],
+      };
+    }).filter(Boolean);
+  };
+
   const handleAddToCart = () => {
+    if (!validateOptions()) return;
+    const optionSnapshots = buildOptionSnapshots() as any[];
     const img = selectedVariant?.variant_images?.find((i: any) => i.is_primary)?.image_url || selectedVariant?.variant_images?.[0]?.image_url || "";
     addToCart({
       id: selectedVariant?.id || product.id,
+      product_id: product.id,
+      variant_id: selectedVariant?.id || undefined,
       name: `${product.name} ${selectedVariant?.color_name ? `(${selectedVariant.color_name})` : ""}`.trim(),
       slug: product.slug,
       price: selectedVariant?.price || 0,
       image: img,
       meters: meters,
+      selling_mode: product.sell_mode === "meter" ? "meter" : "piece",
+      selected_options: optionSnapshots,
     });
   };
 
   const averageRating = reviewsData.reduce((sum, r) => sum + r.rating, 0) / reviewsData.length;
   const categoryName = Array.isArray(product.categories) ? product.categories[0]?.name : product.categories?.name;
+  const shortDescription = product.short_description || product.description || "";
+  const longDescription = product.long_description || product.description || "";
+  const descriptionHtml = product.description_html || "";
+  const descriptionCss = product.description_css || "";
+  const useCustomDescription = Boolean(product.use_custom_description);
+  const hasCustomDescription = descriptionHtml.trim().length > 0;
+  const showCustomDescription = useCustomDescription && hasCustomDescription;
+  const highlightItems = Array.isArray(product.highlights) ? product.highlights : [];
+  const faqItems = Array.isArray(product.faqs) ? product.faqs : [];
+  const fabricRows = Array.isArray(product.fabric_details) ? product.fabric_details : [];
 
   const media = selectedVariant?.variant_images?.map((img: any) => ({
     type: img.media_type || "image",
     url: img.image_url
   })) || [];
+
+  const detailTabs = [
+    { id: "description", label: "Description" },
+    { id: "details", label: "Specifications" },
+    ...(faqItems.length > 0 ? [{ id: "faq", label: `FAQs (${faqItems.length})` }] : []),
+    { id: "reviews", label: `Reviews (${reviewsData.length})` },
+  ];
 
   return (
     <>
@@ -243,7 +419,116 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                 </div>
               )}
 
-              <p className="text-text-secondary text-lg leading-relaxed mb-8">{product.description}</p>
+              {optionGroups.length > 0 && (
+                <div className="mb-8 space-y-6">
+                  {optionGroups.map((group: any) => {
+                    const values = Array.isArray(group.product_option_values)
+                      ? group.product_option_values.filter((v: any) => v.is_active !== false).sort((a: any, b: any) => (a.sort_order || 0) - (b.sort_order || 0))
+                      : [];
+                    const selection = selectedOptions[group.id];
+
+                    return (
+                      <div key={group.id} className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <label className="text-sm font-medium text-foreground">
+                            {group.name}
+                            {group.required && <span className="text-red-500"> *</span>}
+                          </label>
+                          {group.help_text && (
+                            <span className="text-xs text-text-secondary">{group.help_text}</span>
+                          )}
+                        </div>
+
+                        {group.input_type === "input" && (
+                          <input
+                            type={group.input_data_type === "number" ? "number" : "text"}
+                            value={selection ?? ""}
+                            onChange={(e) => {
+                              const val = group.input_data_type === "number" ? e.target.value : e.target.value;
+                              setSelectedOptions((prev) => ({ ...prev, [group.id]: val }));
+                              clearOptionError(group.id);
+                            }}
+                            min={group.input_min_value ?? undefined}
+                            max={group.input_max_value ?? undefined}
+                            placeholder={group.placeholder || ""}
+                            className="w-full px-3 py-2 border border-border bg-white focus:outline-none focus:border-accent"
+                          />
+                        )}
+
+                        {group.input_type === "dropdown" && (
+                          <select
+                            value={typeof selection === "string" ? selection : ""}
+                            onChange={(e) => {
+                              setSelectedOptions((prev) => ({ ...prev, [group.id]: e.target.value }));
+                              clearOptionError(group.id);
+                            }}
+                            className="w-full px-3 py-2 border border-border bg-white focus:outline-none focus:border-accent"
+                          >
+                            <option value="">Select {group.name}</option>
+                            {values.map((val: any) => (
+                              <option key={val.id} value={val.id}>{val.label}</option>
+                            ))}
+                          </select>
+                        )}
+
+                        {group.input_type === "radio" && (
+                          <div className="flex flex-wrap gap-2">
+                            {values.map((val: any) => (
+                              <button
+                                key={val.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedOptions((prev) => ({ ...prev, [group.id]: val.id }));
+                                  clearOptionError(group.id);
+                                }}
+                                className={`px-3 py-1.5 border text-sm transition-colors ${selection === val.id
+                                  ? "border-foreground bg-foreground text-white"
+                                  : "border-border bg-white text-foreground hover:border-foreground"}`}
+                              >
+                                {val.label}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+
+                        {group.input_type === "multi" && (
+                          <div className="flex flex-wrap gap-4">
+                            {values.map((val: any) => {
+                              const list = Array.isArray(selection) ? selection : [];
+                              const checked = list.includes(val.id);
+                              return (
+                                <label key={val.id} className="flex items-center gap-2 text-sm text-foreground">
+                                  <input
+                                    type="checkbox"
+                                    checked={checked}
+                                    onChange={() => {
+                                      const next = checked
+                                        ? list.filter((id: string) => id !== val.id)
+                                        : [...list, val.id];
+                                      setSelectedOptions((prev) => ({ ...prev, [group.id]: next }));
+                                      clearOptionError(group.id);
+                                    }}
+                                    className="h-4 w-4 border-border"
+                                  />
+                                  {val.label}
+                                </label>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {optionErrors[group.id] && (
+                          <p className="text-xs text-red-500">{optionErrors[group.id]}</p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {shortDescription && (
+                <p className="text-text-secondary text-lg leading-relaxed mb-8">{shortDescription}</p>
+              )}
 
               <div className="mb-8">
                 <label className="block text-sm font-medium text-foreground mb-3">Select {product.sell_mode === "meter" ? "Quantity (in meters)" : "Quantity"}</label>
@@ -273,7 +558,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 
           <div className="mt-20 border-t border-border pt-12">
             <div className="flex gap-8 border-b border-border mb-8">
-              {[{ id: "description", label: "Description" }, { id: "details", label: "Fabric Details" }, { id: "reviews", label: `Reviews (${reviewsData.length})` }].map((tab) => (
+              {detailTabs.map((tab) => (
                 <button key={tab.id} onClick={() => setActiveTab(tab.id as any)} className={`pb-4 text-sm font-medium transition-colors relative ${activeTab === tab.id ? "text-accent" : "text-text-secondary hover:text-foreground"}`}>
                   {tab.label}
                   {activeTab === tab.id && <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent" />}
@@ -284,14 +569,38 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
             <div className="max-w-3xl">
               {activeTab === "description" && (
                 <div className="prose prose-lg">
-                  <p className="text-text-secondary leading-relaxed">{product.description}</p>
+                  {showCustomDescription && descriptionCss && (
+                    <style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
+                  )}
+                  {showCustomDescription ? (
+                    <div className="product-desc text-text-secondary leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+                  ) : (
+                    <p className="text-text-secondary leading-relaxed">{longDescription}</p>
+                  )}
+                  {highlightItems.length > 0 && (
+                    <ul className="mt-6 list-disc pl-6 text-text-secondary">
+                      {highlightItems.map((item: string, idx: number) => (
+                        <li key={`${item}-${idx}`}>{item}</li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
               )}
               {activeTab === "details" && (
                 <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Fabric Type</span><span className="text-foreground">{product.fabric || "N/A"}</span></div>
-                  <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Width</span><span className="text-foreground">{product.width || "N/A"}</span></div>
-                  <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Care Instructions</span><span className="text-foreground">{product.care_instructions || "N/A"}</span></div>
+                  {fabricRows.length === 0 && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Fabric Type</span><span className="text-foreground">{product.fabric || "N/A"}</span></div>
+                      <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Width</span><span className="text-foreground">{product.width || "N/A"}</span></div>
+                      <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Care Instructions</span><span className="text-foreground">{product.care_instructions || "N/A"}</span></div>
+                    </>
+                  )}
+                  {fabricRows.map((row: any, idx: number) => (
+                    <div key={`fabric-${idx}`} className="grid grid-cols-2 gap-4 py-4 border-b border-border">
+                      <span className="text-text-secondary">{row.key}</span>
+                      <span className="text-foreground">{row.value}</span>
+                    </div>
+                  ))}
                   <div className="grid grid-cols-2 gap-4 py-4 border-b border-border"><span className="text-text-secondary">Sold By</span><span className="text-foreground capitalize">Per {product.sell_mode === "meter" ? "Meter" : "Piece"}</span></div>
                   <div className="grid grid-cols-2 gap-4 py-4"><span className="text-text-secondary">Category</span><span className="text-foreground capitalize">{categoryName}</span></div>
                 </div>
@@ -321,6 +630,19 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                         {review.verified && <span className="text-xs text-accent bg-accent-light px-2 py-1 rounded">Verified Purchase</span>}
                       </div>
                       <p className="text-text-secondary">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {activeTab === "faq" && (
+                <div className="space-y-6">
+                  {faqItems.length === 0 && (
+                    <p className="text-text-secondary">No FAQs available for this product.</p>
+                  )}
+                  {faqItems.map((faq: any, idx: number) => (
+                    <div key={`faq-${idx}`} className="border-b border-border pb-4">
+                      <p className="font-medium text-foreground">{faq.question || faq.q}</p>
+                      <p className="text-text-secondary mt-1">{faq.answer || faq.a}</p>
                     </div>
                   ))}
                 </div>

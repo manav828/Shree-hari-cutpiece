@@ -34,7 +34,8 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
           .select(`
             id, name, slug, sell_mode, is_featured,
             categories ( name, slug ),
-            product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )
+            product_variants ( id, price, original_price, is_default, variant_images ( image_url, is_primary ) ),
+            product_option_groups ( required )
           `)
           .eq("is_active", true);
 
@@ -54,10 +55,15 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
               price: defaultVariant?.price || 0,
               originalPrice: defaultVariant?.original_price || defaultVariant?.price || 0,
               unit: p.sell_mode === "meter" ? "meter" : "pc",
+              selling_mode: p.sell_mode === "meter" ? "meter" : "piece",
+              variantId: defaultVariant?.id || null,
               category: Array.isArray(p.categories) ? p.categories[0]?.name : p.categories?.name || "",
               categorySlug: Array.isArray(p.categories) ? p.categories[0]?.slug : p.categories?.slug || "",
               image: primaryImage,
-              featured: p.is_featured
+              featured: p.is_featured,
+              requiresOptions: Array.isArray(p.product_option_groups)
+                ? p.product_option_groups.some((g: { required: boolean }) => g.required)
+                : false,
             };
           });
           setProducts(formatted);

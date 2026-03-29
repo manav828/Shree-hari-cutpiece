@@ -67,6 +67,18 @@ const paymentStatusConfig = {
     refunded: { label: "Refunded", color: "bg-gray-100 text-gray-600 border-gray-200" },
 };
 
+function formatOptionSummary(options?: Array<{ group_name?: string | null; value_labels?: string[] | null; input_value?: string | number | null; }> | null) {
+    if (!options || options.length === 0) return "";
+    const parts = options
+        .map((opt) => {
+            const value = opt.value_labels?.join(", ") || opt.input_value;
+            if (!value) return null;
+            return `${opt.group_name}: ${value}`;
+        })
+        .filter(Boolean) as string[];
+    return parts.join(" | ");
+}
+
 // Timeline steps in order for normal flow
 const TIMELINE_STEPS: Order["status"][] = ["placed", "confirmed", "shipped", "delivered"];
 const EXCEPTION_STATUSES: Order["status"][] = ["cancelled", "returning", "returned", "replacing", "replaced"];
@@ -162,11 +174,15 @@ export default function OrderDetailPage() {
         if (!order) return;
         order.items.forEach((item) => {
             addToCart({
-                id: item.variant_id || item.id,
+                id: item.variant_id || item.product_id || item.id,
+                product_id: item.product_id || undefined,
+                variant_id: item.variant_id || undefined,
                 name: item.product_name,
                 image: item.image_url || "",
                 price: item.price_per_unit,
                 meters: item.quantity_or_meters,
+                selling_mode: item.selling_mode || "meter",
+                selected_options: item.selected_options_json || undefined,
                 slug: "",
             });
         });
@@ -176,11 +192,15 @@ export default function OrderDetailPage() {
 
     const handleReorderItem = (item: Order["items"][0]) => {
         addToCart({
-            id: item.variant_id || item.id,
+            id: item.variant_id || item.product_id || item.id,
+            product_id: item.product_id || undefined,
+            variant_id: item.variant_id || undefined,
             name: item.product_name,
             image: item.image_url || "",
             price: item.price_per_unit,
             meters: item.quantity_or_meters,
+            selling_mode: item.selling_mode || "meter",
+            selected_options: item.selected_options_json || undefined,
             slug: "",
         });
         setReorderedItems((prev) => new Set(prev).add(item.id));
@@ -370,6 +390,11 @@ export default function OrderDetailPage() {
                                                 <p className="text-text-secondary text-xs">
                                                     {item.quantity_or_meters} × {formatPrice(item.price_per_unit)}
                                                 </p>
+                                                {formatOptionSummary(item.selected_options_json) && (
+                                                    <p className="text-[11px] text-text-secondary mt-0.5">
+                                                        {formatOptionSummary(item.selected_options_json)}
+                                                    </p>
+                                                )}
                                                 <p className="font-medium text-foreground text-sm mt-1">
                                                     {formatPrice(item.price_per_unit * item.quantity_or_meters)}
                                                 </p>

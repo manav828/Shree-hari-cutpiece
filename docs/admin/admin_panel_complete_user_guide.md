@@ -75,10 +75,14 @@ Data source:
 ### Create product page (`/admin/products/new`)
 Capabilities:
 - Multi-step style editor:
-  - Product details
-  - Fabric and care fields
+  - Product details (short description, category)
+  - Product description (HTML/CSS) and care fields
   - Selling mode and discount display style
   - Color variants
+  - Product options (radio, multi-select, dropdown, input + validation)
+  - SEO metadata (meta, canonical, OG, Twitter card)
+  - Product content (long description, highlights, FAQs)
+  - Recommended products (You May Also Like)
 - Variant-level management:
   - Color name and swatch
   - Price and original price
@@ -97,6 +101,10 @@ Capabilities:
 - Full product edit with tabbed sections
 - Dynamic fabric details key-value rows
 - Variant CRUD and media management
+- Options tab (groups, values, required rules, validation)
+- SEO tab (meta title/description, canonical, OG, Twitter)
+- Content tab (long description, highlights, FAQs)
+- Recommendations (select products to show in You May Also Like)
 - Pricing normalization logic during save (original price correction)
 - View-on-store shortcut
 - Product delete action from edit view

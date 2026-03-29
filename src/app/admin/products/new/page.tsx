@@ -19,12 +19,41 @@ interface Variant {
     price: number; original_price: number; stock: number; sku: string;
     is_default: boolean; sort_order: number; images: VariantImage[];
 }
+type OptionInputType = "radio" | "multi" | "dropdown" | "input";
+type OptionInputDataType = "text" | "number";
+
+interface OptionValue {
+    id?: string; label: string; value: string; is_default: boolean;
+    sort_order: number; is_active: boolean;
+}
+
+interface OptionGroup {
+    id?: string; name: string; input_type: OptionInputType; input_data_type: OptionInputDataType;
+    required: boolean; min_selections?: number | null; max_selections?: number | null;
+    placeholder?: string; help_text?: string;
+    input_min_length?: number | null; input_max_length?: number | null;
+    input_min_value?: number | null; input_max_value?: number | null;
+    sort_order: number; is_active: boolean; values: OptionValue[];
+}
+
+interface FaqRow {
+    question: string;
+    answer: string;
+}
 interface ProductForm {
     name: string; slug: string; category_id: string; description: string;
     fabric: string; width: string; care_instructions: string;
     sell_mode: "meter" | "quantity"; is_featured: boolean; is_new_arrival: boolean;
     is_active: boolean; sort_order: number;
     discount_type: "percent" | "flat"; discount_label: string;
+    description_html: string;
+    description_css: string;
+    use_custom_description: boolean;
+    related_product_ids: string[];
+    long_description: string;
+    meta_title: string; meta_description: string; canonical_url: string;
+    og_title: string; og_description: string; og_image_url: string;
+    twitter_card_type: "summary" | "summary_large_image";
 }
 
 /* ─── Reusable ─── */
@@ -49,11 +78,21 @@ export default function AddProductPage() {
     const router = useRouter();
     const [saving, setSaving] = useState(false);
     const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
+    const [allProducts, setAllProducts] = useState<{ id: string; name: string }[]>([]);
+    const [productSearch, setProductSearch] = useState("");
 
     const [form, setForm] = useState<ProductForm>({
         name: "", slug: "", category_id: "", description: "", fabric: "", width: "",
         care_instructions: "", sell_mode: "meter", is_featured: false, is_new_arrival: false,
         is_active: true, sort_order: 0, discount_type: "percent", discount_label: "",
+        description_html: "",
+        description_css: "",
+        use_custom_description: false,
+        related_product_ids: [],
+        long_description: "",
+        meta_title: "", meta_description: "", canonical_url: "",
+        og_title: "", og_description: "", og_image_url: "",
+        twitter_card_type: "summary_large_image",
     });
 
     const [variants, setVariants] = useState<Variant[]>([{
@@ -61,10 +100,17 @@ export default function AddProductPage() {
         original_price: 0, stock: 0, sku: "", is_default: true, sort_order: 0, images: [],
     }]);
 
-    useEffect(() => { supabase.from("categories").select("id, name").order("sort_order").then(({ data }) => { if (data) setCategories(data); }); }, []);
+    const [optionGroups, setOptionGroups] = useState<OptionGroup[]>([]);
+    const [highlights, setHighlights] = useState<string[]>([]);
+    const [faqs, setFaqs] = useState<FaqRow[]>([]);
+
+    useEffect(() => {
+        supabase.from("categories").select("id, name").order("sort_order").then(({ data }) => { if (data) setCategories(data); });
+        supabase.from("products").select("id, name").order("name").then(({ data }) => { if (data) setAllProducts(data); });
+    }, []);
 
     const genSlug = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-    const upd = (k: keyof ProductForm, v: string | boolean | number) => { setForm((p) => { const u = { ...p, [k]: v }; if (k === "name") u.slug = genSlug(v as string); return u; }); };
+    const upd = (k: keyof ProductForm, v: string | boolean | number | string[]) => { setForm((p) => { const u = { ...p, [k]: v }; if (k === "name") u.slug = genSlug(v as string); return u; }); };
     const updV = (i: number, k: keyof Variant, v: string | number | boolean) => {
         setVariants((p) => { const u = [...p]; (u[i] as unknown as Record<string, unknown>)[k] = v; if (k === "is_default" && v === true) u.forEach((x, j) => { if (j !== i) x.is_default = false; }); return u; });
     };
@@ -85,9 +131,159 @@ export default function AddProductPage() {
         setVariants((p) => { const u = [...p]; u[vi] = { ...u[vi], images: u[vi].images.map((img, i) => ({ ...img, is_primary: i === ii })) }; return u; });
     };
 
+    const addOptionGroup = () => {
+        setOptionGroups((p) => ([
+            ...p,
+            {
+                name: "",
+                input_type: "radio",
+                input_data_type: "text",
+                required: false,
+                min_selections: null,
+                max_selections: null,
+                placeholder: "",
+                help_text: "",
+                input_min_length: null,
+                input_max_length: null,
+                input_min_value: null,
+                input_max_value: null,
+                sort_order: p.length,
+                is_active: true,
+                values: [
+                    { label: "", value: "", is_default: false, sort_order: 0, is_active: true },
+                ],
+            },
+        ]));
+    };
+
+    const updateOptionGroup = (i: number, field: keyof OptionGroup, value: any) => {
+        setOptionGroups((p) => {
+            const next = [...p];
+            const current = { ...next[i], [field]: value } as OptionGroup;
+            if (field === "input_type") {
+                if (value === "input") {
+                    current.values = [];
+                } else if (!current.values || current.values.length === 0) {
+                    current.values = [{ label: "", value: "", is_default: false, sort_order: 0, is_active: true }];
+                }
+            }
+            next[i] = current;
+            return next;
+        });
+    };
+
+    const removeOptionGroup = (i: number) => {
+        setOptionGroups((p) => p.filter((_, idx) => idx !== i));
+    };
+
+    const addOptionValue = (groupIndex: number) => {
+        setOptionGroups((p) => {
+            const next = [...p];
+            const group = { ...next[groupIndex] };
+            const values = group.values ? [...group.values] : [];
+            values.push({ label: "", value: "", is_default: false, sort_order: values.length, is_active: true });
+            group.values = values;
+            next[groupIndex] = group;
+            return next;
+        });
+    };
+
+    const updateOptionValue = (groupIndex: number, valueIndex: number, field: keyof OptionValue, value: any) => {
+        setOptionGroups((p) => {
+            const next = [...p];
+            const group = { ...next[groupIndex] };
+            const values = group.values ? [...group.values] : [];
+            const updated = { ...values[valueIndex], [field]: value } as OptionValue;
+            if ((group.input_type === "radio" || group.input_type === "dropdown") && field === "is_default" && value === true) {
+                values.forEach((v, idx) => {
+                    values[idx] = { ...v, is_default: idx === valueIndex };
+                });
+            }
+            values[valueIndex] = updated;
+            group.values = values;
+            next[groupIndex] = group;
+            return next;
+        });
+    };
+
+    const removeOptionValue = (groupIndex: number, valueIndex: number) => {
+        setOptionGroups((p) => {
+            const next = [...p];
+            const group = { ...next[groupIndex] };
+            group.values = (group.values || []).filter((_, idx) => idx !== valueIndex);
+            next[groupIndex] = group;
+            return next;
+        });
+    };
+
+    const addHighlight = () => setHighlights((p) => [...p, ""]);
+    const updateHighlight = (i: number, value: string) => setHighlights((p) => p.map((v, idx) => idx === i ? value : v));
+    const removeHighlight = (i: number) => setHighlights((p) => p.filter((_, idx) => idx !== i));
+
+    const addFaq = () => setFaqs((p) => [...p, { question: "", answer: "" }]);
+    const updateFaq = (i: number, field: keyof FaqRow, value: string) => setFaqs((p) => p.map((row, idx) => idx === i ? { ...row, [field]: value } : row));
+    const removeFaq = (i: number) => setFaqs((p) => p.filter((_, idx) => idx !== i));
+
+    const toggleRelatedProduct = (id: string) => {
+        setForm((prev) => {
+            const exists = prev.related_product_ids.includes(id);
+            const nextIds = exists
+                ? prev.related_product_ids.filter((pid) => pid !== id)
+                : [...prev.related_product_ids, id];
+            return { ...prev, related_product_ids: nextIds };
+        });
+    };
+
     const getDiscount = (price: number, mrp: number) => {
         if (!mrp || mrp <= price) return "";
         return form.discount_type === "percent" ? `${Math.round(((mrp - price) / mrp) * 100)}% off` : `₹${mrp - price} off`;
+    };
+
+    const saveOptionGroups = async (productId: string) => {
+        for (let i = 0; i < optionGroups.length; i++) {
+            const group = optionGroups[i];
+            if (!group.name.trim()) continue;
+            const { data: createdGroup, error: groupErr } = await supabase
+                .from("product_option_groups")
+                .insert({
+                    product_id: productId,
+                    name: group.name,
+                    input_type: group.input_type,
+                    input_data_type: group.input_data_type,
+                    required: group.required,
+                    min_selections: group.min_selections || null,
+                    max_selections: group.max_selections || null,
+                    placeholder: group.placeholder || null,
+                    help_text: group.help_text || null,
+                    input_min_length: group.input_min_length || null,
+                    input_max_length: group.input_max_length || null,
+                    input_min_value: group.input_min_value || null,
+                    input_max_value: group.input_max_value || null,
+                    sort_order: i,
+                    is_active: group.is_active,
+                })
+                .select("id")
+                .single();
+
+            if (groupErr || !createdGroup) throw groupErr;
+
+            if (group.input_type === "input") continue;
+
+            const values = (group.values || []).filter((v) => v.label.trim() || v.value.trim());
+            if (!values.length) continue;
+
+            const valueRows = values.map((v, idx) => ({
+                group_id: createdGroup.id,
+                label: v.label,
+                value: v.value || v.label,
+                is_default: v.is_default,
+                sort_order: idx,
+                is_active: v.is_active,
+            }));
+
+            const { error: valueErr } = await supabase.from("product_option_values").insert(valueRows);
+            if (valueErr) throw valueErr;
+        }
     };
 
     const handleSave = async (draft = false) => {
@@ -96,7 +292,26 @@ export default function AddProductPage() {
         setSaving(true);
         try {
             const { data: product, error: pErr } = await supabase.from("products")
-                .insert({ ...form, is_active: draft ? false : form.is_active, category_id: form.category_id || null })
+                .insert({
+                    ...form,
+                    short_description: form.description || null,
+                    description_html: form.description_html || null,
+                    description_css: form.description_css || null,
+                    use_custom_description: form.use_custom_description || false,
+                    related_product_ids: form.related_product_ids || [],
+                    long_description: form.long_description || null,
+                    meta_title: form.meta_title || null,
+                    meta_description: form.meta_description || null,
+                    canonical_url: form.canonical_url || null,
+                    og_title: form.og_title || null,
+                    og_description: form.og_description || null,
+                    og_image_url: form.og_image_url || null,
+                    twitter_card_type: form.twitter_card_type || "summary_large_image",
+                    highlights: highlights.filter((h) => h.trim()),
+                    faqs: faqs.filter((f) => f.question.trim() || f.answer.trim()),
+                    is_active: draft ? false : form.is_active,
+                    category_id: form.category_id || null,
+                })
                 .select("id").single();
             if (pErr || !product) throw pErr;
 
@@ -118,12 +333,14 @@ export default function AddProductPage() {
                     if (url) await supabase.from("variant_images").insert({ variant_id: iv.id, image_url: url, is_primary: img.is_primary, sort_order: img.sort_order, media_type: img.media_type });
                 }
             }
+
+            await saveOptionGroups(product.id);
             router.push("/admin/products");
         } catch (e) { console.error(e); alert("Failed to save"); } finally { setSaving(false); }
     };
 
     return (
-        <div className="max-w-5xl">
+        <div className="w-full max-w-none">
             {/* Header */}
             <div className="flex items-center gap-3 mb-6">
                 <Link href="/admin/products" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><ArrowLeft className="h-5 w-5" /></Link>
@@ -141,16 +358,44 @@ export default function AddProductPage() {
                                 <div><Label tip="Auto-generated URL path.">Slug</Label><input type="text" value={form.slug} onChange={(e) => upd("slug", e.target.value)} className={`${inputCls} text-gray-400`} /></div>
                                 <div><Label tip="Organize into groups like Cotton, Silk.">Category</Label><select value={form.category_id} onChange={(e) => upd("category_id", e.target.value)} className={inputCls}><option value="">Select category</option>{categories.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}</select></div>
                             </div>
-                            <div><Label tip="Full description shown on product info page.">Description</Label><textarea value={form.description} onChange={(e) => upd("description", e.target.value)} rows={4} className={`${inputCls} resize-none`} placeholder="Describe the fabric quality, pattern..." /></div>
+                            <div><Label tip="Short summary shown near the product title.">Short Description</Label><textarea value={form.description} onChange={(e) => upd("description", e.target.value)} rows={3} className={`${inputCls} resize-none`} placeholder="Short summary for quick scanning..." /></div>
                         </div>
                     </Section>
 
-                    {/* 2 - Fabric */}
-                    <Section title="Fabric & Care Details" step={2}>
-                        <p className="text-xs text-gray-400 -mt-3 mb-4">Shown in the &quot;Fabric Details&quot; tab on the product page.</p>
-                        <div className="grid grid-cols-2 gap-4">
-                            <div><Label>Fabric Type</Label><input type="text" value={form.fabric} onChange={(e) => upd("fabric", e.target.value)} className={inputCls} placeholder="100% Cotton" /></div>
-                            <div><Label>Care Instructions</Label><input type="text" value={form.care_instructions} onChange={(e) => upd("care_instructions", e.target.value)} className={inputCls} placeholder="Gentle hand wash" /></div>
+                    {/* 2 - Product Description */}
+                    <Section title="Product Description" step={2}>
+                        <p className="text-xs text-gray-400 -mt-3 mb-4">Optional HTML/CSS for the Description tab. Fabric/care details show in Specifications.</p>
+                        <div className="space-y-4">
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-semibold text-gray-500">Description Mode</span>
+                                <button
+                                    type="button"
+                                    onClick={() => upd("use_custom_description", false)}
+                                    className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${!form.use_custom_description ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 text-gray-500"}`}
+                                >
+                                    Default
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => upd("use_custom_description", true)}
+                                    className={`px-2.5 py-1 text-xs font-semibold rounded-full border ${form.use_custom_description ? "border-gray-900 bg-gray-900 text-white" : "border-gray-200 text-gray-500"}`}
+                                >
+                                    Custom HTML/CSS
+                                </button>
+                                {!form.use_custom_description && (
+                                    <span className="text-xs text-gray-400">Uses Long Description from Content tab.</span>
+                                )}
+                            </div>
+                            {form.use_custom_description && (
+                                <>
+                                    <div><Label tip="Optional: custom HTML shown in the Description tab.">Description HTML</Label><textarea value={form.description_html} onChange={(e) => upd("description_html", e.target.value)} rows={6} className={`${inputCls} font-mono text-xs`} placeholder="<p>Write rich HTML description here</p>" /></div>
+                                    <div><Label tip="Optional: CSS to style the HTML above.">Description CSS</Label><textarea value={form.description_css} onChange={(e) => upd("description_css", e.target.value)} rows={5} className={`${inputCls} font-mono text-xs`} placeholder=".product-desc h2 { margin-top: 16px; }" /></div>
+                                </>
+                            )}
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><Label>Fabric Type</Label><input type="text" value={form.fabric} onChange={(e) => upd("fabric", e.target.value)} className={inputCls} placeholder="100% Cotton" /></div>
+                                <div><Label>Care Instructions</Label><input type="text" value={form.care_instructions} onChange={(e) => upd("care_instructions", e.target.value)} className={inputCls} placeholder="Gentle hand wash" /></div>
+                            </div>
                         </div>
                     </Section>
 
@@ -228,6 +473,219 @@ export default function AddProductPage() {
                             ))}
                         </div>
                         <button onClick={addVariant} className="mt-3 inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors"><Plus className="h-4 w-4" /> Add another color</button>
+                    </Section>
+
+                    {/* 5 - Options */}
+                    <Section title="Product Options" step={5}>
+                        <div className="flex items-center justify-between mb-4">
+                            <p className="text-xs text-gray-400">Add option groups like Size, Pack, Custom Text.</p>
+                            <button onClick={addOptionGroup} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+                                <Plus className="h-3.5 w-3.5" /> Add Option Group
+                            </button>
+                        </div>
+
+                        {optionGroups.length === 0 ? (
+                            <p className="text-sm text-gray-400">No option groups yet.</p>
+                        ) : (
+                            <div className="space-y-4">
+                                {optionGroups.map((group, gi) => (
+                                    <div key={gi} className="border border-gray-200 rounded-xl p-4">
+                                        <div className="flex items-center justify-between mb-3">
+                                            <input
+                                                type="text"
+                                                value={group.name}
+                                                onChange={(e) => updateOptionGroup(gi, "name", e.target.value)}
+                                                placeholder="Option group name"
+                                                className={`${inputCls} max-w-xs`}
+                                            />
+                                            <button onClick={() => removeOptionGroup(gi)} className="text-gray-300 hover:text-red-500">
+                                                <Trash2 className="h-4 w-4" />
+                                            </button>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-3">
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-500 mb-1 block">Input Type</label>
+                                                <select value={group.input_type} onChange={(e) => updateOptionGroup(gi, "input_type", e.target.value as OptionInputType)} className={inputCls}>
+                                                    <option value="radio">Radio</option>
+                                                    <option value="multi">Multi-select</option>
+                                                    <option value="dropdown">Dropdown</option>
+                                                    <option value="input">Input field</option>
+                                                </select>
+                                            </div>
+                                            <div className="flex items-end">
+                                                <label className="flex items-center gap-2 text-sm text-gray-600">
+                                                    <input type="checkbox" checked={group.required} onChange={(e) => updateOptionGroup(gi, "required", e.target.checked)} className="w-4 h-4" />
+                                                    Required
+                                                </label>
+                                            </div>
+                                            {group.input_type === "input" && (
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Input Data Type</label>
+                                                    <select value={group.input_data_type} onChange={(e) => updateOptionGroup(gi, "input_data_type", e.target.value as OptionInputDataType)} className={inputCls}>
+                                                        <option value="text">Text</option>
+                                                        <option value="number">Number</option>
+                                                    </select>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-500 mb-1 block">Placeholder</label>
+                                                <input type="text" value={group.placeholder || ""} onChange={(e) => updateOptionGroup(gi, "placeholder", e.target.value)} className={inputCls} />
+                                            </div>
+                                            <div>
+                                                <label className="text-xs font-medium text-gray-500 mb-1 block">Help Text</label>
+                                                <input type="text" value={group.help_text || ""} onChange={(e) => updateOptionGroup(gi, "help_text", e.target.value)} className={inputCls} />
+                                            </div>
+                                        </div>
+
+                                        {group.input_type === "multi" && (
+                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Min Selections</label>
+                                                    <input type="number" value={group.min_selections ?? ""} onChange={(e) => updateOptionGroup(gi, "min_selections", e.target.value ? Number(e.target.value) : null)} className={inputCls} />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Max Selections</label>
+                                                    <input type="number" value={group.max_selections ?? ""} onChange={(e) => updateOptionGroup(gi, "max_selections", e.target.value ? Number(e.target.value) : null)} className={inputCls} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {group.input_type === "input" && (
+                                            <div className="grid grid-cols-2 gap-4 mb-3">
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Min Length / Value</label>
+                                                    <input type="number" value={group.input_data_type === "text" ? (group.input_min_length ?? "") : (group.input_min_value ?? "")} onChange={(e) => updateOptionGroup(gi, group.input_data_type === "text" ? "input_min_length" : "input_min_value", e.target.value ? Number(e.target.value) : null)} className={inputCls} />
+                                                </div>
+                                                <div>
+                                                    <label className="text-xs font-medium text-gray-500 mb-1 block">Max Length / Value</label>
+                                                    <input type="number" value={group.input_data_type === "text" ? (group.input_max_length ?? "") : (group.input_max_value ?? "")} onChange={(e) => updateOptionGroup(gi, group.input_data_type === "text" ? "input_max_length" : "input_max_value", e.target.value ? Number(e.target.value) : null)} className={inputCls} />
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {group.input_type !== "input" && (
+                                            <div className="mt-3">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <label className="text-xs font-medium text-gray-500">Option Values</label>
+                                                    <button onClick={() => addOptionValue(gi)} className="text-xs text-gray-600 hover:text-gray-900">+ Add Value</button>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    {group.values.map((val, vi) => (
+                                                        <div key={vi} className="grid grid-cols-1 md:grid-cols-[1fr_1fr_100px_30px] gap-2 items-center">
+                                                            <input type="text" value={val.label} onChange={(e) => updateOptionValue(gi, vi, "label", e.target.value)} placeholder="Label" className={inputCls} />
+                                                            <input type="text" value={val.value} onChange={(e) => updateOptionValue(gi, vi, "value", e.target.value)} placeholder="Value" className={inputCls} />
+                                                            <label className="flex items-center gap-2 text-xs text-gray-500">
+                                                                <input type="checkbox" checked={val.is_default} onChange={(e) => updateOptionValue(gi, vi, "is_default", e.target.checked)} className="w-4 h-4" /> Default
+                                                            </label>
+                                                            <button onClick={() => removeOptionValue(gi, vi)} className="text-gray-300 hover:text-red-500">
+                                                                <X className="h-4 w-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </Section>
+
+                    {/* 6 - SEO */}
+                    <Section title="SEO" step={6}>
+                        <div className="space-y-4">
+                            <div><Label tip="Browser title and Google result title (50-60 chars).">Meta Title</Label><input type="text" value={form.meta_title} onChange={(e) => upd("meta_title", e.target.value)} className={inputCls} /></div>
+                            <div><Label tip="Google snippet text (140-160 chars).">Meta Description</Label><textarea value={form.meta_description} onChange={(e) => upd("meta_description", e.target.value)} rows={3} className={`${inputCls} resize-none`} /></div>
+                            <div><Label tip="Preferred URL for this product to avoid duplicates.">Canonical URL</Label><input type="text" value={form.canonical_url} onChange={(e) => upd("canonical_url", e.target.value)} className={inputCls} placeholder="https://example.com/shop/product" /></div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><Label tip="Title shown on WhatsApp/Facebook shares.">OG Title</Label><input type="text" value={form.og_title} onChange={(e) => upd("og_title", e.target.value)} className={inputCls} /></div>
+                                <div><Label tip="Description shown on social shares.">OG Description</Label><input type="text" value={form.og_description} onChange={(e) => upd("og_description", e.target.value)} className={inputCls} /></div>
+                            </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div><Label tip="Image URL for social share card.">OG Image URL</Label><input type="text" value={form.og_image_url} onChange={(e) => upd("og_image_url", e.target.value)} className={inputCls} /></div>
+                                <div><Label tip="Use large image for better preview.">Twitter Card</Label>
+                                    <select value={form.twitter_card_type} onChange={(e) => upd("twitter_card_type", e.target.value)} className={inputCls}>
+                                        <option value="summary_large_image">Summary Large Image</option>
+                                        <option value="summary">Summary</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </Section>
+
+                    {/* 7 - Content */}
+                    <Section title="Product Content" step={7}>
+                        <div className="space-y-5">
+                            <div><Label tip="Detailed description shown in the Description tab.">Long Description</Label><textarea value={form.long_description} onChange={(e) => upd("long_description", e.target.value)} rows={5} className={`${inputCls} resize-none`} /></div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <Label>Highlights</Label>
+                                    <button onClick={addHighlight} className="text-xs text-gray-600 hover:text-gray-900">+ Add Highlight</button>
+                                </div>
+                                {highlights.length === 0 ? (
+                                    <p className="text-sm text-gray-400">No highlights added.</p>
+                                ) : (
+                                    <div className="space-y-2">
+                                        {highlights.map((h, i) => (
+                                            <div key={i} className="flex items-center gap-2">
+                                                <input type="text" value={h} onChange={(e) => updateHighlight(i, e.target.value)} className={inputCls} />
+                                                <button onClick={() => removeHighlight(i)} className="text-gray-300 hover:text-red-500"><X className="h-4 w-4" /></button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div>
+                                <div className="flex items-center justify-between mb-2">
+                                    <Label>FAQs</Label>
+                                    <button onClick={addFaq} className="text-xs text-gray-600 hover:text-gray-900">+ Add FAQ</button>
+                                </div>
+                                {faqs.length === 0 ? (
+                                    <p className="text-sm text-gray-400">No FAQs added.</p>
+                                ) : (
+                                    <div className="space-y-3">
+                                        {faqs.map((f, i) => (
+                                            <div key={i} className="border border-gray-200 rounded-lg p-3 space-y-2">
+                                                <input type="text" value={f.question} onChange={(e) => updateFaq(i, "question", e.target.value)} placeholder="Question" className={inputCls} />
+                                                <textarea value={f.answer} onChange={(e) => updateFaq(i, "answer", e.target.value)} placeholder="Answer" rows={3} className={`${inputCls} resize-none`} />
+                                                <button onClick={() => removeFaq(i)} className="text-xs text-red-500">Remove</button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div>
+                                    <Label tip="Products shown in the 'You May Also Like' section on the product page.">Recommended Products</Label>
+                                    <input
+                                        type="text"
+                                        value={productSearch}
+                                        onChange={(e) => setProductSearch(e.target.value)}
+                                        placeholder="Search products..."
+                                        className={`${inputCls} mb-2`}
+                                    />
+                                    <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto bg-white">
+                                        {(productSearch ? allProducts.filter((p) => p.name.toLowerCase().includes(productSearch.toLowerCase())) : allProducts).map((p) => (
+                                            <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={form.related_product_ids.includes(p.id)}
+                                                    onChange={() => toggleRelatedProduct(p.id)}
+                                                    className="h-4 w-4"
+                                                />
+                                                <span className="truncate">{p.name}</span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">Selected: {form.related_product_ids.length}</p>
+                                </div>
+                            </div>
+                        </div>
                     </Section>
                 </div>
 

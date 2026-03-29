@@ -64,8 +64,17 @@ export default function CartSidebar() {
                     <h3 className="font-medium text-foreground mb-1 line-clamp-1">
                       {item.name}
                     </h3>
+                    {item.selected_options && item.selected_options.length > 0 && (
+                      <div className="text-[11px] text-text-secondary mb-1 space-y-0.5">
+                        {item.selected_options.map((opt, idx) => (
+                          <p key={`${opt.group_name}-${idx}`}>
+                            {opt.group_name}: {opt.value_labels?.join(", ") || opt.input_value}
+                          </p>
+                        ))}
+                      </div>
+                    )}
                     <p className="text-text-secondary text-sm mb-2">
-                      {formatPrice(item.price)} / meter
+                      {formatPrice(item.price)} / {item.selling_mode === "piece" ? "pc" : "meter"}
                     </p>
                     <div className="flex items-center gap-3">
                       <div className="flex items-center border border-border">
@@ -76,7 +85,7 @@ export default function CartSidebar() {
                           -
                         </button>
                         <span className="px-3 py-1 min-w-[40px] text-center">
-                          {item.meters}m
+                          {item.meters}{item.selling_mode === "piece" ? "pc" : "m"}
                         </span>
                         <button 
                           onClick={() => updateQuantity(item.id, item.meters + 1)}

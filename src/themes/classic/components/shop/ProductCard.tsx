@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { formatPrice } from "@/lib/utils";
@@ -14,6 +15,9 @@ interface ProductCardProps {
     price: number;
     originalPrice: number;
     unit: string;
+    selling_mode: "meter" | "piece";
+    variantId?: string | null;
+    requiresOptions?: boolean;
     category: string;
     image: string;
     images?: string[];
@@ -25,17 +29,28 @@ export default function ProductCard({ product }: ProductCardProps) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const { addToCart } = useCart();
+  const router = useRouter();
 
   const handleAddToCart = (e: React.MouseEvent) => {
+    if (product.requiresOptions) {
+      e.preventDefault();
+      e.stopPropagation();
+      router.push(`/shop/${product.slug}`);
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
+    const baseId = product.variantId || product.id;
     addToCart({
-      id: product.id,
+      id: baseId,
+      product_id: product.id,
+      variant_id: product.variantId || undefined,
       name: product.name,
       slug: product.slug,
       price: product.price,
       image: product.image,
       meters: 1,
+      selling_mode: product.selling_mode,
     });
   };
 

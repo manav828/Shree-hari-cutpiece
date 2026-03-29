@@ -15,12 +15,19 @@ export interface User {
 
 export interface OrderItem {
     id: string;
+    product_id?: string | null;
     product_name: string;
     color_name: string | null;
     image_url: string | null;
     quantity_or_meters: number;
     price_per_unit: number;
     variant_id: string | null;
+    selling_mode?: "meter" | "piece";
+    selected_options_json?: Array<{
+        group_name?: string | null;
+        value_labels?: string[] | null;
+        input_value?: string | number | null;
+    }> | null;
 }
 
 export interface Order {
@@ -111,12 +118,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
             itemsByOrder[item.order_id].push({
                 id: item.id,
+                product_id: item.product_id || null,
                 product_name: item.product_name,
                 color_name: item.color_name,
                 image_url: item.image_url,
                 quantity_or_meters: item.quantity_or_meters,
                 price_per_unit: item.price_per_unit,
                 variant_id: item.variant_id,
+                selling_mode: item.selling_mode || "meter",
+                selected_options_json: item.selected_options_json || null,
             });
         });
 

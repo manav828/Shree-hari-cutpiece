@@ -485,8 +485,17 @@ export default function CheckoutPage() {
                         <h3 className="text-sm font-medium text-foreground line-clamp-1">
                           {item.name}
                         </h3>
+                        {item.selected_options && item.selected_options.length > 0 && (
+                          <div className="text-[11px] text-text-secondary mb-1 space-y-0.5">
+                            {item.selected_options.map((opt, idx) => (
+                              <p key={`${opt.group_name}-${idx}`}>
+                                {opt.group_name}: {opt.value_labels?.join(", ") || opt.input_value}
+                              </p>
+                            ))}
+                          </div>
+                        )}
                         <p className="text-text-secondary text-sm">
-                          {item.meters}m x {formatPrice(item.price)}
+                          {item.meters}{item.selling_mode === "piece" ? "pc" : "m"} x {formatPrice(item.price)}
                         </p>
                         <p className="text-foreground font-medium text-sm">
                           {formatPrice(item.price * item.meters)}

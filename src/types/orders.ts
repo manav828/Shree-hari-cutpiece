@@ -23,6 +23,15 @@ export type PaymentMethod = "cod" | "razorpay";
 
 export type SellingMode = "meter" | "piece";
 
+export interface OrderItemOptionSnapshot {
+    group_id?: string | null;
+    group_name?: string | null;
+    input_type?: string | null;
+    value_ids?: string[] | null;
+    value_labels?: string[] | null;
+    input_value?: string | number | null;
+}
+
 // ── Matches public.order_addresses ───────────────────────────────────────────
 export interface OrderAddress {
     id: string;
@@ -51,6 +60,7 @@ export interface OrderItem {
     quantity_or_meters: number;       // existing column name
     price_per_unit: number;           // existing column name
     total_price: number;
+    selected_options_json?: OrderItemOptionSnapshot[] | null;
 }
 
 // ── Matches public.order_status_history ──────────────────────────────────────
