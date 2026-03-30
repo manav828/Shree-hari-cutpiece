@@ -1,5 +1,7 @@
+import { revalidateTag } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { CMS_BANNERS_TAG } from "@/lib/cms";
 
 type BannerPlacement = "announcement_bar" | "homepage_hero" | "shop_top" | "popup";
 
@@ -19,6 +21,8 @@ type BannerPayload = {
 };
 
 const VALID_PLACEMENTS: BannerPlacement[] = ["announcement_bar", "homepage_hero", "shop_top", "popup"];
+
+const revalidateCmsBanners = () => revalidateTag(CMS_BANNERS_TAG);
 
 function isValidHexColor(value: string): boolean {
     return /^#[0-9A-Fa-f]{6}$/.test(value);
@@ -192,6 +196,8 @@ export async function POST(req: NextRequest) {
 
             if (error) throw error;
 
+            revalidateCmsBanners();
+
             return NextResponse.json({ success: true, count: rows.length });
         }
 
@@ -208,6 +214,8 @@ export async function POST(req: NextRequest) {
                 .is("deleted_at", null);
 
             if (error) throw error;
+
+            revalidateCmsBanners();
             return NextResponse.json({ success: true });
         }
 
@@ -224,6 +232,8 @@ export async function POST(req: NextRequest) {
                 .is("deleted_at", null);
 
             if (error) throw error;
+
+            revalidateCmsBanners();
             return NextResponse.json({ success: true });
         }
 
@@ -251,6 +261,8 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error;
 
+        revalidateCmsBanners();
+
         return NextResponse.json({ success: true });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to create banner";
@@ -277,6 +289,8 @@ export async function PATCH(req: NextRequest) {
                 .is("deleted_at", null);
 
             if (error) throw error;
+
+            revalidateCmsBanners();
 
             return NextResponse.json({ success: true });
         }
@@ -311,6 +325,8 @@ export async function PATCH(req: NextRequest) {
             .is("deleted_at", null);
 
         if (error) throw error;
+
+        revalidateCmsBanners();
 
         return NextResponse.json({ success: true });
     } catch (err: unknown) {

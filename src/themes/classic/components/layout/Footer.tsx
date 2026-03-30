@@ -18,7 +18,7 @@ const footerLinks = {
 
 export default function Footer() {
   return (
-    <footer className="bg-foreground text-white w-screen relative left-1/2 right-1/2 -ml-[50vw] -mr-[50vw]">
+    <footer className="bg-foreground text-white w-full">
       <Container>
         <div className="py-16 lg:py-20">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">

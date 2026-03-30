@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { removeMissingProductsColumnFromPayload } from "@/lib/productsSchemaFallback";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
     Star, Sparkles, CircleHelp, ExternalLink, Check, FileText, Palette,
@@ -127,7 +128,7 @@ export default function EditProductPage() {
         try {
             // Update Product
             console.log("➤ Sending Product Update API Call...");
-            const productUpdatePayload = {
+            const productUpdatePayload: Record<string, unknown> = {
                 name: form.name, slug: form.slug, category_id: form.category_id || null,
                 description: form.description, fabric: form.fabric, width: form.width,
                 care_instructions: form.care_instructions, sell_mode: form.sell_mode,
@@ -152,11 +153,33 @@ export default function EditProductPage() {
                 faqs: faqs.filter((f) => f.question.trim() || f.answer.trim()),
             };
 
-            const { data: pData, error: pErr } = await sb
-                .from("products")
-                .update(productUpdatePayload as never)
-                .eq("id", productId)
-                .select(); // ADDED SELECT to force return data
+            let payloadForUpdate = { ...productUpdatePayload };
+            let pData: Array<{ id: string }> | null = null;
+            let pErr: { message: string } | null = null;
+
+            for (let attempt = 0; attempt < 20; attempt += 1) {
+                const { data, error } = await sb
+                    .from("products")
+                    .update(payloadForUpdate as never)
+                    .eq("id", productId)
+                    .select("id");
+
+                pData = data;
+                pErr = error;
+
+                if (!pErr) {
+                    break;
+                }
+
+                const { nextPayload, removedColumn } = removeMissingProductsColumnFromPayload(payloadForUpdate, pErr.message);
+
+                if (!removedColumn) {
+                    break;
+                }
+
+                console.warn(`Skipping missing products column "${removedColumn}" and retrying save.`);
+                payloadForUpdate = nextPayload;
+            }
 
             console.log("✅ Product Update Response:", { data: pData, error: pErr });
             if (pErr) throw new Error("Products update err: " + pErr.message);

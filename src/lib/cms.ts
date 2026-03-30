@@ -31,6 +31,8 @@ export type CmsBanner = {
     priority: number;
 };
 
+export const CMS_BANNERS_TAG = "cms_banners";
+
 const loadSiteConfigMapCached = unstable_cache(
     async (): Promise<SiteConfigMap> => {
         const { data, error } = await supabaseAdmin
@@ -132,7 +134,7 @@ const loadCmsBannersCached = unstable_cache(
         }));
     },
     ["cms_banners_all"],
-    { revalidate: 30 },
+    { revalidate: 30, tags: [CMS_BANNERS_TAG] },
 );
 
 export async function getActiveCmsBannersByPlacement(placement: CmsBannerPlacement): Promise<CmsBanner[]> {

@@ -21,7 +21,7 @@ export default function ShopPage({ searchParams }: ShopPageProps) {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-12 lg:pt-24 pb-20">
+            <main className="pt-12 lg:pt-24 pb-12 lg:pb-16">
                 <Container>
                     {/* Page Header */}
                     <div className="text-center mb-16">

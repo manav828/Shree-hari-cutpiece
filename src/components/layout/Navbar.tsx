@@ -44,8 +44,8 @@ export default function Navbar() {
     <>
       <nav
         className={`sticky top-0 left-0 right-0 z-40 transition-all duration-300 w-full bg-white ${isScrolled
-          ? "shadow-premium py-4"
-          : "py-6 border-b border-black/5"
+          ? "shadow-premium py-3"
+          : "py-4 border-b border-black/5"
           }`}
       >
         <Container>

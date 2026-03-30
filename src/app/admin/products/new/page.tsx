@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { removeMissingProductsColumnFromPayload } from "@/lib/productsSchemaFallback";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
     Star, Sparkles, CircleHelp
@@ -291,29 +292,54 @@ export default function AddProductPage() {
         if (variants.some((v) => !v.color_name.trim())) return alert("All variants need a color name");
         setSaving(true);
         try {
-            const { data: product, error: pErr } = await supabase.from("products")
-                .insert({
-                    ...form,
-                    short_description: form.description || null,
-                    description_html: form.description_html || null,
-                    description_css: form.description_css || null,
-                    use_custom_description: form.use_custom_description || false,
-                    related_product_ids: form.related_product_ids || [],
-                    long_description: form.long_description || null,
-                    meta_title: form.meta_title || null,
-                    meta_description: form.meta_description || null,
-                    canonical_url: form.canonical_url || null,
-                    og_title: form.og_title || null,
-                    og_description: form.og_description || null,
-                    og_image_url: form.og_image_url || null,
-                    twitter_card_type: form.twitter_card_type || "summary_large_image",
-                    highlights: highlights.filter((h) => h.trim()),
-                    faqs: faqs.filter((f) => f.question.trim() || f.answer.trim()),
-                    is_active: draft ? false : form.is_active,
-                    category_id: form.category_id || null,
-                })
-                .select("id").single();
-            if (pErr || !product) throw pErr;
+            const productInsertPayload: Record<string, unknown> = {
+                ...form,
+                short_description: form.description || null,
+                description_html: form.description_html || null,
+                description_css: form.description_css || null,
+                use_custom_description: form.use_custom_description || false,
+                related_product_ids: form.related_product_ids || [],
+                long_description: form.long_description || null,
+                meta_title: form.meta_title || null,
+                meta_description: form.meta_description || null,
+                canonical_url: form.canonical_url || null,
+                og_title: form.og_title || null,
+                og_description: form.og_description || null,
+                og_image_url: form.og_image_url || null,
+                twitter_card_type: form.twitter_card_type || "summary_large_image",
+                highlights: highlights.filter((h) => h.trim()),
+                faqs: faqs.filter((f) => f.question.trim() || f.answer.trim()),
+                is_active: draft ? false : form.is_active,
+                category_id: form.category_id || null,
+            };
+
+            let payloadForInsert = { ...productInsertPayload };
+            let product: { id: string } | null = null;
+            let pErr: { message: string } | null = null;
+
+            for (let attempt = 0; attempt < 20; attempt += 1) {
+                const { data, error } = await supabase.from("products")
+                    .insert(payloadForInsert)
+                    .select("id").single();
+
+                product = data;
+                pErr = error;
+
+                if (!pErr) {
+                    break;
+                }
+
+                const { nextPayload, removedColumn } = removeMissingProductsColumnFromPayload(payloadForInsert, pErr.message);
+
+                if (!removedColumn) {
+                    break;
+                }
+
+                console.warn(`Skipping missing products column "${removedColumn}" and retrying create.`);
+                payloadForInsert = nextPayload;
+            }
+
+            if (pErr || !product) throw pErr || new Error("Failed to create product");
 
             for (const v of variants) {
                 const { data: iv, error: vErr } = await supabase.from("product_variants")
