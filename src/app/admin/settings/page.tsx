@@ -1,11 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { Loader2, Check, Monitor, LayoutTemplate } from "lucide-react";
+import { Loader2, Check, Monitor, LayoutTemplate, Palette } from "lucide-react";
 import CustomStatusManager from "@/components/admin/orders/CustomStatusManager";
 
-type ThemeOption = "classic" | "luxury";
+type ThemeOption = "classic" | "luxury" | "bohemian";
 
 const themes: { id: ThemeOption; name: string; description: string; icon: React.ElementType }[] = [
     {
@@ -20,7 +19,24 @@ const themes: { id: ThemeOption; name: string; description: string; icon: React.
         description: "A premium, symmetrical, and highly visual dark/elegant variant.",
         icon: Monitor,
     },
+    {
+        id: "bohemian",
+        name: "Bohemian",
+        description: "Warm earthy tones, texture-first merchandising, and social-first decor storytelling.",
+        icon: Palette,
+    },
 ];
+
+function isThemeOption(value: unknown): value is ThemeOption {
+    return value === "classic" || value === "luxury" || value === "bohemian";
+}
+
+type ThemeApiPayload = {
+    theme?: string;
+    persisted?: boolean;
+    warning?: string;
+    error?: string;
+};
 
 export default function AdminSettings() {
     const [activeTheme, setActiveTheme] = useState<ThemeOption>("classic");
@@ -29,42 +45,82 @@ export default function AdminSettings() {
     const [toast, setToast] = useState("");
 
     useEffect(() => {
-        const fetchSettings = async () => {
-            const { data, error } = await supabase
-                .from("site_settings" as any)
-                .select("value")
-                .eq("key", "active_theme")
-                .single();
+        let cancelled = false;
 
-            const rec = data as { value?: string } | null;
-            if (rec && rec.value) {
-                // Ensure it's a string, supabase JSONB can occasionally return strings with quotes
-                const themeVal = typeof rec.value === "string" ? rec.value.replace(/"/g, "") : rec.value;
-                setActiveTheme(themeVal as ThemeOption);
-            }
-            if (error && error.code !== "PGRST116") {
+        const fetchSettings = async () => {
+            try {
+                const res = await fetch("/api/admin/theme", { cache: "no-store" });
+                const payload = (await res.json().catch(() => ({}))) as ThemeApiPayload;
+
+                if (!res.ok) {
+                    throw new Error(payload.error || "Failed to fetch active theme.");
+                }
+
+                if (!cancelled && isThemeOption(payload.theme)) {
+                    setActiveTheme(payload.theme);
+                }
+
+                if (!cancelled && payload.warning) {
+                    setToast(payload.warning);
+                }
+            } catch (error) {
                 console.error("Error fetching theme:", error);
+                if (!cancelled) {
+                    setToast("Theme service is currently unavailable. Using fallback mode.");
+                }
+            } finally {
+                if (!cancelled) {
+                    setLoading(false);
+                }
             }
-            setLoading(false);
         };
+
         fetchSettings();
+
+        return () => {
+            cancelled = true;
+        };
     }, []);
 
+    useEffect(() => {
+        if (!toast) return;
+        const timer = window.setTimeout(() => setToast(""), 3000);
+        return () => window.clearTimeout(timer);
+    }, [toast]);
+
     const handleSaveTheme = async (themeId: ThemeOption) => {
+        const previousTheme = activeTheme;
         setActiveTheme(themeId);
         setSaving(true);
-        try {
-            const { error } = await supabase
-                .from("site_settings" as any)
-                .upsert(
-                    { key: "active_theme", value: themeId } as any,
-                    { onConflict: "key" }
-                );
 
-            if (error) throw error;
-            setToast(`Theme successfully updated to ${themeId}.`);
+        try {
+            const response = await fetch("/api/admin/theme", {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ theme: themeId }),
+            });
+
+            const payload = (await response.json().catch(() => ({}))) as ThemeApiPayload;
+
+            if (!response.ok) {
+                throw new Error(payload.error || "Theme update failed.");
+            }
+
+            if (isThemeOption(payload.theme)) {
+                setActiveTheme(payload.theme);
+            }
+
+            const savedTheme = isThemeOption(payload.theme) ? payload.theme : themeId;
+            if (payload.persisted === false) {
+                setToast(payload.warning || `Theme switched to ${savedTheme} in browser fallback mode.`);
+            } else {
+                setToast(`Theme successfully updated to ${savedTheme}.`);
+            }
         } catch (e: any) { // eslint-disable-line @typescript-eslint/no-explicit-any
             console.error("Failed to update theme", e);
+            setActiveTheme(previousTheme);
             alert("Error updating theme: " + e.message);
         } finally {
             setSaving(false);
@@ -79,9 +135,6 @@ export default function AdminSettings() {
                     <span className="text-sm font-medium">{toast}</span>
                 </div>
             )}
-
-            {/* Auto hide toast after 3s */}
-            {toast && (() => { setTimeout(() => setToast(""), 3000); return null; })()}
 
             <h1 className="text-2xl font-playfair font-bold text-gray-900 mb-6">Site Settings</h1>
 
@@ -101,13 +154,17 @@ export default function AdminSettings() {
                                 <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {themes.map((theme) => {
                                     const isActive = activeTheme === theme.id;
                                     return (
                                         <div
                                             key={theme.id}
-                                            onClick={() => handleSaveTheme(theme.id)}
+                                            onClick={() => {
+                                                if (!saving && activeTheme !== theme.id) {
+                                                    handleSaveTheme(theme.id);
+                                                }
+                                            }}
                                             className={`relative flex flex-col p-5 rounded-xl border-2 cursor-pointer transition-all ${isActive
                                                 ? "border-gray-900 bg-gray-50"
                                                 : "border-gray-200 hover:border-gray-300 hover:bg-gray-50/50"

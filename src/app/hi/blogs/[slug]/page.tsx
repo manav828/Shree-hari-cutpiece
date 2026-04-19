@@ -12,6 +12,8 @@ import ShareButtons from "@/components/blog/ShareButtons";
 import ProductCard from "@/components/shop/ProductCard";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { filterPublicContentPosts, isPublicContentPost } from "@/lib/blogPublicContent";
+import { buildArticleSchema, buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
 
 export const dynamic = "force-dynamic";
 
@@ -149,7 +151,7 @@ function estimateReadTime(text: string): string | null {
     const words = text.trim().split(/\s+/).filter(Boolean).length;
     if (!words) return null;
     const minutes = Math.max(1, Math.round(words / 200));
-    return `${minutes} min read`;
+    return `${minutes} मिनट पढ़ें`;
 }
 
 async function fetchPost(slug: string, language: BlogVariant["language"]): Promise<BlogDetailRow | null> {
@@ -178,7 +180,7 @@ async function fetchVariants(variantGroupId: string): Promise<BlogVariant[]> {
     return (data ?? []) as BlogVariant[];
 }
 
-async function fetchRelatedPosts(postId: string): Promise<RelatedPostRow[]> {
+async function fetchRelatedPosts(postId: string, language: BlogVariant["language"]): Promise<RelatedPostRow[]> {
     const { data: relatedRows, error: relatedError } = await supabaseAdmin
         .from("blog_post_related_posts")
         .select("related_post_id")
@@ -194,7 +196,8 @@ async function fetchRelatedPosts(postId: string): Promise<RelatedPostRow[]> {
         .from("blog_posts")
         .select("id, title, slug, excerpt, published_at, cover_media:cover_media_id (public_url, alt_text, width, height), category:category_id (name, slug)")
         .in("id", relatedIds)
-        .eq("status", "published");
+        .eq("status", "published")
+        .eq("language", language);
 
     if (error) return [];
 
@@ -254,22 +257,32 @@ async function fetchRelatedProducts(postId: string): Promise<RelatedProductView[
 async function fetchRedirect(slug: string, language: BlogVariant["language"]) {
     const { data, error } = await supabaseAdmin
         .from("blog_slug_redirects")
-        .select("new_slug, blog_posts(language, status)")
+        .select("new_slug, blog_posts(language, status, title, slug, excerpt)")
         .eq("old_slug", slug)
         .limit(1);
 
     if (error) return null;
-    const row = (data ?? [])[0] as { new_slug?: string; blog_posts?: { language?: string; status?: string } | null } | undefined;
+    const row = (data ?? [])[0] as {
+        new_slug?: string;
+        blog_posts?: { language?: string; status?: string; title?: string | null; slug?: string | null; excerpt?: string | null } | null;
+    } | undefined;
     if (!row?.new_slug) return null;
     if (row.blog_posts?.status !== "published") return null;
     if (row.blog_posts?.language !== language) return null;
+    if (!isPublicContentPost({
+        title: row.blog_posts?.title,
+        slug: row.blog_posts?.slug || row.new_slug,
+        excerpt: row.blog_posts?.excerpt,
+    })) {
+        return null;
+    }
     return row.new_slug;
 }
 
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
     const post = await fetchPost(params.slug, DEFAULT_LANGUAGE);
-    if (!post) {
-        return { title: "Post Not Found" };
+    if (!post || !isPublicContentPost(post)) {
+        return { title: "पोस्ट नहीं मिला" };
     }
 
     const baseUrl = getSiteUrl();
@@ -324,13 +337,17 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
         notFound();
     }
 
+    if (!isPublicContentPost(post)) {
+        notFound();
+    }
+
     const variants = await fetchVariants(post.variant_group_id);
-    const relatedPosts = await fetchRelatedPosts(post.id);
+    const relatedPosts = filterPublicContentPosts(await fetchRelatedPosts(post.id, post.language));
     const relatedProducts = await fetchRelatedProducts(post.id);
     const languageLabels: Record<BlogVariant["language"], string> = {
         en: "English",
-        hi: "Hindi",
-        other: "Other",
+        hi: "हिंदी",
+        other: "अन्य",
     };
 
     const activeVariants = variants.filter((variant) => variant.language !== post.language);
@@ -338,21 +355,36 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
         ? stripHtml(post.full_page_html || "")
         : extractTextFromLayout(post.builder_layout);
     const readTime = estimateReadTime(contentText);
-    const shareUrl = post.seo_canonical_url || `${getSiteUrl()}${getBlogBasePath(post.language)}/${post.slug}`;
+    const articlePath = `${getBlogBasePath(post.language)}/${post.slug}`;
+    const shareUrl = post.seo_canonical_url || `${getSiteUrl()}${articlePath}`;
 
-    const schemaJson = post.schema_markup_enabled
-        ? {
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: post.seo_meta_title || post.title,
-            description: post.seo_meta_description || post.excerpt || "",
-            image: post.og_media?.public_url || post.cover_media?.public_url || undefined,
-            datePublished: post.published_at || undefined,
-            author: post.author_name ? { "@type": "Person", name: post.author_name } : undefined,
-            inLanguage: post.language,
-            mainEntityOfPage: post.seo_canonical_url || `${getSiteUrl()}${getBlogBasePath(post.language)}/${post.slug}`,
-        }
-        : null;
+    const schemaMarkup: Array<Record<string, unknown>> = [
+        buildWebPageSchema({
+            path: articlePath,
+            title: post.seo_meta_title || post.title,
+            description: post.seo_meta_description || post.excerpt || post.title,
+            type: "Article",
+        }),
+        buildBreadcrumbSchema([
+            { name: "होम", path: "/" },
+            { name: "ब्लॉग", path: getBlogBasePath(post.language) },
+            { name: post.title, path: articlePath },
+        ]),
+    ];
+
+    if (post.schema_markup_enabled) {
+        schemaMarkup.push(
+            buildArticleSchema({
+                path: articlePath,
+                headline: post.seo_meta_title || post.title,
+                description: post.seo_meta_description || post.excerpt || post.title,
+                image: post.og_media?.public_url || post.cover_media?.public_url,
+                datePublished: post.published_at,
+                authorName: post.author_name,
+                inLanguage: post.language,
+            }),
+        );
+    }
 
     return (
         <>
@@ -364,13 +396,13 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                         <ol className="flex items-center gap-2 text-sm text-text-secondary">
                             <li>
                                 <Link href="/" className="hover:text-accent transition-colors">
-                                    Home
+                                    होम
                                 </Link>
                             </li>
                             <li>/</li>
                             <li>
                                 <Link href="/hi/blogs" className="hover:text-accent transition-colors">
-                                    Blog
+                                    ब्लॉग
                                 </Link>
                             </li>
                             <li>/</li>
@@ -379,12 +411,13 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                     </nav>
 
                     <article className="max-w-5xl mx-auto">
-                        {schemaJson && (
+                        {schemaMarkup.map((schema, index) => (
                             <script
+                                key={`blog-hi-schema-${index}`}
                                 type="application/ld+json"
-                                dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaJson) }}
+                                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
                             />
-                        )}
+                        ))}
                         {post.show_header !== false && (
                             <header className="text-center mb-12">
                                 {post.category?.name && (
@@ -400,12 +433,12 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                                         <span className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-serif">
                                             {(post.author_name || "S").charAt(0)}
                                         </span>
-                                        <span>{post.author_name || "Editorial Team"}</span>
+                                        <span>{post.author_name || "संपादकीय टीम"}</span>
                                     </div>
                                     {post.published_at && (
                                         <>
                                             <span>•</span>
-                                            <span>{new Date(post.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
+                                            <span>{new Date(post.published_at).toLocaleDateString("hi-IN", { month: "long", day: "numeric", year: "numeric" })}</span>
                                         </>
                                     )}
                                     {readTime && (
@@ -438,6 +471,7 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                                         src={post.cover_media.public_url}
                                         alt={post.cover_media.alt_text || post.title}
                                         fill
+                                        sizes="(max-width: 1024px) 100vw, 960px"
                                         className="object-cover"
                                         priority
                                     />
@@ -455,7 +489,18 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                             )}
                             {post.show_share_buttons !== false && (
                                 <div className="mb-10">
-                                    <ShareButtons title={post.title} url={shareUrl} />
+                                    <ShareButtons
+                                        title={post.title}
+                                        url={shareUrl}
+                                        labels={{
+                                            nativeShare: "शेयर करें",
+                                            whatsapp: "व्हाट्सऐप",
+                                            facebook: "फेसबुक",
+                                            copy: "Instagram के लिए लिंक कॉपी करें",
+                                            copied: "लिंक कॉपी हो गया",
+                                            copyPrompt: "इस लिंक को कॉपी करें",
+                                        }}
+                                    />
                                 </div>
                             )}
                             {post.editor_mode === "full_code" ? (
@@ -467,6 +512,32 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                             ) : (
                                 <BlogRenderer layout={post.builder_layout} />
                             )}
+                            <div className="mt-14 rounded-2xl border border-border bg-background-secondary px-6 py-6">
+                                <p className="text-xs tracking-[0.28em] uppercase text-text-secondary">आगे पढ़ें</p>
+                                <h3 className="mt-2 font-serif text-2xl text-foreground">अपने फैब्रिक प्लान को आगे बढ़ाएं</h3>
+                                <div className="mt-5 flex flex-wrap gap-3">
+                                    <Link
+                                        href={getBlogBasePath(post.language)}
+                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                    >
+                                        सभी ब्लॉग लेख
+                                    </Link>
+                                    <Link
+                                        href="/shop"
+                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                    >
+                                        फैब्रिक कलेक्शन देखें
+                                    </Link>
+                                    {post.category?.name && (
+                                        <Link
+                                            href={`${getBlogBasePath(post.language)}?category=${encodeURIComponent(post.category.name)}`}
+                                            className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                        >
+                                            {post.category.name} से जुड़े लेख
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </article>
                 </Container>
@@ -475,7 +546,7 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                     <section className="mt-24 border-t border-border pt-12 bg-background-secondary">
                         <Container>
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-6 text-center">
-                                {post.related_products_title || "Shop This Story"}
+                                {post.related_products_title || "इस कहानी से खरीदें"}
                             </h2>
                             <div
                                 className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-6"
@@ -495,13 +566,15 @@ export default async function BlogDetailHindiPage({ params }: BlogDetailPageProp
                     <section className="mt-32 border-t border-border pt-20 bg-background-secondary">
                         <Container>
                             <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-10 text-center">
-                                More from our Journal
+                                हमारी जर्नल से और पढ़ें
                             </h2>
                             <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
                                 {relatedPosts.map((relatedPost) => (
                                     <BlogCard
                                         key={relatedPost.id}
                                         hrefBase="/hi/blogs"
+                                        locale="hi-IN"
+                                        readMoreLabel="पूरा लेख पढ़ें"
                                         post={{
                                             id: relatedPost.id,
                                             title: relatedPost.title,

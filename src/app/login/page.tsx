@@ -4,7 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
+import { Manrope, Newsreader } from "next/font/google";
 import { useAuth } from "@/context/AuthContext";
+import { getWhatsAppUrl } from "@/lib/brand";
+
+const headingFont = Newsreader({
+    subsets: ["latin"],
+    style: ["normal", "italic"],
+    weight: ["400", "500", "600", "700"],
+});
+
+const bodyFont = Manrope({
+    subsets: ["latin"],
+    weight: ["400", "500", "600", "700"],
+});
 
 export default function LoginPage() {
     const { login } = useAuth();
@@ -12,7 +25,7 @@ export default function LoginPage() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
-    const [showPassword, setShowPassword] = useState(false);
+    const supportLink = getWhatsAppUrl("Hi, I need help logging into my account.");
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -22,7 +35,7 @@ export default function LoginPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        const result = await login(formData.email, formData.password);
+        const result = await login(formData.email.trim(), formData.password);
         if (result.success) {
             router.push("/account");
         } else {
@@ -32,176 +45,138 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen flex">
-            {/* Left Panel - Brand Image */}
-            <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden">
-                <Image
-                    src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1200&q=90"
-                    alt="Shree Hari Fabrics"
-                    fill
-                    className="object-cover"
-                    priority
-                />
-                {/* Dark overlay */}
-                <div className="absolute inset-0 bg-gradient-to-br from-foreground/90 via-foreground/70 to-accent/40" />
-                {/* Brand content */}
-                <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-                    <Link href="/" className="flex items-center gap-3">
-                        <span className="font-serif text-2xl text-white">Shree Hari</span>
-                        <span className="text-white/60 text-sm tracking-widest uppercase">Cutpiece</span>
-                    </Link>
-                    <div>
-                        <p className="text-white/60 text-xs tracking-[0.3em] uppercase mb-4">Est. 1987</p>
-                        <blockquote className="font-serif text-3xl text-white leading-relaxed mb-6">
-                            &ldquo;Where every thread tells a story of craftsmanship and tradition.&rdquo;
-                        </blockquote>
-                        <p className="text-white/70 text-sm">
-                            Over 35 years of bringing the finest fabrics from across India to your doorstep.
+        <main className={`${bodyFont.className} h-[100dvh] overflow-hidden bg-[#fcf9f4] text-[#1c1c19] antialiased`}>
+            <div className="flex h-full flex-col md:flex-row">
+                <section className="relative hidden overflow-hidden md:flex md:w-1/2">
+                    <Image
+                        src="/auth/login-hero.jpg"
+                        alt="High-resolution warm interior with earthy styling and natural textures"
+                        fill
+                        priority
+                        quality={100}
+                        unoptimized
+                        sizes="50vw"
+                        className="object-cover object-center"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#e5e2dd]/80 via-transparent to-transparent" />
+                    <div className="relative z-10 flex h-full w-full flex-col justify-end p-[clamp(1.5rem,4vh,4rem)] text-[#1c1c19]">
+                        <h2 className={`${headingFont.className} text-[clamp(2.25rem,5vh,3.75rem)] leading-[0.98] tracking-tight`}>
+                            Curate your space.
+                            <br />
+                            Ground your soul.
+                        </h2>
+                        <p className="mt-3 max-w-md text-[clamp(1rem,2.2vh,1.5rem)] text-[#56423d]">
+                            Access your personal archive of artisanal finds and earthy aesthetics.
                         </p>
                     </div>
-                </div>
-            </div>
+                </section>
 
-            {/* Right Panel - Login Form */}
-            <div className="w-full lg:w-1/2 flex flex-col justify-center min-h-screen bg-[#F7F0F1]">
-                {/* Mobile header */}
-                <div className="lg:hidden px-6 pt-8 pb-6">
-                    <Link href="/" className="flex items-center gap-2">
-                        <span className="font-serif text-xl text-foreground">Shree Hari</span>
-                        <span className="text-text-secondary text-xs tracking-widest uppercase">Cutpiece</span>
-                    </Link>
-                </div>
+                <section className="relative z-10 flex h-full w-full items-center justify-center bg-[#fcf9f4] px-[clamp(1rem,3vw,2.25rem)] py-[clamp(0.75rem,2.4vh,2rem)] shadow-[-20px_0_40px_rgba(28,28,25,0.02)] md:w-1/2 md:shadow-none lg:px-[clamp(2.5rem,5vw,5.5rem)]">
+                    <div className="w-full max-w-md space-y-[clamp(0.7rem,1.7vh,1.9rem)]">
+                        <header className="text-center md:text-left">
+                            <h1 className={`${headingFont.className} mb-2 text-[clamp(2rem,4.8vh,3.1rem)] leading-[0.96] text-[#9f3f29]`}>Welcome back.</h1>
+                            <p className="text-base text-[#56423d]">Continue your journey with Terra &amp; Loom.</p>
+                        </header>
 
-                <div className="flex-1 flex items-center justify-center px-6 py-12">
-                    <div className="w-full max-w-md">
-                        {/* Header */}
-                        <div className="mb-10">
-                            <p className="text-accent text-xs tracking-[0.3em] uppercase mb-3 font-medium">Welcome Back</p>
-                            <h1 className="font-serif text-4xl text-foreground mb-2">Sign In</h1>
-                            <p className="text-text-secondary text-sm">
-                                Don&apos;t have an account?{" "}
-                                <Link href="/signup" className="text-accent hover:underline font-medium">
-                                    Create one
-                                </Link>
-                            </p>
+                        <div className="space-y-[clamp(0.45rem,1.15vh,0.75rem)]">
+                            <button
+                                type="button"
+                                className="group flex w-full items-center justify-center gap-3 rounded-lg bg-[#f6f3ee] px-6 py-[clamp(0.62rem,1.5vh,0.95rem)] font-medium text-[#1c1c19] transition-colors duration-300 hover:bg-[#f0ede8]"
+                            >
+                                <svg className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.58c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                                    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                                    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
+                                    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
+                                </svg>
+                                Continue with Google
+                            </button>
+                            <button
+                                type="button"
+                                className="group flex w-full items-center justify-center gap-3 rounded-lg bg-[#f6f3ee] px-6 py-[clamp(0.62rem,1.5vh,0.95rem)] font-medium text-[#1c1c19] transition-colors duration-300 hover:bg-[#f0ede8]"
+                            >
+                                <svg className="h-5 w-5 transition-transform duration-300 group-hover:scale-110" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                    <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.15 2.95.97 3.67 2.14-3.32 1.83-2.73 6.17.65 7.42-.82 1.54-1.6 3-2.97 3.45zm-4.38-14.2c-.12-1.92 1.63-3.73 3.5-3.86.32 2.09-1.8 3.82-3.5 3.86z" />
+                                </svg>
+                                Continue with Apple
+                            </button>
                         </div>
 
-                        {/* Form */}
-                        <form onSubmit={handleSubmit} className="space-y-5">
-                            {/* Email */}
-                            <div className="relative">
+                        <div className="flex items-center gap-4">
+                            <div className="h-px flex-1 bg-[#dcdad5]" />
+                            <span className="text-xs font-medium uppercase tracking-[0.2em] text-[#56423d]">Or</span>
+                            <div className="h-px flex-1 bg-[#dcdad5]" />
+                        </div>
+
+                        <form onSubmit={handleSubmit} className="space-y-[clamp(0.65rem,1.4vh,1.25rem)]">
+                            <div className="space-y-1.5">
+                                <label htmlFor="login-email" className="block px-1 text-sm font-medium text-[#56423d]">
+                                    Email Address
+                                </label>
                                 <input
+                                    id="login-email"
                                     type="email"
                                     name="email"
-                                    id="login-email"
                                     value={formData.email}
                                     onChange={handleChange}
                                     required
-                                    className="peer w-full px-4 pt-6 pb-2 border-b-2 border-border bg-white/80 focus:outline-none focus:border-accent transition-colors placeholder-transparent rounded-t-md"
-                                    placeholder="Email Address"
                                     autoComplete="email"
+                                    placeholder="hello@example.com"
+                                    className="w-full rounded-t-lg rounded-b-none border-0 border-b border-b-transparent bg-[#ebe8e3] px-4 py-[clamp(0.62rem,1.45vh,0.92rem)] text-[#1c1c19] placeholder:text-[#89726c]/60 focus:bg-[#fcf9f4] focus:border-b-[#9f3f29] focus:ring-0"
                                 />
-                                <label
-                                    htmlFor="login-email"
-                                    className="absolute left-4 top-2 text-[10px] text-text-secondary transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-accent font-medium pointer-events-none"
-                                >
-                                    Email Address
-                                </label>
                             </div>
 
-                            {/* Password */}
-                            <div className="relative">
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between px-1">
+                                    <label htmlFor="login-password" className="block text-sm font-medium text-[#56423d]">
+                                        Password
+                                    </label>
+                                    <Link href={supportLink} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-[#9f3f29] hover:text-[#bf573f]">
+                                        Forgot password?
+                                    </Link>
+                                </div>
                                 <input
-                                    type={showPassword ? "text" : "password"}
-                                    name="password"
                                     id="login-password"
+                                    type="password"
+                                    name="password"
                                     value={formData.password}
                                     onChange={handleChange}
                                     required
-                                    className="peer w-full px-4 pt-6 pb-2 border-b-2 border-border bg-white/80 focus:outline-none focus:border-accent transition-colors placeholder-transparent rounded-t-md pr-12"
-                                    placeholder="Password"
                                     autoComplete="current-password"
+                                    placeholder="********"
+                                    className="w-full rounded-t-lg rounded-b-none border-0 border-b border-b-transparent bg-[#ebe8e3] px-4 py-[clamp(0.62rem,1.45vh,0.92rem)] text-[#1c1c19] placeholder:text-[#89726c]/60 focus:bg-[#fcf9f4] focus:border-b-[#9f3f29] focus:ring-0"
                                 />
-                                <label
-                                    htmlFor="login-password"
-                                    className="absolute left-4 top-2 text-[10px] text-text-secondary transition-all peer-placeholder-shown:text-sm peer-placeholder-shown:top-4 peer-focus:top-2 peer-focus:text-[10px] peer-focus:text-accent font-medium pointer-events-none"
-                                >
-                                    Password
-                                </label>
-                                <button
-                                    type="button"
-                                    onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -mt-1 text-text-secondary hover:text-foreground transition-colors"
-                                    aria-label={showPassword ? "Hide password" : "Show password"}
-                                >
-                                    {showPassword ? (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                                        </svg>
-                                    )}
-                                </button>
                             </div>
 
-                            {/* Error Message */}
                             {error && (
-                                <div className="px-4 py-3 bg-red-50 border border-red-200 rounded-md">
-                                    <p className="text-red-600 text-sm">{error}</p>
+                                <div className="rounded-md bg-[#ffdad6] px-4 py-3 text-sm text-[#93000a]">
+                                    {error}
                                 </div>
                             )}
 
-                            {/* Forgot Password */}
-                            <div className="text-right">
-                                <Link href="#" className="text-xs text-text-secondary hover:text-accent transition-colors">
-                                    Forgot your password?
-                                </Link>
-                            </div>
-
-                            {/* Submit Button */}
                             <button
                                 type="submit"
                                 disabled={isLoading}
-                                className="w-full btn-primary justify-center py-4 text-base mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                                className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9f3f29] to-[#bf573f] py-[clamp(0.66rem,1.55vh,0.95rem)] text-base font-medium text-white shadow-[0_4px_16px_rgba(159,63,41,0.15)] transition-opacity duration-300 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
                             >
-                                {isLoading ? (
-                                    <span className="flex items-center gap-2">
-                                        <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                                        </svg>
-                                        Signing in...
-                                    </span>
-                                ) : (
-                                    "Sign In"
+                                {isLoading ? "Signing in..." : "Sign In"}
+                                {!isLoading && (
+                                    <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M5 12h14M13 6l6 6-6 6" />
+                                    </svg>
                                 )}
                             </button>
                         </form>
 
-                        {/* Divider */}
-                        <div className="my-8 flex items-center gap-4">
-                            <div className="flex-1 h-px bg-border" />
-                            <span className="text-text-secondary text-xs tracking-wide">NEW TO SHREE HARI?</span>
-                            <div className="flex-1 h-px bg-border" />
-                        </div>
-
-                        {/* Continue to Signup */}
-                        <Link href="/signup" className="btn-secondary w-full justify-center py-4 text-sm">
-                            Create an Account
-                        </Link>
-
-                        {/* Back to home */}
-                        <p className="text-center text-xs text-text-secondary mt-8">
-                            <Link href="/" className="hover:text-accent transition-colors">
-                                ← Back to Home
+                        <p className="pt-[clamp(0.35rem,0.9vh,0.75rem)] text-center text-sm text-[#56423d]">
+                            New to the archive?{" "}
+                            <Link href="/signup" className="font-medium text-[#9f3f29] underline decoration-[#9f3f29]/30 underline-offset-4 hover:text-[#bf573f] hover:decoration-[#9f3f29]">
+                                Create an account
                             </Link>
                         </p>
                     </div>
-                </div>
+                </section>
             </div>
-        </div>
+        </main>
     );
 }

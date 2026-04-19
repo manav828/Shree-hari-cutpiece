@@ -29,10 +29,10 @@ export default async function Hero() {
       <div className="absolute inset-0 lg:hidden z-0">
         <Image
           src={mobileImage}
-          alt="Premium fabric collection background"
+          alt="Close-up premium cutpiece fabric texture backdrop"
           fill
+          sizes="100vw"
           className="object-cover"
-          priority
         />
         {/* Semi-transparent overlay to ensure text readability while showing image */}
         <div className="absolute inset-0 bg-background/80 md:bg-background/70" />
@@ -86,7 +86,7 @@ export default async function Hero() {
             <div className="w-full lg:aspect-[4/5] relative overflow-hidden bg-background-secondary group rounded-xl shadow-sm">
               <Image
                 src={desktopImage}
-                alt="Premium fabric collection"
+                alt="Premium cutpiece fabric drape and texture hero visual"
                 fill
                 className="object-cover transition-transform duration-[10000ms] ease-out group-hover:scale-110"
                 priority

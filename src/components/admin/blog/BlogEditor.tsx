@@ -1,4 +1,5 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
@@ -972,11 +973,14 @@ export default function BlogEditor({ postId }: Props) {
         setShowMediaLibrary(false);
     };
 
+    // `handleSave` is intentionally omitted to keep autosave cadence stable across form edits.
+    /* eslint-disable react-hooks/exhaustive-deps */
     const autosave = useCallback(async () => {
         if (!dirtyRef.current) return;
         if (!post.title.trim()) return;
         await handleSave("draft", true);
     }, [post]);
+    /* eslint-enable react-hooks/exhaustive-deps */
 
     useEffect(() => {
         autosaveRef.current = setInterval(() => {
@@ -2130,7 +2134,7 @@ export default function BlogEditor({ postId }: Props) {
 
                     <div>
                         <label className="block text-xs text-gray-500 mb-1">Related Posts (max 5)</label>
-                        <p className="text-[11px] text-gray-500 mb-2">Shows in the "More from our Journal" section on the blog page.</p>
+                        <p className="text-[11px] text-gray-500 mb-2">Shows in the &quot;More from our Journal&quot; section on the blog page.</p>
                         <div className="max-h-40 overflow-auto border border-gray-200 rounded-md p-2 space-y-1">
                             {relatedPostOptions.length === 0 ? (
                                 <p className="text-xs text-gray-500">No other posts available yet.</p>

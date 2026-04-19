@@ -1,0 +1,1 @@
+export const BOHEMIAN_SITE_CONTAINER = "mx-auto w-full max-w-[1320px] px-6 lg:px-8";

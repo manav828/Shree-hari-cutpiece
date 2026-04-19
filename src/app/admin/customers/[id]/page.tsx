@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Fragment, useEffect, useMemo, useState } from "react";
+import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mail, Phone, MapPin, Package, User, StickyNote, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { AdminCustomerDetails, CustomerAccountStatus, CustomerInteraction } from "@/types/customers";
@@ -92,7 +92,7 @@ export default function AdminCustomerDetailPage() {
         });
     };
 
-    const loadDetails = async () => {
+    const loadDetails = useCallback(async () => {
         if (!id) return;
         setLoading(true);
         setError("");
@@ -110,9 +110,9 @@ export default function AdminCustomerDetailPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
-    const loadInteractions = async () => {
+    const loadInteractions = useCallback(async () => {
         if (!id) return;
         try {
             const res = await fetch(`/api/admin/customers/${id}/interactions?limit=20&offset=0`);
@@ -122,12 +122,12 @@ export default function AdminCustomerDetailPage() {
         } catch (err: unknown) {
             setError(err instanceof Error ? err.message : "Failed to fetch interactions");
         }
-    };
+    }, [id]);
 
     useEffect(() => {
         loadDetails();
         loadInteractions();
-    }, [id]);
+    }, [loadDetails, loadInteractions]);
 
     const displayName = useMemo(() => {
         if (!details) return "Customer";

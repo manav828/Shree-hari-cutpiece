@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "surface-variant": "#e5e2dd",
+                    "tertiary-fixed": "#ffdf9e",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "on-secondary-container": "#5e6649",
+                    "secondary-fixed": "#dee6c2",
+                    "on-primary": "#ffffff",
+                    "surface-container-highest": "#e5e2dd",
+                    "surface-container-high": "#ebe8e3",
+                    "on-primary-container": "#ffffff",
+                    "tertiary": "#785900",
+                    "primary": "#9f3f29",
+                    "inverse-on-surface": "#f3f0eb",
+                    "on-secondary-fixed-variant": "#424a2f",
+                    "tertiary-container": "#977000",
+                    "secondary-container": "#dbe4c0",
+                    "on-secondary": "#ffffff",
+                    "inverse-surface": "#31302d",
+                    "background": "#fcf9f4",
+                    "inverse-primary": "#ffb4a3",
+                    "surface-container-low": "#f6f3ee",
+                    "surface": "#fcf9f4",
+                    "outline": "#89726c",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "error-container": "#ffdad6",
+                    "surface-container-lowest": "#ffffff",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-secondary-fixed": "#171e08",
+                    "tertiary-fixed-dim": "#f3bf43",
+                    "secondary": "#5a6245",
+                    "outline-variant": "#ddc0ba",
+                    "surface-bright": "#fcf9f4",
+                    "error": "#ba1a1a",
+                    "secondary-fixed-dim": "#c2caa8",
+                    "on-primary-fixed-variant": "#802915",
+                    "surface-container": "#f0ede8",
+                    "on-primary-fixed": "#3d0600",
+                    "primary-fixed-dim": "#ffb4a3",
+                    "surface-tint": "#a0402a",
+                    "on-tertiary-container": "#ffffff",
+                    "on-surface": "#1c1c19",
+                    "on-background": "#1c1c19",
+                    "surface-dim": "#dcdad5",
+                    "primary-fixed": "#ffdad2",
+                    "on-tertiary": "#ffffff",
+                    "primary-container": "#bf573f",
+                    "on-surface-variant": "#56423d"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+        .serif-italic { font-family: 'Newsreader'; font-style: italic; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .text-outline-white {
+            -webkit-text-stroke: 1px rgba(255, 255, 255, 0.4);
+            color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 dark:bg-stone-900/80 backdrop-blur-xl">
+<div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+<div class="flex items-center gap-8">
+<a class="font-serif text-2xl italic tracking-tighter text-[#9f3f29] dark:text-[#bf573f]" href="#">The Artisanal Archive</a>
+<div class="hidden md:flex items-center gap-6">
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Living</a>
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Dining</a>
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Bedroom</a>
+<a class="text-[#9f3f29] border-b-2 border-[#9f3f29] pb-1 font-bold" href="#">New Arrivals</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center bg-surface-container-high px-4 py-2 rounded-full">
+<span class="material-symbols-outlined text-on-surface-variant text-lg">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm placeholder:text-on-surface-variant/60 ml-2 w-48 font-label" placeholder="Search the archive..." type="text"/>
+</div>
+<div class="flex items-center gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors"><span class="material-symbols-outlined">favorite</span></button>
+<button class="hover:text-primary transition-colors relative">
+<span class="material-symbols-outlined">shopping_bag</span>
+<span class="absolute -top-1 -right-1 bg-primary text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">2</span>
+</button>
+</div>
+</div>
+</div>
+</nav>
+<main class="pt-24 lg:pt-32 max-w-screen-2xl mx-auto px-6 md:px-12">
+<!-- Hero Section: Product Detail -->
+<section class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-20 items-start">
+<!-- Left: Gallery -->
+<div class="lg:col-span-7 flex flex-col md:flex-row-reverse gap-6">
+<!-- Main Image Container -->
+<div class="flex-grow aspect-[4/5] bg-surface-container-low rounded-lg overflow-hidden relative">
+<img alt="The Solstice Throw" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUIo9my-oFVkdGRNfVaGJbRdloyGATA7l9qeAtmnMosYtf7AbeKUYPW21XRdkRjCwhXBwHfa0RdVCJ4ZPGUKiPyPikbGnrDJ2bpPZoAwVQw21GIz4-HNswOEZ9pcdOqayO9H7TO-1Y4B4uyuV6MHeb63EklhPvCVa97TTY2YiIaHpDMUTO8SomKyY-bxTCeqZteDp5WY7aqx4EfnFXvvJ8bFsVk6JTk-_XwizN8j9GQRt6kNMpkylc2uxI0OIFvX_3ZU7d3IpmucU"/>
+<div class="absolute top-4 left-4 bg-background/90 backdrop-blur px-3 py-1 rounded-full text-[10px] tracking-widest uppercase font-bold text-primary">Limited Batch</div>
+</div>
+<!-- Thumbnails -->
+<div class="flex md:flex-col gap-4 overflow-x-auto md:overflow-y-auto hide-scrollbar md:w-24">
+<button class="flex-shrink-0 w-20 h-24 md:w-full md:h-32 rounded-lg overflow-hidden border-2 border-primary">
+<img alt="Detail 1" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0xcef04zIgK5pkjZXtm6FECqWhQ0fcbv_jlAMSYBfAAu2j5YkAjtDm2Kl3F8rC19sMXlFjjZB9pJO6bcZkCUINdPm68jr-RdfJQkVn2p23u9QpO3-6E6w6hvHPnbEDfl11qO9YMceYZDOF5CGQBmWWAWLNXMzFBFkzHJqe4JzESpSceuUgXbrhr6GxlHTxiJ769x-iV781K8eH9etpjlwfqVDIQC9kel-CcDq0g25K-MNWlgfD1WckMP3a3TA3Ci8Oug6KKK3ato"/>
+</button>
+<button class="flex-shrink-0 w-20 h-24 md:w-full md:h-32 rounded-lg overflow-hidden opacity-60 hover:opacity-100 transition-opacity">
+<img alt="Detail 2" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAojYohP2NSOxANC-uay4zrBq9I1flPNnyGa3QMUwhLKo7B22ZgUJpV2wsqP_OPjSSOdxojdRS_6VS3YgkytgsCHgVN8TyG4hIjhXuh9GeCULS6xCTL8e6se6-KRCE3wH5qUeegubc1XRjq0cnX8L6GvZ_nKVAgHWVNPWlpNb7GO1MOOXteDtYdCz0-NFwRnCaSc4VB4DmluxSyPoFa5mF-u8fOMD6FKcOiKxyTtfeDxhNYu1X7hm1X-AklF7Ll8_zVSA3KCGljHTM"/>
+</button>
+<button class="flex-shrink-0 w-20 h-24 md:w-full md:h-32 rounded-lg overflow-hidden opacity-60 hover:opacity-100 transition-opacity">
+<img alt="Detail 3" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDRl9nQQVXj354DMIlKVaCp10iKrTj069naXSzIo22RIKNeRlZl8rg4LCqnErWbV0WPFj7LXwfd5vhmB1d4VMgBLHnuFV8NOGW644WWrpXB40Qi3C2LIF2qyRXjzjK06IdcMvzcYIvvkUBsybzGsvRmt5cQWy4b7svZQagi9fKYzQyOUUZv9CJRnfi1zGaihteSUNdPi771ynMbSVUrl-HqyKr8UUlcDLr4EZlAOfv6z-JdH_GnCAONGel4l0ueJCR4V2crT7utryY"/>
+</button>
+</div>
+</div>
+<!-- Right: Details -->
+<div class="lg:col-span-5 flex flex-col space-y-8">
+<div>
+<div class="flex items-center gap-2 mb-4">
+<span class="px-3 py-1 bg-secondary-container text-on-secondary-container text-xs font-bold rounded-full flex items-center gap-1">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+                        Artisan Crafted
+                    </span>
+<span class="text-xs text-on-surface-variant font-medium tracking-wide uppercase">SKU: SOL-2401</span>
+</div>
+<h1 class="font-headline text-5xl md:text-6xl text-on-surface leading-[1.1] mb-4">The Solstice Throw</h1>
+<div class="flex items-center gap-4">
+<p class="text-3xl font-headline text-primary">$185.00</p>
+<p class="text-xl font-headline text-on-surface-variant line-through opacity-50">$240.00</p>
+<span class="text-xs font-bold text-tertiary-container bg-tertiary-fixed px-2 py-0.5 rounded">Save 25%</span>
+</div>
+</div>
+<p class="text-on-surface-variant leading-relaxed text-lg">
+                Inspired by the golden hues of the setting sun, this heavy-weight throw is hand-loomed from organic cotton and natural dyes. A piece designed to grow softer with every season.
+            </p>
+<!-- Color Swatches -->
+<div class="space-y-4">
+<span class="block text-sm font-bold tracking-wider uppercase text-on-surface-variant">Select Hue: Terracotta</span>
+<div class="flex gap-4">
+<button class="w-10 h-10 rounded-full bg-[#9f3f29] ring-2 ring-offset-2 ring-primary relative flex items-center justify-center">
+<span class="material-symbols-outlined text-white text-sm" style="font-variation-settings: 'FILL' 1;">check</span>
+</button>
+<button class="w-10 h-10 rounded-full bg-[#5a6245] ring-1 ring-outline-variant/30 hover:ring-secondary transition-all"></button>
+<button class="w-10 h-10 rounded-full bg-[#dcc9ae] ring-1 ring-outline-variant/30 hover:ring-secondary transition-all"></button>
+</div>
+</div>
+<!-- Dual CTA -->
+<div class="flex flex-col sm:flex-row gap-4 pt-4">
+<button class="flex-grow bg-primary text-white font-bold py-5 rounded-lg hover:bg-primary-container transition-all flex items-center justify-center gap-2 shadow-sm">
+<span class="material-symbols-outlined">shopping_bag</span>
+                    Add to Cart
+                </button>
+<button class="flex-grow border-2 border-primary text-primary font-bold py-5 rounded-lg hover:bg-primary/5 transition-all">
+                    Buy Now
+                </button>
+</div>
+<!-- Trust Strip -->
+<div class="grid grid-cols-3 gap-4 pt-8 border-t border-outline-variant/20">
+<div class="flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-secondary text-3xl">eco</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Sustainable</span>
+</div>
+<div class="flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-secondary text-3xl">pan_tool</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Handmade</span>
+</div>
+<div class="flex flex-col items-center text-center gap-2">
+<span class="material-symbols-outlined text-secondary text-3xl">verified</span>
+<span class="text-[10px] font-bold uppercase tracking-widest text-on-surface-variant">Fair Trade</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Horizontal Tabs Section -->
+<section class="mt-24">
+<div class="flex border-b border-outline-variant/30 overflow-x-auto hide-scrollbar">
+<button class="px-8 py-4 text-primary border-b-2 border-primary font-bold whitespace-nowrap">Artisan Story</button>
+<button class="px-8 py-4 text-on-surface-variant hover:text-primary transition-colors font-medium whitespace-nowrap">Materials</button>
+<button class="px-8 py-4 text-on-surface-variant hover:text-primary transition-colors font-medium whitespace-nowrap">Dimensions</button>
+<button class="px-8 py-4 text-on-surface-variant hover:text-primary transition-colors font-medium whitespace-nowrap">Reviews (124)</button>
+</div>
+<div class="py-12 grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+<div class="space-y-6">
+<h3 class="font-headline text-4xl text-on-surface italic">A Loom with a Legacy</h3>
+<p class="text-on-surface-variant leading-relaxed text-lg">
+                    Each Solstice Throw is crafted by a collective of fifth-generation weavers in the central highlands. Using traditional back-strap looms, the process for a single throw takes nearly three weeks from the raw cotton spinning to the final knotted fringe. 
+                </p>
+<p class="text-on-surface-variant leading-relaxed text-lg">
+                    We partner directly with these artisans, ensuring equitable pay that is 3x the local living wage, directly supporting community infrastructure and education.
+                </p>
+<a class="inline-flex items-center gap-2 text-primary font-bold group" href="#">
+                    Meet the Weavers 
+                    <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+<div class="relative">
+<div class="aspect-video bg-surface-container rounded-xl overflow-hidden shadow-xl">
+<img alt="Artisan workshop" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCrRoBODPT1WPovjEC3-z05DbR7rAjGoBXWTN9oRddrm4H9qBuRSg9mQ-i7PtVnKE8MnR0nMgo2p0666EqiS07Y9lR6JNdGxxovsDizZk6tn4vRE1nxRAtuZEyS5k7bN9C0jzK7K5Gdj--xaNlcVHMER-gLGNTxCIoNruv7KMRDVJ4Emyy24IS6M01bSWQOt9GakKMz4oUAlNpo_UzXzJg2sQwCkgCLKE4WQEEmc25XHz-VTZvqDAKOlmgUegANZOiUvUbriD3qcFg"/>
+</div>
+<div class="absolute -bottom-6 -right-6 bg-secondary-container p-6 rounded-lg hidden md:block max-w-[200px]">
+<p class="font-headline text-lg text-on-secondary-container leading-tight">"This throw is like a warm hug from the earth itself."</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Lifestyle Banner Section -->
+<section class="mt-32 -mx-6 md:-mx-12 overflow-hidden relative group">
+<div class="aspect-[16/7] md:aspect-[21/9] lg:aspect-[3/1] relative">
+<img alt="A ritual of slow living" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida/ADBb0ui8nOrpG-V9m3I3jbTfJgEmLvjFr4FEh1YoSy3xbocip_LNebo7W6YJ7CmPJZh2Jy_8vJKn5-djR5kuNbr2-dlMgZoDTyCRI_36ImK6ZiqbrhWArIbthgSgShP2RaP2Tb8oaNeWS2QKQWWyv9Mkqs13JmWXhdqUIxN3bPvTgKxTIDy5H9uNQwjmBh97xj8bm1HPtuDOhaL6KE89S9wIBsiQIXrcXQCZJW8tehJanziJYuNDMwsGAVAADbOryAYQPH_SVQIo-Ew66A"/>
+<div class="absolute inset-0 bg-black/10 transition-colors duration-500 group-hover:bg-black/20"></div>
+<div class="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+<!-- Overlapping Text Effect -->
+<div class="relative mb-6">
+<h2 class="font-headline text-4xl md:text-7xl lg:text-8xl text-outline-white italic absolute inset-0 -translate-x-2 -translate-y-2 select-none pointer-events-none opacity-40">A ritual of slow living.</h2>
+<h2 class="font-headline text-4xl md:text-7xl lg:text-8xl text-white drop-shadow-2xl relative">A ritual of slow living.</h2>
+</div>
+<p class="text-white font-body text-sm md:text-lg max-w-2xl drop-shadow-md">
+                    Designed to be draped over shoulders during sunset or spread across the foot of a well-loved bed. The Solstice Throw is an invitation to pause.
+                </p>
+</div>
+</div>
+</section>
+<!-- Social Proof Section -->
+<section class="mt-32">
+<div class="text-center mb-16">
+<h2 class="font-headline text-5xl mb-4">Loved in Homes Worldwide</h2>
+<p class="text-on-surface-variant">Join our community of curators. Mention @ArtisanalArchive to be featured.</p>
+</div>
+<!-- Row 1: Gallery -->
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-16">
+<div class="aspect-square rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img alt="Customer Home 1" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/ADBb0uhvI4FQAELyMd-G76z5ng0GbHlvE1urtb0u4phNLg0JTwoTOHasWot2avroYFXXBHvW0KdJ6BTr81DfmWVxTcs285UMpWpj0NM9FDoA5kc5bVEL2w85SUvqTOiwYejZQLAildPUwAYNN5Y7JCG-pbIFc03p1k5EROoiyeSB2GboOte_DsWmOriVzCU8rVmzBNAYW_A2tMHsqyG4Bd1GeVTSOPUMKv2js0xosOXAcluTT2fd13d1EifFVV29N-uY61i89QW_bjJInQ"/>
+</div>
+<div class="aspect-square rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img alt="Customer Home 2" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida/ADBb0ujPZjPN5x_bEI5rY63GI9q5EwLK1q6tCkba-WnnRazuAXz2JWrFSPCnTEUyEUV8poi7MsOQCgo3lsg6H2Xp-56Xm5hfUzKTlZIF-vcL8HaUfj03Jhd2yvU1KapR-ZPHmmvJBT7fqP1-jSO9BaC1t11yXPV5nrkSpyB6fR5M-StfX-DcE8TILPNEprfS_P8X8THnBhtlLq_G60l85AyfjgJ-JOap5bYUZDXACRr_23FGz4qVc-6_XEHrH99_MtSmt354p53u2Q_NvQ"/>
+</div>
+<div class="aspect-square rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img alt="Customer Home 3" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDUIo9my-oFVkdGRNfVaGJbRdloyGATA7l9qeAtmnMosYtf7AbeKUYPW21XRdkRjCwhXBwHfa0RdVCJ4ZPGUKiPyPikbGnrDJ2bpPZoAwVQw21GIz4-HNswOEZ9pcdOqayO9H7TO-1Y4B4uyuV6MHeb63EklhPvCVa97TTY2YiIaHpDMUTO8SomKyY-bxTCeqZteDp5WY7aqx4EfnFXvvJ8bFsVk6JTk-_XwizN8j9GQRt6kNMpkylc2uxI0OIFvX_3ZU7d3IpmucU"/>
+</div>
+<div class="hidden md:block aspect-square rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img alt="Customer Home 4" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAojYohP2NSOxANC-uay4zrBq9I1flPNnyGa3QMUwhLKo7B22ZgUJpV2wsqP_OPjSSOdxojdRS_6VS3YgkytgsCHgVN8TyG4hIjhXuh9GeCULS6xCTL8e6se6-KRCE3wH5qUeegubc1XRjq0cnX8L6GvZ_nKVAgHWVNPWlpNb7GO1MOOXteDtYdCz0-NFwRnCaSc4VB4DmluxSyPoFa5mF-u8fOMD6FKcOiKxyTtfeDxhNYu1X7hm1X-AklF7Ll8_zVSA3KCGljHTM"/>
+</div>
+<div class="hidden lg:block aspect-square rounded-xl overflow-hidden bg-surface-container shadow-sm group">
+<img alt="Customer Home 5" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB0xcef04zIgK5pkjZXtm6FECqWhQ0fcbv_jlAMSYBfAAu2j5YkAjtDm2Kl3F8rC19sMXlFjjZB9pJO6bcZkCUINdPm68jr-RdfJQkVn2p23u9QpO3-6E6w6hvHPnbEDfl11qO9YMceYZDOF5CGQBmWWAWLNXMzFBFkzHJqe4JzESpSceuUgXbrhr6GxlHTxiJ769x-iV781K8eH9etpjlwfqVDIQC9kel-CcDq0g25K-MNWlgfD1WckMP3a3TA3Ci8Oug6KKK3ato"/>
+</div>
+</div>
+<!-- Row 2: Amazon-style Text Reviews -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col border border-outline-variant/10">
+<div class="flex text-tertiary mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h4 class="font-bold text-sm mb-3 uppercase tracking-tight">Premium Weight &amp; Texture</h4>
+<p class="text-on-surface-variant mb-6 flex-grow leading-relaxed">"The texture is simply divine. It has a weight to it that feels very premium. Exactly what I was looking for to complete my master bedroom update."</p>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/10">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold">SM</div>
+<span class="text-xs font-bold uppercase tracking-tighter">Sarah M. — London</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col border border-outline-variant/10">
+<div class="flex text-tertiary mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h4 class="font-bold text-sm mb-3 uppercase tracking-tight">The Perfect Terracotta Hue</h4>
+<p class="text-on-surface-variant mb-6 flex-grow leading-relaxed">"Finally found the perfect terracotta hue. It ties my entire reading nook together. It's soft yet durable, and the handmade quality is evident in the weave."</p>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/10">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold">DK</div>
+<span class="text-xs font-bold uppercase tracking-tighter">David K. — Seattle</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-8 rounded-xl flex flex-col border border-outline-variant/10">
+<div class="flex text-tertiary mb-3">
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h4 class="font-bold text-sm mb-3 uppercase tracking-tight">Beautiful Craftsmanship</h4>
+<p class="text-on-surface-variant mb-6 flex-grow leading-relaxed">"The level of detail is amazing. You can tell this wasn't mass-produced. Shipping was faster than expected and the packaging was completely plastic-free."</p>
+<div class="flex items-center gap-3 pt-4 border-t border-outline-variant/10">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[10px] font-bold">AR</div>
+<span class="text-xs font-bold uppercase tracking-tighter">Anna R. — Paris</span>
+</div>
+</div>
+</div>
+</section>
+<!-- Related Products Section -->
+<section class="mt-32 mb-20">
+<div class="flex items-end justify-between mb-12">
+<h2 class="font-headline text-4xl">Complete the Sanctuary</h2>
+<a class="text-primary font-bold border-b border-primary hover:opacity-70 transition-opacity" href="#">Browse Living Collection</a>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+<!-- Card 1 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low rounded-lg overflow-hidden mb-4 relative">
+<img alt="Linen Pillow" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD1kptc02QUmb8RrVGj96mZDnZ-ssBeYlTcKBTcirR48prjBIBjA2qZlRhf04Vt5CViwOZNhksngb9jly8L62I4GgXskgWDoxL5F2mARqkk0G0hW7UNBlLM9sCzpAna7CkyTV0fJ9bP-T_pQJrSpjw0--YHebUwtfzc8s-Vw2F-nDv8gqHCh8FZjdrZGXdBfZCKKRmxLCcgduAZL4Oqk2cV8OseX1Cg8xTRnhguLvb-R1_XWLYUHKdalR2bkkwurNqHqLibUEy6jDo"/>
+<button class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+<h4 class="font-headline text-xl mb-1">Earthen Table Vase</h4>
+<p class="text-primary font-bold">$75.00</p>
+</div>
+<!-- Card 2 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low rounded-lg overflow-hidden mb-4 relative">
+<img alt="Beeswax Candles" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC2pwcMOxCpHeASZ3_mDEzHijusCvyT12eHBeJv_Fl0mM4IFzD4_uZtt_we_Pq_N1V8A98u6xn3G2Mu0yeuscGl53jthLhXG0771r9mpQxYt1OVxXu9JWXbbNgZt0ttMQ9L291n4v0WFXpBkRMdh0MPwDlHZ-_cKCbfI159DZesPMZLaYrHXgqlzV9Z0kFUNzYVxquqFZ6JjcOCV5zSLjulpMmODwLxDtRJ0cumKxjibWfh7XqGozlRWpiLZrNatvOXUlmhiMCLJOg"/>
+<button class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+<h4 class="font-headline text-xl mb-1">Dipped Taper Set</h4>
+<p class="text-primary font-bold">$32.00</p>
+</div>
+<!-- Card 3 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low rounded-lg overflow-hidden mb-4 relative">
+<img alt="Sage Pillow" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-Jsomm42UXqDy1bSsx82U3XFN7n3TNobf-Z8wgrQ5yfxmqdH1imOazthJtF4HJgR8bkOzpAIZXxR4i-OK54n2PNEpRGOcOoAtZ-AV9VVuqMEgKf3E291N8XsljdxgWaqNo0v2QVbSCfwfbaaP0BceZuCkCxJE44FnYu7rTKUpNKhYlKKRBl3HEWzGKhSgrkdDi-yQ6IM3Alhop80JyXEJiz7ucoRsJjoz37ryqy1hvWJOidSnMQLw3IyuZ9Xp-pkvOJy5JEtZiAU"/>
+<button class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+<h4 class="font-headline text-xl mb-1">Hand-Dyed Linen Pillow</h4>
+<p class="text-primary font-bold">$68.00</p>
+</div>
+<!-- Card 4 -->
+<div class="group cursor-pointer">
+<div class="aspect-[3/4] bg-surface-container-low rounded-lg overflow-hidden mb-4 relative">
+<img alt="Oak Tray" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7l2GeMCcg8wcDB3-fa-1P5H7ApGgGOYhO9wVXUqB-A_gHIaik6qIMKJfDr_6OGz3Xhl4GOB-LujNfShKkCNsmU1Vf9H7TnTgeju9ciWt9GNt7IjS-yT9idedkaHp0LmJuekMzElSB_8nvv2S45p4ZDf_hVvYEQBNrhNvca54TSrZ_6TDPPm5aVIWi6rNd6-ZDv2l9gslTBJq_GT08LrhgE_74CEfaCYWDfOr0au_-iCpwvqYEOKvP_TegWWObzRwx1ZczPUMTLTY"/>
+<button class="absolute bottom-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+<span class="material-symbols-outlined text-on-surface">add</span>
+</button>
+</div>
+<h4 class="font-headline text-xl mb-1">White Oak Catch-all</h4>
+<p class="text-primary font-bold">$45.00</p>
+</div>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-20 bg-stone-100 dark:bg-stone-950">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 px-12 py-16 max-w-screen-2xl mx-auto">
+<div class="space-y-6">
+<a class="font-serif text-xl text-stone-800 dark:text-stone-200" href="#">The Artisanal Archive</a>
+<p class="font-sans text-sm tracking-wide text-stone-500 dark:text-stone-400 max-w-xs leading-relaxed">
+                © 2024 The Artisanal Archive. Curating a life of warmth.
+            </p>
+<div class="flex gap-4">
+<span class="material-symbols-outlined text-stone-400 hover:text-primary cursor-pointer transition-colors">public</span>
+<span class="material-symbols-outlined text-stone-400 hover:text-primary cursor-pointer transition-colors">camera</span>
+<span class="material-symbols-outlined text-stone-400 hover:text-primary cursor-pointer transition-colors">mail</span>
+</div>
+</div>
+<div class="space-y-6">
+<h5 class="text-xs font-bold uppercase tracking-widest text-stone-900 dark:text-stone-100">The Shop</h5>
+<ul class="space-y-4">
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">New Arrivals</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Best Sellers</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Living Room</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Kitchen &amp; Dining</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<h5 class="text-xs font-bold uppercase tracking-widest text-stone-900 dark:text-stone-100">About</h5>
+<ul class="space-y-4">
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Our Story</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Sustainability</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Wholesale</a></li>
+<li><a class="text-stone-500 dark:text-stone-400 font-sans text-sm hover:text-[#9f3f29] transition-all" href="#">Contact Us</a></li>
+</ul>
+</div>
+<div class="space-y-6">
+<h5 class="text-xs font-bold uppercase tracking-widest text-stone-900 dark:text-stone-100">Join the Circle</h5>
+<p class="font-sans text-sm text-stone-500 dark:text-stone-400">Receive 10% off your first order and exclusive access to new launches.</p>
+<div class="flex">
+<input class="bg-stone-200 dark:bg-stone-800 border-none rounded-l-lg px-4 py-3 text-sm focus:ring-1 focus:ring-primary w-full" placeholder="Your email" type="email"/>
+<button class="bg-stone-800 dark:bg-stone-100 text-stone-100 dark:text-stone-900 px-6 py-3 rounded-r-lg text-sm font-bold hover:bg-primary transition-colors">Join</button>
+</div>
+</div>
+</div>
+</footer>
+</body></html>

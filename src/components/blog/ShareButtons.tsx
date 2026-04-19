@@ -2,14 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type ShareButtonLabels = {
+    nativeShare: string;
+    whatsapp: string;
+    facebook: string;
+    copy: string;
+    copied: string;
+    copyPrompt: string;
+};
+
+const defaultLabels: ShareButtonLabels = {
+    nativeShare: "Share",
+    whatsapp: "WhatsApp",
+    facebook: "Facebook",
+    copy: "Copy for Instagram",
+    copied: "Copied",
+    copyPrompt: "Copy this link",
+};
+
 type ShareButtonsProps = {
     title: string;
     url: string;
+    labels?: Partial<ShareButtonLabels>;
 };
 
-export default function ShareButtons({ title, url }: ShareButtonsProps) {
+export default function ShareButtons({ title, url, labels }: ShareButtonsProps) {
     const [copied, setCopied] = useState(false);
     const [canNativeShare, setCanNativeShare] = useState(false);
+    const mergedLabels = { ...defaultLabels, ...labels };
 
     useEffect(() => {
         setCanNativeShare(typeof navigator !== "undefined" && typeof navigator.share === "function");
@@ -29,7 +49,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
             if (navigator?.clipboard?.writeText) {
                 await navigator.clipboard.writeText(url);
             } else {
-                window.prompt("Copy this link", url);
+                window.prompt(mergedLabels.copyPrompt, url);
             }
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
@@ -54,7 +74,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
                     onClick={handleNativeShare}
                     className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-white transition-colors"
                 >
-                    Share
+                    {mergedLabels.nativeShare}
                 </button>
             )}
             <a
@@ -63,7 +83,7 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
                 rel="noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-white transition-colors"
             >
-                WhatsApp
+                {mergedLabels.whatsapp}
             </a>
             <a
                 href={links.facebook}
@@ -71,14 +91,14 @@ export default function ShareButtons({ title, url }: ShareButtonsProps) {
                 rel="noreferrer"
                 className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-white transition-colors"
             >
-                Facebook
+                {mergedLabels.facebook}
             </a>
             <button
                 type="button"
                 onClick={handleCopy}
                 className="inline-flex items-center justify-center rounded-full border border-border px-4 py-2 text-xs font-semibold text-foreground hover:bg-foreground hover:text-white transition-colors"
             >
-                {copied ? "Copied" : "Copy for Instagram"}
+                {copied ? mergedLabels.copied : mergedLabels.copy}
             </button>
         </div>
     );

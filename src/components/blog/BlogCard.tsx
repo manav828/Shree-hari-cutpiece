@@ -16,11 +16,18 @@ type BlogCardPost = {
 interface BlogCardProps {
     post: BlogCardPost;
     hrefBase?: string;
+    readMoreLabel?: string;
+    locale?: string;
 }
 
-export default function BlogCard({ post, hrefBase = "/blogs" }: BlogCardProps) {
+export default function BlogCard({
+    post,
+    hrefBase = "/blogs",
+    readMoreLabel = "Read Article",
+    locale = "en-US",
+}: BlogCardProps) {
     const formattedDate = post.publishedAt
-        ? new Date(post.publishedAt).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
+        ? new Date(post.publishedAt).toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" })
         : "";
     const showMeta = Boolean(formattedDate || post.readTime);
 
@@ -59,7 +66,7 @@ export default function BlogCard({ post, hrefBase = "/blogs" }: BlogCardProps) {
                     </p>
                 )}
                 <span className="inline-flex items-center gap-2 text-accent text-sm font-medium group-hover:gap-3 transition-all mt-auto">
-                    Read Article
+                    {readMoreLabel}
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>

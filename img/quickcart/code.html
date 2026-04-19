@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "on-primary": "#ffffff",
+                    "tertiary": "#785900",
+                    "primary-fixed-dim": "#ffb4a3",
+                    "primary-container": "#bf573f",
+                    "surface-container-high": "#ebe8e3",
+                    "surface": "#fcf9f4",
+                    "on-secondary-container": "#5e6649",
+                    "on-error-container": "#93000a",
+                    "tertiary-fixed-dim": "#f3bf43",
+                    "tertiary-fixed": "#ffdf9e",
+                    "on-primary-fixed-variant": "#802915",
+                    "on-primary-container": "#ffffff",
+                    "primary": "#9f3f29",
+                    "secondary-container": "#dbe4c0",
+                    "on-tertiary-container": "#ffffff",
+                    "on-secondary-fixed-variant": "#424a2f",
+                    "secondary": "#5a6245",
+                    "surface-container-highest": "#e5e2dd",
+                    "outline-variant": "#ddc0ba",
+                    "on-secondary": "#ffffff",
+                    "inverse-on-surface": "#f3f0eb",
+                    "on-tertiary": "#ffffff",
+                    "surface-bright": "#fcf9f4",
+                    "inverse-primary": "#ffb4a3",
+                    "on-error": "#ffffff",
+                    "on-primary-fixed": "#3d0600",
+                    "on-background": "#1c1c19",
+                    "outline": "#89726c",
+                    "surface-container-low": "#f6f3ee",
+                    "surface-dim": "#dcdad5",
+                    "secondary-fixed": "#dee6c2",
+                    "on-surface-variant": "#56423d",
+                    "error-container": "#ffdad6",
+                    "surface-tint": "#a0402a",
+                    "surface-container-lowest": "#ffffff",
+                    "on-surface": "#1c1c19",
+                    "on-secondary-fixed": "#171e08",
+                    "inverse-surface": "#31302d",
+                    "background": "#fcf9f4",
+                    "primary-fixed": "#ffdad2",
+                    "surface-variant": "#e5e2dd",
+                    "secondary-fixed-dim": "#c2caa8",
+                    "on-tertiary-fixed": "#261a00",
+                    "error": "#ba1a1a",
+                    "surface-container": "#f0ede8",
+                    "tertiary-container": "#977000"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader", "serif"],
+                    "body": ["Manrope", "sans-serif"],
+                    "label": ["Manrope", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .ease-out-expo {
+            transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body antialiased overflow-hidden">
+<!-- Background Content (Simulated Shop Page) -->
+<main class="min-h-screen p-8 lg:p-16 flex flex-col gap-12 opacity-40 select-none">
+<header class="flex justify-between items-center">
+<h1 class="font-headline italic text-4xl text-primary">The Artisanal Archive</h1>
+<nav class="hidden md:flex gap-8 text-stone-600 font-medium">
+<span>Shop</span>
+<span>Collections</span>
+<span>Editorial</span>
+<span>Our Story</span>
+</nav>
+</header>
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+<div class="aspect-[4/5] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Minimalist living room with textured terracotta pottery and neutral woven rug in soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCGNJEo2bEesBv5nl6Mr9UkO7vF1-isqPAfAgoUF0Df4bi8M02YR85gWleztnzEpR-s1_9p06e0TacC_TGRXtOFml-BY1vFIEcgcmM4RRfrX-CAosdolUmRnr2yThDsOvBTnxDw0uD6kE0Z_3SZduKV9-ImS7pmM3TJvyPIrvkkt6T1DlybCFXLqL5HhVFMEKenqMsKP_EoTjnIAyjwL6_9LmrriwOeg415YOI5roFET_Ua7CyT6yr2wxs7oTE2axxMIxO_CnIvp-g"/>
+</div>
+<div class="aspect-[4/5] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Handcrafted ceramic vase with dried pampas grass on a rustic wooden table against a cream wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBnK-sgVNnTV4CiMvKTzZMIWHuLLzhQ3jX6O4ebDScU2Jl7HHRyHDwEsl-l0eYfn-nNPbeEYkd3-ykvKQLhjgo_4CBSrk7V8QB9hfQHZj6L-ynK3vUOV2hfDohtG3Oyob_wvVuxTD1o7MMqVjhdzCwLloUl7iXDk3jw4gSf7fA1VbcOr30OjPKQLnA8iFjvzRWNF6EHfeVYDOyTUDFWFTJHVlPQeo7oa-C2LOeqOANr7jbwWjXwGudk-sH51K3L3CexxtoSrapqu2Y"/>
+</div>
+<div class="aspect-[4/5] bg-surface-container rounded-xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="Artisanal woven pendant light fixture hanging in a sun-drenched bohemian interior" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANcyF0BRNEwvUxozvHsAufCc3TvwvYStsxnW0xcStPxbkCfKVPg92wMHpQjiKGxT6atoFeaKsWwFsvm9pS8yEx1z2IucmZlZvv2nh0v3cgGtC7EW1iRJDQelOjKA5Z5kbOLrY5KRc6MRoCLaqIhBdtlig48YoXoDG86EvWFIHbwMk7fa_nhIUrflTK6lM5PqJaqAh3fj3lE6ID0GhnuYBDV_-BZEnh3NzQ31DnpPeII5XCJRj2J2P_7XwSA1CTmX82RXeTFbtVl0Q"/>
+</div>
+</div>
+</main>
+<!-- Dimmed Background Overlay -->
+<div class="fixed inset-0 bg-stone-900/40 backdrop-blur-sm z-50"></div>
+<!-- SideNavBar (Mini Cart) -->
+<aside class="fixed right-0 top-0 h-full w-full sm:w-[480px] bg-[#fcf9f4] shadow-[-20px_0_40px_rgba(0,0,0,0.05)] z-[60] flex flex-col ease-out-expo duration-500 transform translate-x-0 rounded-l-[2rem] overflow-hidden">
+<!-- Header -->
+<div class="px-8 pt-8 pb-6 flex justify-between items-center border-b border-outline-variant/20">
+<div class="flex flex-col">
+<h2 class="font-headline italic text-2xl text-primary">Your Archive</h2>
+<span class="text-sm font-label text-stone-500 uppercase tracking-widest">2 items</span>
+</div>
+<button class="w-10 h-10 flex items-center justify-center rounded-full bg-surface-container-high text-on-surface-variant hover:bg-surface-variant transition-colors">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Scrollable Content -->
+<div class="flex-1 overflow-y-auto px-8 py-6 space-y-10">
+<!-- Cart Items -->
+<div class="space-y-8">
+<!-- Item 1 -->
+<div class="flex gap-5 group">
+<div class="w-24 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Close-up of a textured terracotta mug with artisanal glaze and organic shape" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDziUvfYLAzaVrkfZdKhURa7cgwdGNZ6xw43heAqCICCcY-PcS11PI_CSjWxypp6EAPOlpjUwWOCjFwfNpmvTkpIgbw3seJu_AtoBXorRtCG3u_QA8eErXDRNPOht945tNqQhA1-oMllpV77APZkIgSgW-cyY_-UTp1y8wzXWnlp0h3-xwjvNg907hOaHcTrha78MIhcDWeyHivE1BKKuRdI0ca6xs7mzDXM-f3w9qwtR3abvOfM_4v5sdeqJfcotxdz8kW7VF7bmY"/>
+</div>
+<div class="flex-1 flex flex-col justify-between py-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-lg leading-tight text-on-surface">Ocre Terra Mug</h3>
+<p class="text-xs font-label text-stone-500 mt-1">Set of 2 • Earthenware</p>
+</div>
+<button class="text-stone-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div class="flex items-center bg-surface-container rounded-lg p-1">
+<button class="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-primary"><span class="material-symbols-outlined text-base">remove</span></button>
+<span class="w-8 text-center text-sm font-semibold">1</span>
+<button class="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-primary"><span class="material-symbols-outlined text-base">add</span></button>
+</div>
+<span class="font-headline text-lg text-primary">$48.00</span>
+</div>
+</div>
+</div>
+<!-- Divider -->
+<div class="h-px bg-surface-container-highest/30"></div>
+<!-- Item 2 -->
+<div class="flex gap-5 group">
+<div class="w-24 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-surface-container">
+<img class="w-full h-full object-cover" data-alt="Small woven decorative wall basket with natural fibers and dark earth tone patterns" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC7JkFd66dhU4db8Yfk5sQB5Q8he1txtG-bKCVfh1PQFl5H02p7ZWgCAGwVhGZRzYfMm3GnPo4oA0xR8T6BvpqWfpxTn3YtU4Usz6F15MIu3jTH42txC3sJ8IXNEgMH2i8sKn9RwHtowocnkAHPmB30Xyq1lzT_My4ynOLdYFarCMUxSVaAqtQTWnlW2eP-lG4tJQL2ZqLbGAEXbDxKo3RT6rXT23WSk1hkro-CiRNT_CUNzCDsMhij4LJtbvELUaNJWj8_B35Euj0"/>
+</div>
+<div class="flex-1 flex flex-col justify-between py-1">
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-headline text-lg leading-tight text-on-surface">Woven Willow Basket</h3>
+<p class="text-xs font-label text-stone-500 mt-1">Medium • Natural Tint</p>
+</div>
+<button class="text-stone-400 hover:text-error transition-colors">
+<span class="material-symbols-outlined text-sm">delete</span>
+</button>
+</div>
+<div class="flex justify-between items-end">
+<div class="flex items-center bg-surface-container rounded-lg p-1">
+<button class="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-primary"><span class="material-symbols-outlined text-base">remove</span></button>
+<span class="w-8 text-center text-sm font-semibold">1</span>
+<button class="w-7 h-7 flex items-center justify-center text-stone-500 hover:text-primary"><span class="material-symbols-outlined text-base">add</span></button>
+</div>
+<span class="font-headline text-lg text-primary">$62.00</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Upsell Section -->
+<div class="pt-8 border-t border-outline-variant/10">
+<h4 class="font-headline italic text-xl text-secondary mb-6">Complete your space</h4>
+<div class="grid grid-cols-2 gap-4">
+<!-- Upsell 1 -->
+<div class="space-y-3">
+<div class="aspect-square bg-surface-container-low rounded-xl overflow-hidden group cursor-pointer relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Hand-poured soy wax candle in a dark amber glass jar with a minimalist label" src="https://lh3.googleusercontent.com/aida-public/AB6AXuARsFmn3la9e456fMRqSRDpzVXeRMVQZJYnQ5H72EE_kwcGe-YTHacLomSSzhWFlQGeirPzfC3nu_Sqe3qYVdAVSJgI_aMPqAm_XS7vuP_RWJy6gvqxVli-9r0PrUWdyEbXwxgsUgBRzbu322qiBdzZ9AvlNLWQq91seq02fmzEUTZ5lgY_bISRXNYo3gdTcyWgutZROPwET_-qcvTGJqmMMRFiArUfbNr1u_yDPZeQVp7A1Lw8dC6onkj5k9C348ndCgIZRlQgsZM"/>
+<button class="absolute bottom-2 right-2 bg-white/90 backdrop-blur text-primary w-8 h-8 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Amber Soy Candle</p>
+<p class="text-xs text-stone-500">$24.00</p>
+</div>
+</div>
+<!-- Upsell 2 -->
+<div class="space-y-3">
+<div class="aspect-square bg-surface-container-low rounded-xl overflow-hidden group cursor-pointer relative">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Linen napkin set in a muted sage green color, neatly folded on a neutral surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA6TZ-4rKeuVruPQHPVdYPrylwf2mxw0uN-oHcy98icVsaqFdEHjVy0_Ywa5uVayHwDVzB2N46iuAnov1lEi5dlRfieNczSm_58BSe9BSQqh4_33hxPjiondainq1JbD1b5QChQJXumAr1uHcgLW8SPIhaQXo4BUVF-mK2Ba3OjdrcszSSWgAEu6I3PLuTdvm1Sr2O3QLh7msvEeJgIbLdmqG_UtCjeKxtHhojNbSFzYE9xxl-KsU2yKEDd6N2wI_D3K3OoPD7XFq4"/>
+<button class="absolute bottom-2 right-2 bg-white/90 backdrop-blur text-primary w-8 h-8 rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity">
+<span class="material-symbols-outlined text-lg">add</span>
+</button>
+</div>
+<div>
+<p class="text-sm font-medium text-on-surface">Linen Napkin Set</p>
+<p class="text-xs text-stone-500">$32.00</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Sticky Footer -->
+<div class="p-8 bg-surface-container-low shadow-[0_-20px_40px_rgba(0,0,0,0.02)] space-y-6">
+<!-- Progress Bar Shipping -->
+<div class="space-y-3">
+<div class="flex justify-between text-xs font-label uppercase tracking-widest text-stone-600">
+<span>Free Shipping</span>
+<span class="text-primary font-bold">You’re $40 away</span>
+</div>
+<div class="h-1.5 w-full bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary w-[70%] rounded-full"></div>
+</div>
+</div>
+<!-- Subtotal -->
+<div class="flex flex-col gap-1">
+<div class="flex justify-between items-baseline">
+<span class="font-headline text-xl text-on-surface">Subtotal</span>
+<span class="font-headline text-2xl text-primary">$110.00</span>
+</div>
+<p class="text-xs text-stone-500 font-label">Shipping &amp; taxes calculated at checkout</p>
+</div>
+<!-- Actions -->
+<div class="flex flex-col gap-3">
+<button class="w-full bg-primary text-on-primary py-4 px-6 rounded-lg font-bold tracking-wide shadow-lg shadow-primary/20 hover:bg-primary-container transition-all flex items-center justify-center gap-2">
+                    Checkout Now
+                    <span class="material-symbols-outlined text-lg">arrow_forward</span>
+</button>
+<button class="w-full bg-transparent border border-outline text-on-surface py-3 px-6 rounded-lg font-semibold hover:bg-surface-container-high transition-all">
+                    View Cart
+                </button>
+</div>
+</div>
+</aside>
+<!-- FAB for demo context - suppressed on this screen per mandate but provided as reference for product landing -->
+<!-- <button class="fixed bottom-8 right-8 bg-primary text-on-primary p-4 rounded-full shadow-xl">...</button> -->
+</body></html>

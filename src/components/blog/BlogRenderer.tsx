@@ -56,7 +56,7 @@ function renderSection(section: BuilderSection) {
             const linkUrl = asString(content.link_url);
             const image = imageUrl ? (
                 <div className="relative w-full overflow-hidden rounded-lg bg-background-secondary" style={{ aspectRatio: "16 / 9" }}>
-                    <Image src={imageUrl} alt={alt} fill className="object-cover" />
+                    <Image src={imageUrl} alt={alt} fill sizes="(max-width: 1024px) 100vw, 1024px" className="object-cover" />
                 </div>
             ) : null;
             if (linkUrl && image) {
@@ -72,7 +72,7 @@ function renderSection(section: BuilderSection) {
                 <figure className="space-y-3">
                     {imageUrl && (
                         <div className="relative w-full overflow-hidden rounded-lg bg-background-secondary" style={{ aspectRatio: "16 / 9" }}>
-                            <Image src={imageUrl} alt={alt} fill className="object-cover" />
+                            <Image src={imageUrl} alt={alt} fill sizes="(max-width: 1024px) 100vw, 1024px" className="object-cover" />
                         </div>
                     )}
                     {caption && <figcaption className="text-sm text-text-secondary" dangerouslySetInnerHTML={{ __html: caption }} />}
@@ -87,7 +87,7 @@ function renderSection(section: BuilderSection) {
             const isImageLeft = imagePosition === "left";
             const imageBlock = imageUrl ? (
                 <div className="relative w-full overflow-hidden rounded-lg bg-background-secondary" style={{ aspectRatio: "4 / 3" }}>
-                    <Image src={imageUrl} alt={alt} fill className="object-cover" />
+                    <Image src={imageUrl} alt={alt} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                 </div>
             ) : null;
             const textBlock = renderHtml(textHtml);
@@ -189,7 +189,13 @@ function renderSection(section: BuilderSection) {
                         if (!imageUrl) return null;
                         return (
                             <div key={index} className="relative w-full overflow-hidden rounded-lg bg-background-secondary" style={{ aspectRatio: "4 / 3" }}>
-                                <Image src={imageUrl} alt={alt} fill className="object-cover" />
+                                <Image
+                                    src={imageUrl}
+                                    alt={alt}
+                                    fill
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                                    className="object-cover"
+                                />
                             </div>
                         );
                     })}

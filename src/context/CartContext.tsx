@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { trackAddToCart } from "@/lib/tracking";
 
 export interface CartItemOption {
   group_id?: string;
@@ -26,9 +27,16 @@ export interface CartItem {
   options_key?: string;
 }
 
+export interface AddToCartInput extends Omit<CartItem, "quantity" | "id"> {
+  id: string;
+  meters: number;
+  options_key?: string;
+  analytics_source?: string;
+}
+
 interface CartContextType {
   items: CartItem[];
-  addToCart: (item: Omit<CartItem, "quantity" | "id" | "options_key"> & { id: string; meters: number }) => void;
+  addToCart: (item: AddToCartInput) => void;
   removeFromCart: (id: string) => void;
   updateQuantity: (id: string, meters: number) => void;
   clearCart: () => void;
@@ -75,20 +83,34 @@ export function CartProvider({ children }: { children: ReactNode }) {
       .join(";");
   };
 
-  const addToCart = (item: Omit<CartItem, "quantity" | "id" | "options_key"> & { id: string; meters: number }) => {
-    const optionsKey = item.options_key || buildOptionsKey(item.selected_options);
-    const lineId = `${item.id}::${optionsKey}`;
+  const addToCart = (item: AddToCartInput) => {
+    const { analytics_source, ...cartItem } = item;
+    const optionsKey = cartItem.options_key || buildOptionsKey(cartItem.selected_options);
+    const lineId = `${cartItem.id}::${optionsKey}`;
+
     setItems((prev) => {
       const existing = prev.find((i) => i.id === lineId);
       if (existing) {
         return prev.map((i) =>
           i.id === lineId
-            ? { ...i, meters: i.meters + item.meters, quantity: i.quantity + 1 }
+            ? { ...i, meters: i.meters + cartItem.meters, quantity: i.quantity + 1 }
             : i
         );
       }
-      return [...prev, { ...item, id: lineId, options_key: optionsKey, quantity: 1 }];
+      return [...prev, { ...cartItem, id: lineId, options_key: optionsKey, quantity: 1 }];
     });
+
+    trackAddToCart({
+      productId: cartItem.product_id || cartItem.id,
+      productName: cartItem.name,
+      variantId: cartItem.variant_id,
+      unitPrice: cartItem.price,
+      quantity: cartItem.meters,
+      sellingMode: cartItem.selling_mode,
+      source: analytics_source || "cart_api",
+      hasOptions: Boolean(cartItem.selected_options && cartItem.selected_options.length > 0),
+    });
+
     setIsCartOpen(true);
   };
 

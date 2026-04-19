@@ -1,0 +1,470 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Terra &amp; Loom | The Artisanal Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary": "#ffffff",
+                      "primary-container": "#bf573f",
+                      "on-secondary-container": "#5e6649",
+                      "surface-dim": "#dcdad5",
+                      "surface-container": "#f0ede8",
+                      "on-tertiary-fixed": "#261a00",
+                      "on-background": "#1c1c19",
+                      "on-primary-container": "#ffffff",
+                      "tertiary-container": "#977000",
+                      "on-secondary": "#ffffff",
+                      "background": "#fcf9f4",
+                      "surface": "#fcf9f4",
+                      "on-surface-variant": "#56423d",
+                      "on-surface": "#1c1c19",
+                      "secondary": "#5a6245",
+                      "on-secondary-fixed-variant": "#424a2f",
+                      "on-tertiary-fixed-variant": "#5b4300",
+                      "secondary-fixed-dim": "#c2caa8",
+                      "inverse-primary": "#ffb4a3",
+                      "tertiary-fixed-dim": "#f3bf43",
+                      "surface-bright": "#fcf9f4",
+                      "secondary-container": "#dbe4c0",
+                      "on-error-container": "#93000a",
+                      "surface-variant": "#e5e2dd",
+                      "primary-fixed": "#ffdad2",
+                      "inverse-on-surface": "#f3f0eb",
+                      "on-primary-fixed": "#3d0600",
+                      "outline-variant": "#ddc0ba",
+                      "surface-tint": "#a0402a",
+                      "error": "#ba1a1a",
+                      "tertiary": "#785900",
+                      "primary-fixed-dim": "#ffb4a3",
+                      "on-tertiary-container": "#ffffff",
+                      "tertiary-fixed": "#ffdf9e",
+                      "on-tertiary": "#ffffff",
+                      "surface-container-low": "#f6f3ee",
+                      "on-primary-fixed-variant": "#802915",
+                      "on-secondary-fixed": "#171e08",
+                      "secondary-fixed": "#dee6c2",
+                      "surface-container-high": "#ebe8e3",
+                      "on-error": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "surface-container-highest": "#e5e2dd",
+                      "outline": "#89726c",
+                      "inverse-surface": "#31302d",
+                      "primary": "#9f3f29",
+                      "error-container": "#ffdad6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Newsreader", "serif"],
+                      "body": ["Manrope", "sans-serif"],
+                      "label": ["Manrope", "sans-serif"]
+              }
+            },
+          }
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3, .font-serif { font-family: 'Newsreader', serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- TopNavBar Shell -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 dark:bg-stone-900/80 backdrop-blur-md flex justify-between items-center px-8 py-4 max-w-full mx-auto">
+<div class="flex items-center gap-8">
+<a class="text-2xl font-serif italic text-[#9f3f29] dark:text-[#bf573f]" href="#">The Artisanal Archive</a>
+<div class="hidden md:flex gap-8 items-center">
+<a class="font-serif text-[#9f3f29] font-bold border-b-2 border-[#9f3f29] pb-1" href="#">Collections</a>
+<a class="font-serif text-stone-600 dark:text-stone-400 hover:text-[#9f3f29] transition-colors" href="#">Shop by Room</a>
+<a class="font-serif text-stone-600 dark:text-stone-400 hover:text-[#9f3f29] transition-colors" href="#">Craftsmanship</a>
+<a class="font-serif text-stone-600 dark:text-stone-400 hover:text-[#9f3f29] transition-colors" href="#">New Arrivals</a>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<button class="material-symbols-outlined text-stone-800 hover:opacity-80 transition-all duration-300">shopping_bag</button>
+<button class="material-symbols-outlined text-stone-800 hover:opacity-80 transition-all duration-300">person</button>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Hero Section: Asymmetric & Editorial -->
+<section class="relative min-h-[921px] flex items-center px-8 md:px-20 overflow-hidden">
+<div class="absolute inset-0 z-0">
+<img class="w-full h-full object-cover brightness-95" data-alt="Sun-drenched bohemian living room with terracotta walls, woven jute rug, and artisanal ceramic vases on a wooden table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAaCDw8QHOe1teenctDH0izVv3SyWALN4oKhJKJT02-KFwZOeGvRGYzAQNhG8qV-l3cIcL_rHBVtnFMzrSzu-W8FlA4AKv5BdCRHExJiip9SEuuTpnGmltnZG51nOlNOTt8u1rDb9xKXrkCs7AG_iIw0kYMS7eESLwUets5aeovBy3ugUCaaRQtUEEqFLStdqYA4lf1_v1WvhIH245Kyqzm1CChNDNxtFPmQiYyvHCyDw-FrgJykVATChqfR4NAAY2ndkAHVKR-xd4"/>
+<div class="absolute inset-0 bg-gradient-to-r from-surface/40 to-transparent"></div>
+</div>
+<div class="relative z-10 max-w-2xl">
+<span class="inline-block px-4 py-1 rounded-full bg-secondary-container text-on-secondary-fixed-variant text-sm mb-6 font-medium tracking-wide">Meticulously Curated</span>
+<h1 class="text-6xl md:text-8xl font-serif text-on-surface leading-none mb-8 italic">Embrace the Warmth</h1>
+<p class="text-xl md:text-2xl text-on-surface-variant font-light mb-12 max-w-lg leading-relaxed">
+                    Handcrafted home essentials that tell a story of heritage, earth, and the modern nomad’s spirit.
+                </p>
+<div class="flex gap-4">
+<button class="bg-primary text-on-primary px-10 py-5 rounded-lg text-lg font-medium hover:opacity-90 transition-all active:scale-95 shadow-sm">Explore Collection</button>
+<button class="bg-white/30 backdrop-blur-md text-on-surface border border-white/40 px-10 py-5 rounded-lg text-lg font-medium hover:bg-white/50 transition-all">View Lookbook</button>
+</div>
+</div>
+</section>
+<!-- USP Strip -->
+<section class="py-12 px-8 bg-surface-container-low">
+<div class="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">local_shipping</span>
+<div>
+<p class="font-bold text-sm">Free Shipping</p>
+<p class="text-xs text-on-surface-variant">On orders over $150</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">assignment_return</span>
+<div>
+<p class="font-bold text-sm">Easy Returns</p>
+<p class="text-xs text-on-surface-variant">30-day window</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">verified_user</span>
+<div>
+<p class="font-bold text-sm">Secure Payments</p>
+<p class="text-xs text-on-surface-variant">100% encrypted</p>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-3xl">temp_preferences_custom</span>
+<div>
+<p class="font-bold text-sm">Handmade Quality</p>
+<p class="text-xs text-on-surface-variant">By global artisans</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Curated Collections: Asymmetric Bento -->
+<section class="py-24 px-8 max-w-7xl mx-auto">
+<div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
+<div>
+<h2 class="text-4xl md:text-5xl font-serif text-on-surface italic">The Curated Archive</h2>
+<p class="text-on-surface-variant mt-4 text-lg">Discovery of ancient techniques in modern forms.</p>
+</div>
+<a class="text-primary font-bold tracking-widest text-sm uppercase flex items-center gap-2 group" href="#">
+                    View All Categories <span class="material-symbols-outlined transition-transform group-hover:translate-x-1">arrow_forward</span>
+</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 h-[800px] md:h-[600px]">
+<div class="md:col-span-8 group relative overflow-hidden rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Close up of various textured linen textiles and woven blankets stacked neatly in earthy tones of sage, terracotta and cream" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgGWz_CGhyiG1VT1RaZgZQpOuiV3guxCmGGg-Ck_hWfMQnik09h6EHA7CtwkZ78lh8iXTWLwnaQ5or0JoglQz7WmGj1E463Cu1KJxs5Z-JHhiYy6yw2kcjOBb9G2Pm-0mL998AEO_lZFv6_yj-Wdf2ARuaOeqZ8xFLEbuenIKB5LEIeqSRJlKerMc-O82U4xh705A7TylzQ_5ofxtA9wg9TGtTjM0IEYECWv4dP6bF3T-Cd885YMS6uwq9fZQrB99U9Jp57394idc"/>
+<div class="absolute inset-0 bg-black/20 group-hover:bg-black/10 transition-colors"></div>
+<div class="absolute bottom-10 left-10 text-white">
+<h3 class="text-4xl font-serif mb-2">Textiles</h3>
+<p class="font-light tracking-wide italic">Woven by hand in the High Atlas</p>
+</div>
+</div>
+<div class="md:col-span-4 grid grid-rows-2 gap-6">
+<div class="group relative overflow-hidden rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Collection of minimalist handmade ceramic bowls and plates on a stone ledge with soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDZ-_C9CHCuUxDPzka7hT-mxE7s22WEDsn9MJR6FG3fMMWnp_DQtnZTRzMaO9JejH3xbQkMqRIDZ6DOl7DF31yMPaL-9mbmvu2X5zw1yiNg14xoKJL4w6TjTalZgDZUzygjUPH7ZXN2s0AAjxPuteN-Sfckqm6ysSglWre-iczbhsQKxCY7BTu3r3KpAQFULLQtKpxw01CreZodwTIMnOAPKrou_j0gTR1S75RsD-hUb7ZS3wZCG3Wylo88PLSD7jnwpt77v8dPvyk"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="text-2xl font-serif mb-1">Ceramics</h3>
+</div>
+</div>
+<div class="group relative overflow-hidden rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" data-alt="Bohemian wall art featuring abstract line drawings and framed woven macrame hanging on a light beige wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7SMIREBK8NFKT284mkGwxiibTc2k6703pHAZMd0awV3y5FPsfqABVsN5fbdp26SKmMifDc8MJLDesJ1yLSjK_4pVlw-g8SF12248TZPYyon2Obea0n6SOpIhI8r-kR648LeLs5AY1PSxvz3TZqVOkIw1TKN2FW3RUeHOzHpy5pESdIymywJCFNgOb55AczeLfIx9ObL_olFFdBUBkmdwynuVRNHisgsa5WJN6o-AP_IbKd5CV_X0hvvn0_lTDtquCu7-6yIK9d20"/>
+<div class="absolute inset-0 bg-black/20"></div>
+<div class="absolute bottom-6 left-6 text-white">
+<h3 class="text-2xl font-serif mb-1">Wall Art</h3>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Shop By Room -->
+<section class="py-24 bg-surface-container md:py-32">
+<div class="max-w-7xl mx-auto px-8">
+<div class="text-center mb-16">
+<h2 class="text-5xl md:text-7xl font-serif text-on-surface mb-6 italic">Spaces to Inhabit</h2>
+<p class="text-on-surface-variant max-w-2xl mx-auto text-lg md:text-xl font-light leading-relaxed">Find harmony in every corner of your sanctuary with pieces designed for mindful living.</p>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="flex flex-col gap-4">
+<div class="aspect-[4/5] rounded-full overflow-hidden border-8 border-surface group">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Modern living room with low wooden furniture, floor cushions, and large green leafy plants in sunbeams" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCm7n_OQfY22IJF7wJGnyr3EOg7ZC2fdZz3IdCLT6TRk-xW6FRJAl_88GVgdxSQLCiCGbh6CNjbEdUxrbIZKreY8WHH_tB95Ugk1xRiR6r5w-FBXSpVPop-LczhOnBo0NFhx2cRm3IODR9FzE_YOsKANpdSUDE7RzHeTdOADmZJv2JMCWXv-2gt5nUC0zfHekwZvmbgzqu9y_GgzZWDyTXJ17xdZXKX2fmUg0b_8n8_5VdLn5E-vM-5nKWp34pLgODozOcP0NV0DAs"/>
+</div>
+<p class="text-center font-serif text-xl italic mt-2">Living Room</p>
+</div>
+<div class="flex flex-col gap-4">
+<div class="aspect-[4/5] rounded-full overflow-hidden border-8 border-surface group">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Cozy bedroom with white linen bedding, a natural wood headboard, and warm ambient lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDIpV0cZeRk2jp8Cj2XkoHx3kuFw9Yly4PbXUPAM4YHVgi0uQvuDn4nKJMMib0H3rUAP8uh5DbzDhGDzsSRAH6NRFw6YvLTMDdOjuEjWbS_6Q1hSUaG2xBj6zAxddzT3qy1EFkPfIH4XNOLRi2Kdhhdz9pGF1ssV9ti56aWewch82wVfyw1igseCIx4fImY1OyNLCb4XzwHZ_xbUuQsJyzJoLu1btF0PbSICsOLSJcpo39u_p4b-rotMppre1fPC-prlC8uEcfBErw"/>
+</div>
+<p class="text-center font-serif text-xl italic mt-2">Bedroom</p>
+</div>
+<div class="flex flex-col gap-4">
+<div class="aspect-[4/5] rounded-full overflow-hidden border-8 border-surface group">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Outdoor balcony with rattan furniture, hanging plants, and a small wooden coffee table at sunset" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA8xOGl24iEBrATb0d9MTV_gCyZM_fkYaEQ-EZLFU4GK-MyS1O4_ED8cbgzLHIOJV59NqBWUlNXrNCjPmo44OB30nGqwHaHogAdWQiFmY-TwhtIc38YMDxx52NmZXLglK58Baadh_OqM9I2pH2YcDQwz6-4_DFhWsKHY7pnVJ3Pjo_ErvHX0MOP8qJOExyqc-3l_q-gjivj5TBX5u9IFZNSDHfuKghSVA66e1oNXkJxdn8r28zVnjOpj0LA0hTiN18h7kea_juR7uo"/>
+</div>
+<p class="text-center font-serif text-xl italic mt-2">Balcony</p>
+</div>
+<div class="flex flex-col gap-4">
+<div class="aspect-[4/5] rounded-full overflow-hidden border-8 border-surface group">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="Minimalist home workspace with a light oak desk, ergonomic chair, and artisanal desk accessories" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDHKo9r2n4ZupyXkGLuZimpf5BHUz1nrzHrWBlPW9QcNu57pwQj8YRvFd7zlkiOw1rOGhmdcB299MHEhkMcUeNWAebJV1u4T0yhcVtYrv5zNX2wwkHynpgHZjTLK50LG2fSn3RkbnmG0E7RWEmQCxGs5TXN3BiQ3klJhd2qom6qkT4KyHIAzEpXrwXJlClRBvu0wWvTKe3xy6XlGkwGf9zI0Cn5UWbiQ0hxsKv0XYIL7T2f_muFJw-NPTu9Rx17czdSDOi_zg_lH4s"/>
+</div>
+<p class="text-center font-serif text-xl italic mt-2">Workspace</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Featured Product: The Story -->
+<section class="py-24 px-8 overflow-hidden">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-16">
+<div class="w-full md:w-1/2 relative">
+<div class="absolute -top-10 -left-10 w-40 h-40 bg-secondary-container rounded-full opacity-20 blur-3xl"></div>
+<img class="rounded-2xl shadow-2xl relative z-10 w-full object-cover aspect-square" data-alt="Close-up of a hand-loomed wool rug with intricate geometric patterns in muted cream and ochre tones" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdYMMrk_iP8YI9r1TcSRJChlJxrF5_rPlKZEDvnGgqJkL-Jll4RGcXwnKg8e0ykkeSKBg9a3Ie1LRnwnVoZ1-ecU3WcyO3gh5aBxN7Mn7e0DwIPSGuNkOij5DAvUNYncfMFCcqFr_rPV7MwRFHfJjocOv3n1XZ1qqgTlpuXA1SOiVZ866hFFLg62dcIOV8N0N4j_Nu5kKT8Wx0s8WINMpKrTpukDykyMcEhR7ugo6gTN6Hucq5sV83CZYbI-avqR7vUgCSupzP974"/>
+</div>
+<div class="w-full md:w-1/2">
+<p class="text-primary font-bold tracking-[0.2em] text-sm mb-4 uppercase">Featured Craft</p>
+<h2 class="text-5xl font-serif text-on-surface mb-6 leading-tight italic">The Saharan Drift Throw</h2>
+<p class="text-on-surface-variant text-lg leading-relaxed mb-8">
+                        Each Saharan Drift throw is hand-woven by a collective of women in the Atlas Mountains, using wool naturally dyed with indigo and pomegranate skins. A process that takes 14 days of patient labor.
+                    </p>
+<div class="flex items-center gap-6 mb-10">
+<span class="text-3xl font-serif text-on-surface">$245.00</span>
+<span class="h-8 w-px bg-outline-variant"></span>
+<div class="flex items-center gap-1 text-secondary">
+<span class="material-symbols-outlined fill">star</span>
+<span class="material-symbols-outlined fill">star</span>
+<span class="material-symbols-outlined fill">star</span>
+<span class="material-symbols-outlined fill">star</span>
+<span class="material-symbols-outlined fill">star</span>
+<span class="text-xs text-on-surface-variant ml-2">(48 reviews)</span>
+</div>
+</div>
+<button class="bg-primary text-on-primary px-12 py-5 rounded-lg flex items-center gap-4 hover:opacity-90 active:scale-95 transition-all">
+                        Pre-order for July Batch <span class="material-symbols-outlined">shopping_bag</span>
+</button>
+</div>
+</div>
+</section>
+<!-- New Arrivals: Product Grid -->
+<section class="py-24 bg-surface-container-low px-8">
+<div class="max-w-7xl mx-auto">
+<div class="flex justify-between items-end mb-16">
+<h2 class="text-4xl font-serif text-on-surface italic">Freshly Harvested</h2>
+<a class="text-on-surface-variant font-medium underline underline-offset-8 decoration-outline-variant" href="#">See the full collection</a>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+<!-- Product 1 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[3/4] overflow-hidden bg-surface-container mb-4 rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Tall minimalist clay vase with a rough, sandy texture and single dried flower stem" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBE7n-xjJ0KT5jhua9ISVzx6avgS6zJZ8CDTg2pFMpJIdmgOSY_dg5yv5YRxLZH6VrrZEQSAqXGuGGtnB7YcR7sEuBpTirTSK3sEr5ffAHL3tHeuAq4hqEAdVqqanDdb2EX7eJ0eGFkY-ePkUpytWnNu9L2OafVY5ZtOLaxTH5tEB8D7-F1cQWXeJ8wQVbs9_hWazqFhbZl4FmJGuAiKAZSPkOPaji5ySu7cWvo9U6Td_v-l2lyV9TfMtcBt1ezznW-CRZ45IFxjNg"/>
+<div class="absolute top-4 left-4 bg-white px-3 py-1 rounded-full text-xs font-bold uppercase tracking-tighter">Limited</div>
+</div>
+<h4 class="font-serif text-xl mb-1 group-hover:text-primary transition-colors">Arid Clay Vase</h4>
+<p class="text-on-surface-variant text-sm font-medium">$88.00</p>
+</div>
+<!-- Product 2 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[3/4] overflow-hidden bg-surface-container mb-4 rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Handcrafted beeswax candles in textured amber glass jars on a rustic wooden tray" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAU6KYGk0mGhSIzp9AieDxEfKb2FJ6hB3iRKg6JaQBIyzLcbLzxU5rvfucrdz4a8lJTVs6wmenbFDWGGYnKmF6ljlfxIOXBNMZMToAhDfnq_4gCoMgpXR1RhlsqLNIRGvyQN3sXjRVFpOXkbPM2136JjOq4KFboKkptV7J4FlJ4Im12xpSheKhFnLhutXGQLrOgANgAGh9zeAiRe5X1iq4Ga9nXxpwjhTE8t8B8XP9pOx2XfZePDLGm50Dfqss-7rO6dfAlzna9ZsE"/>
+</div>
+<h4 class="font-serif text-xl mb-1 group-hover:text-primary transition-colors">Dusk Glow Candle</h4>
+<p class="text-on-surface-variant text-sm font-medium">$34.00</p>
+</div>
+<!-- Product 3 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[3/4] overflow-hidden bg-surface-container mb-4 rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Natural woven seagrass storage baskets in various sizes with leather handles" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAAJPLjNZbaft28_YyZeWuIGgjNADIWXncBGWppgDIPNRXW-707oz_4v_5NfPcUl2uArriTUeJjVOoGNGQMyTQHRz4NylAF9smjBSpo-JipydMxgmC31CiQkC4dKwHaze2cb69iJfZE4EvYHtM_5TlUNMvytgM-zvcnW2HtqH0Ztg0ZWMUoZ3OH1TSs6g7YvEuks2dlX39CkOqQNey3zu9EDJpyaYKSI0ZfarsCxk3N7swPFRD_Jk72B7BruwQBXqrWsYUoUUMU76A"/>
+</div>
+<h4 class="font-serif text-xl mb-1 group-hover:text-primary transition-colors">Seagrass Coven Basket</h4>
+<p class="text-on-surface-variant text-sm font-medium">$110.00</p>
+</div>
+<!-- Product 4 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[3/4] overflow-hidden bg-surface-container mb-4 rounded-xl">
+<img class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" data-alt="Minimalist abstract face wall sculpture made of white plaster on a warm beige wall" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB5qKUxT83TaJjeQ3_CwnPtkpdP9JrviycoOt7JxZjzXKeSuZSB6xusNIl2sojEo_yROXyk6Qmy642M7uGH-CqSV-OaL4qJLPxCiXuL1xPpHNDPy5zOH8tdNdKIaGice7zbwIY1Rv3wwXrsDQfG4OZi2u544qO0Gs7NTUFUVN9N1UQHOlmSCvzt2ROPBZ9-JE-pfipLhKWVI6ZuTT1JNDZCiQmN_QV6b2S7OfHwIyYYcSdaMJHemMxbn-Xc18Zv7t24yCwkHQblUhQ"/>
+</div>
+<h4 class="font-serif text-xl mb-1 group-hover:text-primary transition-colors">Plaster Muse Wall Sculpture</h4>
+<p class="text-on-surface-variant text-sm font-medium">$165.00</p>
+</div>
+</div>
+</div>
+</section>
+<!-- Social Proof / Testimonials -->
+<section class="py-24 px-8 overflow-hidden">
+<div class="max-w-7xl mx-auto">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-20 items-center">
+<div class="grid grid-cols-2 gap-4">
+<img class="rounded-xl w-full aspect-square object-cover" data-alt="Satisfied customer relaxing on a sofa with artisan pillows from Terra and Loom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC95laBVGT7l33J0TdPoEJ76KhoB5HIpDY6huh4veCGguHOkMla5i7YChPLj1cPxhjLgIf5_vPH0pqPkOdkzZIb-BHfOPI2dhQjSk6OOOQDUyyRgyZBXJCc7VpQ28qMaz5ALSRvFnuGoeBMAp1Dwr5y6CTut6Php6GM-yQk8mK3VIcx09RvqyJPolh3evwZUbLmV0BDLjW_Rg2CFL8Mids_h7RgC5uddCVr9swqs-ZFi1RrkisVHowXQ15r8MnolmKV76Jj6gJQLMM"/>
+<img class="rounded-xl w-full aspect-square object-cover mt-8" data-alt="Light-filled corner of a home decorated with brand's ceramics and woven art" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDBirCtsOc-AvQjVfrcND0PCWDIPzMEOrFDD27TBvDpb0opEkhLUMy_iPfYP3M1hTKbyPKGXm8jAAq74NXDrA50JP4WtbaNhFqZchOsMe8cuvRJpdpAySJyuCe_l6t0GDzGJGvgCvdhsyHu2VKFuYIY7I08AhD_g3yjYInMzBktUOG1JOfkuc1sCqSXEAnyK_QhZcA2pTxuNz9S7vkjvhAgh_8_0MzsYHHWArQBz_MyXMCW48kDfuXEKNA1CafNX8IRMd7B1iGWS0E"/>
+</div>
+<div>
+<div class="flex items-center gap-1 text-primary mb-6">
+<span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined fill" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+<h2 class="text-4xl font-serif mb-8 italic">"The texture of the linen is unlike anything I've owned. It brings a soul to my living room that mass-market pieces just can't match."</h2>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 bg-outline-variant rounded-full overflow-hidden">
+<img class="w-full h-full object-cover" data-alt="Portrait of a smiling woman who is a brand advocate" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAXmrgm9EaP3SDPzQ9ZGCIr_dhazudE8m0DqpNUlMQEv7RKDOFaGoXbzeJFoeQJ05gmP5kDn2Z42LGXHM97GE6eG5xOLnXKUiSbSWnSi-gf8wZ8zLQvAV1cxPfUMSyTeN1tudNPcGcx-PKYsbofozmCbu9o9VFaXNqvgc7YvF_8U-MweDo0ai2p9Wmib6IP7Nv2Bx6cjeU3jB1dDzZLI2Nwj55KVVdcsPmrDBDx9jYRELqbkep1r0p0Y83VM8xnWAIV5pCsaQE6ev4"/>
+</div>
+<div>
+<p class="font-bold">Elena Thorne</p>
+<p class="text-sm text-on-surface-variant">Interior Designer, NYC</p>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Craftsmanship Section -->
+<section class="py-24 bg-surface-container-high px-8">
+<div class="max-w-7xl mx-auto flex flex-col md:flex-row gap-16 items-center">
+<div class="w-full md:w-1/2">
+<h2 class="text-5xl font-serif text-on-surface mb-8 italic leading-tight">Crafting Slowly, Living Better.</h2>
+<p class="text-on-surface-variant text-lg mb-8 leading-relaxed">
+                        We partner directly with family-run workshops across 12 countries. By removing the middleman, we ensure that the people who weave your rugs and throw your pots earn a sustainable living wage while preserving techniques passed down through generations.
+                    </p>
+<div class="flex flex-col gap-6">
+<div class="flex items-start gap-4">
+<span class="bg-primary-container text-white p-2 rounded-lg">
+<span class="material-symbols-outlined">eco</span>
+</span>
+<div>
+<p class="font-bold">Natural Materials Only</p>
+<p class="text-on-surface-variant text-sm">No synthetics. No toxic dyes. Just pure Earth.</p>
+</div>
+</div>
+<div class="flex items-start gap-4">
+<span class="bg-primary-container text-white p-2 rounded-lg">
+<span class="material-symbols-outlined">groups</span>
+</span>
+<div>
+<p class="font-bold">Artisan Co-ops</p>
+<p class="text-on-surface-variant text-sm">Empowering craft communities globally.</p>
+</div>
+</div>
+</div>
+</div>
+<div class="w-full md:w-1/2 relative">
+<div class="grid grid-cols-2 gap-4">
+<img class="rounded-xl w-full h-[400px] object-cover" data-alt="An artisan's hands working with wet clay on a pottery wheel" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDrTAGOm-1Hgep81V9xadrEFE86iPyvNkOjCAq1yTFVrbdQw_VP8ElMKeC5q_qwLd6Pz1y4lHLeI25PTzySpLK3czdgG_V5vI9TblVhUQVkiPhYKuOVLIYlbn4RXZx2cg-rdcMM9nVWX6-d9ya9PE2wANm-VEmsgYSwDScpP5MhQBSFQAmnWYylB4HDgLqpy6kHi-YhQNnt1vb8taavKe_PRKYwZ4dYCXf4ucBMF_h80qEs1G_3lZeY9Cw6b6Ip1YWpUuN2Ora811Q"/>
+<div class="flex flex-col gap-4">
+<img class="rounded-xl w-full h-[192px] object-cover" data-alt="Detail of a hand weaving process on a traditional wooden loom" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC89tKp2Fckzy1f1sTe7RNtXPiOIrApdwot58y0c8lYX5L6faXogXbrlN1yyTuOdvND48XRbGR2kioF3ary1HiGuaHPnXdZ5pmgICRNXrPYmMv0xN_-r4po9mlFHBU2vOkiw5yH-c64F-uhRjhnoN5nJPelk2u2132rZRXVFtJ5GDAfk6mc5yoaqIq1GnJ2cQ7NbQJHf-ORmiSznkkaIe2o5TtqkJh9qEVSSfpTx-8TGf0Mr2b880P2c2ryWCfayDwvMd78922vHXo"/>
+<img class="rounded-xl w-full h-[192px] object-cover" data-alt="Drying herbs and natural pigments used for dyeing fabrics" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCZ3M3S0bZZ-F9GuF75EncXGRkTi5oRg2gUQok2c_MSOA6dC0penQC4_zpxgpxN9mn6otK45GyILyHz5W46FHvrOMgokYl7dKCc_oMNu3imLhc7HlMBM79M4vOkS5OZvTuOXg4-s7WxI_dROUe_bnQMT8mAHH_yPW12yhXjAqYqioiB-c4GeesJEVQ0rXv5mn9o1Dg4SK62e7Z4MlOa5cJh0O56DB9_ACEPFcLW2mtvlywUZZasFmHelErF4xf1xSero5uOxMo1t9o"/>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Instagram Gallery -->
+<section class="py-24 px-8">
+<div class="max-w-7xl mx-auto text-center mb-12">
+<h2 class="text-3xl font-serif italic mb-4">In Your Sanctuaries</h2>
+<p class="text-on-surface-variant">Tag <span class="font-bold text-primary">@TerraAndLoom</span> to be featured</p>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a cozy reading nook" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB7nZPkMfU5eU_TF7QCEbsa9SDj2GHRKJogt7KIljdGoDYdOCZpK28JjYQaaADjQVaFUTjq_dVYY6QPhoBZiJ2f1_kAmJYeSuTkcR1-cQfG9TDR_HnOYYDF9CkkkE5ZD2Cb5C-Moc0umuPbv-GeyGZNFiiorEdPeelYjb6ncw8AYP0X4qA7qtW-xMP7uN9ftSikL-YOcoZT7ezYWCr1-v7ryTN5S-gLy7i5HsnlPnB2uTzxtf10x6IPp0wWLF5QzoyVDwH7cHgs9uU"/>
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a minimalist shelf with brand's pottery" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA5CsHUP4Y7i6Et5cgSszF7tEoBylVcMlxE9djmCcUBqBXh3Kq5LvEYNU0Nc84rVgyof2zOaXweHRX1FCNDYOc_WZHv9NDzAlyn_oGuEsnCvmEhmNRixNVA4Q9U2yWWj2IVvh5MQrGncYUDJ1HOcsux5IzVWm51AKlFBLHixSB-MaADYc6wTqdzXXsG8_mAPiRIdamlS20OMUvmtfwmyIFPzpxAvl-AJ9Nc4a3MJ7duOGdSK_jNljNAXhGkRdJuth8DUb_5_OftLTc"/>
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a morning coffee setting on artisan coasters" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCsZBb9zoV4K74MCj6WEFCyQk9QncKKIc4I64TyJWKSngoxHr23L4djcBfJjExQSwsIE7xGmwlIIOICwcZ9hf99vj3L-Mg2H2UNFHB-McgV__OQ9ZquEr0PCJ8KACDWER6V77h9lPMvMcVVFwHx7ACL7QUsS2bjCq4J-gb_ceY1Yv7dlHeDqFrG3h9xHFdq3ubyQE04kHTY6zLoojxgMgu7TN2yNMKf5IehiXL0Ragop8koMzYvyWg-OP11Yz3PVRA2s63Kgk6c6bI"/>
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a sunny kitchen window with terracotta pots" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAlmTuso_D7TYh_00RfzQqaufVsXK3l57UOX-av3SuL6dnO2Tcvt0B7C4tdiyo_MDAFF9kzi0kk5rpGzpTzCp6rzLpgZtF6SfRlaOZQcFRhuM3sM9clZGsDncABqb25pO6KEShm_taFKYOjqffJF0QV_AOL5wpesSFzLtdBK_u3xEliKuaSZS95agDEEPr-Yv4snx5asViNwQ2PzssgrAOIVmmIfg3ifWq5q8_qRzYVMYJETxdiYEBfDRCdpMNH5R7NMIWnCkvLbYg"/>
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a beautifully made bed with brand's linens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD6lXphEzPWCpzq49bQT9TFEI1YSFATFa7LDu-ifTbHXspPXxi1yRX3QuiynHzfeDRnKiDRPO_iYzzkRZ0fNkYhTrapI95-4dt-rT-sChIRpjVtuWY8ZIDVprkPVzF872RSTgZfkZxmeorBJ32LkZqqElKijZWroOKfZpDfYvvOSgF8rEjjgA2PMGPAmzRrIhYt7MWVM0OC8Bt3UlaLp5ttO9XquKG-EivIgWv6yV-asy1yeFV7PM_ONkevc1rsAq3qg_8F4rEMjQU"/>
+<img class="aspect-square object-cover hover:opacity-80 transition-all cursor-pointer" data-alt="Instagram user photo of a minimalist home office setup" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBtaw2-OabNbP3MOCZleN4dhrEG8M7wre76iqTm8grBjXYiziIxOF-8BoiAMivv2BY5zzDt9Zh_xKrz15JOtJwTtiWy1IETtERbz95V7yeK5Qmlvavut3n7YvbcoBtO907nvEraSX-2S5Y7q-y1HYhXq5LPSt5QYpDc-1m7yeOR8a5hn458ujTMf-yvFYF7CkF2aLSJMH61crZaSnbfXcyhtK3wtPDBZwI51K8Xk-wr3fBrzD1v5tDECVvyXc6YINOrzAD5NwdCbVo"/>
+</div>
+<div class="mt-12 text-center">
+<button class="border border-outline px-10 py-4 rounded-lg font-bold text-sm tracking-widest uppercase hover:bg-surface-container transition-all">Shop the Look</button>
+</div>
+</section>
+<!-- FAQ Section -->
+<section class="py-24 bg-surface-container-low px-8">
+<div class="max-w-3xl mx-auto">
+<h2 class="text-4xl font-serif text-center italic mb-12">Curiosity Corner</h2>
+<div class="space-y-4">
+<details class="group bg-white rounded-xl p-6 border-b border-transparent open:shadow-md transition-all">
+<summary class="flex justify-between items-center cursor-pointer list-none font-bold">
+                            Do you ship internationally?
+                            <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="mt-4 text-on-surface-variant leading-relaxed">Yes, we ship to over 50 countries. Shipping rates and delivery times vary by location and will be calculated at checkout.</p>
+</details>
+<details class="group bg-white rounded-xl p-6 border-b border-transparent open:shadow-md transition-all">
+<summary class="flex justify-between items-center cursor-pointer list-none font-bold">
+                            How do I care for my handmade ceramics?
+                            <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="mt-4 text-on-surface-variant leading-relaxed">Our ceramics are generally dishwasher safe, but we recommend hand-washing with mild soap to preserve the unique glazed finishes for years to come.</p>
+</details>
+<details class="group bg-white rounded-xl p-6 border-b border-transparent open:shadow-md transition-all">
+<summary class="flex justify-between items-center cursor-pointer list-none font-bold">
+                            Are your products truly limited batch?
+                            <span class="material-symbols-outlined transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<p class="mt-4 text-on-surface-variant leading-relaxed">Absolutely. Because our artisans work by hand and use seasonal natural dyes, we only produce small quantities (usually 50-100 units) of each design per quarter.</p>
+</details>
+</div>
+</div>
+</section>
+<!-- Newsletter Section -->
+<section class="py-24 bg-primary text-on-primary">
+<div class="max-w-4xl mx-auto px-8 text-center">
+<h2 class="text-5xl font-serif italic mb-6">Join Our Journal</h2>
+<p class="text-lg opacity-90 mb-12">Sign up for soulful inspiration, artisan stories, and 10% off your first curation.</p>
+<form class="flex flex-col md:flex-row gap-4 max-w-lg mx-auto">
+<input class="flex-1 bg-white/10 border border-white/20 rounded-lg px-6 py-4 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-white/50" placeholder="Your email address" type="email"/>
+<button class="bg-white text-primary font-bold px-8 py-4 rounded-lg hover:bg-opacity-90 transition-all">Subscribe</button>
+</form>
+</div>
+</section>
+</main>
+<!-- Footer Shell -->
+<footer class="bg-stone-100 dark:bg-stone-950 grid grid-cols-1 md:grid-cols-4 gap-12 px-12 py-20 w-full">
+<div>
+<span class="font-serif text-xl text-[#9f3f29] mb-6 block">The Artisanal Archive</span>
+<p class="font-sans text-sm text-stone-600 dark:text-stone-400 max-w-xs">
+                © 2024 The Artisanal Archive. Curating warmth for the modern nomad.
+            </p>
+<div class="flex gap-4 mt-8">
+<a class="material-symbols-outlined text-[#9f3f29]" href="#">facebook</a>
+<a class="material-symbols-outlined text-[#9f3f29]" href="#">photo_camera</a>
+<a class="material-symbols-outlined text-[#9f3f29]" href="#">video_library</a>
+</div>
+</div>
+<div>
+<h4 class="font-serif text-[#9f3f29] mb-6 font-bold">Discover</h4>
+<ul class="space-y-4">
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Journal</a></li>
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Sustainability</a></li>
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Wholesale</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-serif text-[#9f3f29] mb-6 font-bold">Support</h4>
+<ul class="space-y-4">
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Shipping &amp; Returns</a></li>
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Privacy Policy</a></li>
+<li><a class="font-sans text-sm text-stone-500 hover:text-stone-800 transition-all underline decoration-[#9f3f29]/30 underline-offset-4" href="#">Contact Us</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-serif text-[#9f3f29] mb-6 font-bold">Our Ethos</h4>
+<p class="font-sans text-sm text-stone-600 dark:text-stone-400 italic">
+                "We believe your home should be as intentional as the life you live."
+            </p>
+</div>
+</footer>
+</body></html>

@@ -85,11 +85,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
             const snapshot = (revision.snapshot ?? {}) as Record<string, unknown>;
 
             // Prevent accidental ID replacement from snapshots.
-            const { id: _ignoreId, created_at: _ignoreCreatedAt, updated_at: _ignoreUpdatedAt, ...rest } = snapshot;
+            const snapshotForUpdate = { ...snapshot };
+            delete snapshotForUpdate.id;
+            delete snapshotForUpdate.created_at;
+            delete snapshotForUpdate.updated_at;
 
             const { data: restoredPost, error: restoreError } = await supabaseAdmin
                 .from("blog_posts")
-                .update(rest)
+                .update(snapshotForUpdate)
                 .eq("id", postId)
                 .select("*")
                 .single();

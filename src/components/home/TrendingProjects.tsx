@@ -7,14 +7,14 @@ const projects = [
         id: 1,
         title: "Bespoke Tailoring",
         description: "Suits, Blazers & Formal Wear",
-        image: "https://images.unsplash.com/photo-1594938298598-70f70df33100?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
         link: "/shop",
     },
     {
         id: 2,
         title: "Resort Essentials",
         description: "Linens & Lightweight Cottons",
-        image: "https://images.unsplash.com/photo-1515347619252-12e6bfb6a4dc?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
         link: "/shop",
     },
     {

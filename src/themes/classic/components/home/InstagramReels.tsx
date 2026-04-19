@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Container from "@/components/ui/Container";
 import reelsData from "@/data/reels.json";
+import { brand } from "@/lib/brand";
 
 export default function InstagramReels() {
   return (
@@ -68,7 +69,7 @@ export default function InstagramReels() {
         {/* Instagram CTA */}
         <div className="text-center mt-16">
           <a
-            href="https://instagram.com"
+            href={brand.instagramUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-foreground text-foreground hover:bg-foreground hover:text-white transition-all duration-[400ms] ease-premium tracking-wide text-sm uppercase group"

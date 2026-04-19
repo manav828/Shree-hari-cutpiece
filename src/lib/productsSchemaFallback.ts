@@ -15,6 +15,7 @@ export function removeMissingProductsColumnFromPayload(
         return { nextPayload: payload, removedColumn: null };
     }
 
-    const { [missingColumn]: _removed, ...nextPayload } = payload;
+    const nextPayload = { ...payload };
+    delete nextPayload[missingColumn];
     return { nextPayload, removedColumn: missingColumn };
 }

@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Checkout | The Artisanal Archive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "primary": "#9f3f29",
+                      "surface-variant": "#e5e2dd",
+                      "on-primary-container": "#ffffff",
+                      "surface-container-highest": "#e5e2dd",
+                      "primary-container": "#bf573f",
+                      "surface": "#fcf9f4",
+                      "error-container": "#ffdad6",
+                      "tertiary-fixed": "#ffdf9e",
+                      "on-error": "#ffffff",
+                      "surface-bright": "#fcf9f4",
+                      "on-background": "#1c1c19",
+                      "on-tertiary-fixed-variant": "#5b4300",
+                      "secondary-fixed": "#dee6c2",
+                      "secondary-container": "#dbe4c0",
+                      "error": "#ba1a1a",
+                      "surface-container-low": "#f6f3ee",
+                      "on-tertiary-container": "#ffffff",
+                      "on-secondary": "#ffffff",
+                      "on-secondary-fixed": "#171e08",
+                      "inverse-on-surface": "#f3f0eb",
+                      "surface-container": "#f0ede8",
+                      "secondary-fixed-dim": "#c2caa8",
+                      "on-tertiary": "#ffffff",
+                      "primary-fixed-dim": "#ffb4a3",
+                      "on-surface-variant": "#56423d",
+                      "surface-tint": "#a0402a",
+                      "on-secondary-fixed-variant": "#424a2f",
+                      "inverse-surface": "#31302d",
+                      "surface-dim": "#dcdad5",
+                      "on-surface": "#1c1c19",
+                      "surface-container-high": "#ebe8e3",
+                      "primary-fixed": "#ffdad2",
+                      "tertiary-fixed-dim": "#f3bf43",
+                      "on-primary-fixed-variant": "#802915",
+                      "on-primary-fixed": "#3d0600",
+                      "outline": "#89726c",
+                      "on-primary": "#ffffff",
+                      "surface-container-lowest": "#ffffff",
+                      "on-secondary-container": "#5e6649",
+                      "on-tertiary-fixed": "#261a00",
+                      "tertiary": "#785900",
+                      "inverse-primary": "#ffb4a3",
+                      "outline-variant": "#ddc0ba",
+                      "secondary": "#5a6245",
+                      "on-error-container": "#93000a",
+                      "tertiary-container": "#977000",
+                      "background": "#fcf9f4"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "fontFamily": {
+                      "headline": ["Newsreader"],
+                      "body": ["Manrope"],
+                      "label": ["Manrope"]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3 { font-family: 'Newsreader', serif; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface antialiased min-h-screen">
+<!-- Distraction-free Header (TopNavBar variant) -->
+<header class="bg-[#fcf9f4]/80 backdrop-blur-md fixed top-0 w-full z-50 transition-all duration-300">
+<div class="flex justify-between items-center px-8 h-20 w-full max-w-screen-2xl mx-auto">
+<a class="text-2xl font-serif italic text-[#9f3f29] font-headline" href="#">The Artisanal Archive</a>
+<div class="flex items-center gap-4 text-stone-600">
+<span class="material-symbols-outlined text-xl">lock</span>
+<span class="text-sm font-label uppercase tracking-widest">Secure Checkout</span>
+</div>
+</div>
+</header>
+<main class="pt-28 pb-20 px-8 max-w-screen-2xl mx-auto">
+<div class="flex flex-col lg:grid lg:grid-cols-12 lg:gap-16">
+<!-- Left Column: Checkout Flow -->
+<div class="lg:col-span-8 space-y-12">
+<!-- 3-Step Progress Indicator -->
+<nav aria-label="Progress" class="flex items-center justify-start gap-8 mb-12">
+<div class="flex items-center gap-3">
+<span class="w-8 h-8 rounded-full bg-primary text-on-primary flex items-center justify-center text-xs font-bold">1</span>
+<span class="font-headline text-lg font-medium text-on-surface">Shipping</span>
+</div>
+<div class="h-px w-12 bg-outline-variant"></div>
+<div class="flex items-center gap-3 opacity-40">
+<span class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center text-xs font-bold">2</span>
+<span class="font-headline text-lg font-medium">Payment</span>
+</div>
+<div class="h-px w-12 bg-outline-variant"></div>
+<div class="flex items-center gap-3 opacity-40">
+<span class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface-variant flex items-center justify-center text-xs font-bold">3</span>
+<span class="font-headline text-lg font-medium">Review</span>
+</div>
+</nav>
+<!-- Shipping Form Section -->
+<section class="bg-surface-container-low p-8 lg:p-12 rounded-xl">
+<h2 class="text-3xl mb-8">Shipping Information</h2>
+<form class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div class="md:col-span-2 space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Full Name</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="Arjun Sharma" type="text"/>
+</div>
+<div class="md:col-span-2 space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Street Address / House No.</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="Flat 402, Lotus Apartments" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Area / Locality</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="Bandra West" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Landmark (Optional)</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="Near Mount Mary Church" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">City</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="Mumbai" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Pincode</label>
+<input class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="400050" type="text"/>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">State</label>
+<select class="w-full bg-surface-container-high border-none rounded-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body">
+<option>Maharashtra</option>
+<option>Delhi</option>
+<option>Karnataka</option>
+<option>Tamil Nadu</option>
+<option>Gujarat</option>
+</select>
+</div>
+<div class="space-y-2">
+<label class="block text-xs font-label uppercase tracking-wider text-on-surface-variant">Phone Number</label>
+<div class="flex">
+<span class="inline-flex items-center px-4 rounded-l-lg bg-surface-dim text-on-surface-variant text-sm">+91</span>
+<input class="w-full bg-surface-container-high border-none rounded-r-lg focus:ring-1 focus:ring-primary h-12 px-4 font-body" placeholder="98765 43210" type="tel"/>
+</div>
+</div>
+</form>
+</section>
+<!-- Payment Method Selection -->
+<section class="bg-surface-container-low p-8 lg:p-12 rounded-xl">
+<div class="flex justify-between items-end mb-8">
+<h2 class="text-3xl">Payment Method</h2>
+<div class="flex items-center gap-2 opacity-60">
+<span class="text-[10px] font-label uppercase tracking-tighter">Powered by</span>
+<span class="font-bold text-sm tracking-tight text-on-surface">Razorpay</span>
+</div>
+</div>
+<div class="space-y-4">
+<label class="flex items-center justify-between p-6 bg-surface-container-lowest border-2 border-primary rounded-xl cursor-pointer">
+<div class="flex items-center gap-4">
+<div class="w-5 h-5 rounded-full border-4 border-primary bg-white"></div>
+<div>
+<span class="block font-bold">UPI</span>
+<span class="text-xs text-on-surface-variant">Google Pay, PhonePe, Paytm</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">account_balance_wallet</span>
+</div>
+</label>
+<label class="flex items-center justify-between p-6 bg-surface-container-high/50 border-2 border-transparent rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-5 h-5 rounded-full border border-outline"></div>
+<div>
+<span class="block font-bold">Credit / Debit Card</span>
+<span class="text-xs text-on-surface-variant">Visa, Mastercard, RuPay, Amex</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">credit_card</span>
+</div>
+</label>
+<label class="flex items-center justify-between p-6 bg-surface-container-high/50 border-2 border-transparent rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-4">
+<div class="w-5 h-5 rounded-full border border-outline"></div>
+<div>
+<span class="block font-bold">Net Banking</span>
+<span class="text-xs text-on-surface-variant">All major Indian banks</span>
+</div>
+</div>
+<div class="flex gap-2">
+<span class="material-symbols-outlined text-on-surface-variant">account_balance</span>
+</div>
+</label>
+</div>
+</section>
+</div>
+<!-- Right Column: Sticky Summary -->
+<aside class="lg:col-span-4 mt-12 lg:mt-0">
+<div class="sticky top-28 bg-surface-container border border-outline-variant/10 p-8 rounded-xl">
+<h3 class="text-2xl mb-6">Order Summary</h3>
+<!-- Product List -->
+<div class="space-y-6 mb-8">
+<div class="flex gap-4">
+<div class="w-20 h-24 bg-surface-dim rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="close-up of a hand-woven terracotta textured ceramic vase on a minimalist wooden shelf with warm shadows" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAUBws7bbWpn6G5x5YBIn6sE_-kWiVi-zFUUJOMq7m_UW_1nfLDIjIXG5hWt2KA8Q2U0aolW9e1mxsXTnlCR0lLFr7e2tbhomIM3jqdbieo4EzlROeWSyWkZuU2aBcp-vEX9jtXQ6ILnRCXLo9gtTK9iMCVERRv7VwkDKoutIwFxiNuXshfawFWV75zYMnX59-ZRa6UXnn_R-5gLb1EeLwxSBuBDhfPM5y3deZ0nnjbPmyjJZu1p_h8foPV8iD5DD3j2mo8t3WW7qQ"/>
+</div>
+<div class="flex flex-col justify-center">
+<h4 class="font-bold text-sm">Terra Hand-Woven Vase</h4>
+<p class="text-xs text-on-surface-variant mb-2">Quantity: 1</p>
+<p class="text-sm font-bold text-primary">₹4,200.00</p>
+</div>
+</div>
+<div class="flex gap-4">
+<div class="w-20 h-24 bg-surface-dim rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="high-quality organic cotton sage green linen throw blanket draped softly over an oak chair in morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBNPTewUPJz3E3LRWB0Ck-DwjPsR-Y23DZ-Jc_99aJjnjIrG5N968v5S9V_Uy5dBWZAqQHuAvZejI6my-ZW_VvB391_UGpvcK4V7oN_Vkc2ajUTSN6ovd2jWZ2S_bjfAHIGaqndVkSbUwdeTdjhNoRiXt8OOGnEmgxNPFglj8sLtPkz1c60mCohIS9fycwz8vn58Y0Jd8snZei1XeykICaHEV2X4eQSii2RMYNKJCf_8Mcd-U0NKyxY7hMC68UyhoF8wjdgSqk7XN0"/>
+</div>
+<div class="flex flex-col justify-center">
+<h4 class="font-bold text-sm">Sage Organic Throw</h4>
+<p class="text-xs text-on-surface-variant mb-2">Quantity: 2</p>
+<p class="text-sm font-bold text-primary">₹2,800.00</p>
+</div>
+</div>
+</div>
+<!-- Pricing Tiers -->
+<div class="space-y-3 py-6 border-t border-outline-variant/20">
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">Subtotal</span>
+<span>₹7,000.00</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">Shipping</span>
+<span class="text-secondary font-medium">Free</span>
+</div>
+<div class="flex justify-between text-sm">
+<span class="text-on-surface-variant">GST (18%)</span>
+<span>₹1,260.00</span>
+</div>
+</div>
+<div class="flex justify-between items-center pt-6 border-t border-outline-variant/40 mb-8">
+<span class="text-lg font-headline font-bold">Total</span>
+<span class="text-2xl font-headline font-bold text-primary">₹8,260.00</span>
+</div>
+<!-- CTA -->
+<button class="w-full bg-primary hover:bg-primary-container text-on-primary py-5 rounded-lg font-bold text-lg transition-all active:scale-[0.98] shadow-lg shadow-primary/10">
+                        Place Order &amp; Pay
+                    </button>
+<p class="text-center text-[11px] text-on-surface-variant mt-6 uppercase tracking-widest flex items-center justify-center gap-2">
+<span class="material-symbols-outlined text-xs">verified_user</span>
+                        100% Secure Transaction
+                    </p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full py-12 mt-20 bg-[#fcf9f4] border-t border-stone-200/20">
+<div class="flex flex-col md:flex-row justify-between items-center px-8 max-w-screen-2xl mx-auto space-y-6 md:space-y-0">
+<div class="font-serif text-lg text-stone-800 font-headline">The Artisanal Archive</div>
+<p class="font-body text-sm tracking-wide text-stone-500">© 2024 The Artisanal Archive. Curating warmth for the modern home.</p>
+<div class="flex gap-6">
+<a class="text-stone-500 hover:text-stone-800 text-sm font-label transition-colors" href="#">Privacy</a>
+<a class="text-stone-500 hover:text-stone-800 text-sm font-label transition-colors" href="#">Terms</a>
+<a class="text-stone-500 hover:text-stone-800 text-sm font-label transition-colors" href="#">Shipping Info</a>
+</div>
+</div>
+</footer>
+</body></html>

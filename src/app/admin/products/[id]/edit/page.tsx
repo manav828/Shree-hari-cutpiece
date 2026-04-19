@@ -356,7 +356,7 @@ export default function EditProductPage() {
         supabase.from("products").select("id, name").order("name").then(({ data }) => {
             if (data) setAllProducts(data.filter((p: { id: string }) => p.id !== productId));
         });
-    }, [fetchProduct]);
+    }, [fetchProduct, productId]);
 
     /* ─── Helpers ─── */
     const genSlug = (n: string) => n.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");

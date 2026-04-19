@@ -12,6 +12,8 @@ import ShareButtons from "@/components/blog/ShareButtons";
 import ProductCard from "@/components/shop/ProductCard";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getSiteUrl } from "@/lib/siteUrl";
+import { filterPublicContentPosts, isPublicContentPost } from "@/lib/blogPublicContent";
+import { buildArticleSchema, buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
 
 export const dynamic = "force-dynamic";
 
@@ -178,7 +180,7 @@ async function fetchVariants(variantGroupId: string): Promise<BlogVariant[]> {
     return (data ?? []) as BlogVariant[];
 }
 
-async function fetchRelatedPosts(postId: string): Promise<RelatedPostRow[]> {
+async function fetchRelatedPosts(postId: string, language: BlogVariant["language"]): Promise<RelatedPostRow[]> {
     const { data: relatedRows, error: relatedError } = await supabaseAdmin
         .from("blog_post_related_posts")
         .select("related_post_id")
@@ -194,7 +196,8 @@ async function fetchRelatedPosts(postId: string): Promise<RelatedPostRow[]> {
         .from("blog_posts")
         .select("id, title, slug, excerpt, published_at, cover_media:cover_media_id (public_url, alt_text, width, height), category:category_id (name, slug)")
         .in("id", relatedIds)
-        .eq("status", "published");
+        .eq("status", "published")
+        .eq("language", language);
 
     if (error) return [];
 
@@ -254,21 +257,31 @@ async function fetchRelatedProducts(postId: string): Promise<RelatedProductView[
 async function fetchRedirect(slug: string, language: BlogVariant["language"]) {
     const { data, error } = await supabaseAdmin
         .from("blog_slug_redirects")
-        .select("new_slug, blog_posts(language, status)")
+        .select("new_slug, blog_posts(language, status, title, slug, excerpt)")
         .eq("old_slug", slug)
         .limit(1);
 
     if (error) return null;
-    const row = (data ?? [])[0] as { new_slug?: string; blog_posts?: { language?: string; status?: string } | null } | undefined;
+    const row = (data ?? [])[0] as {
+        new_slug?: string;
+        blog_posts?: { language?: string; status?: string; title?: string | null; slug?: string | null; excerpt?: string | null } | null;
+    } | undefined;
     if (!row?.new_slug) return null;
     if (row.blog_posts?.status !== "published") return null;
     if (row.blog_posts?.language !== language) return null;
+    if (!isPublicContentPost({
+        title: row.blog_posts?.title,
+        slug: row.blog_posts?.slug || row.new_slug,
+        excerpt: row.blog_posts?.excerpt,
+    })) {
+        return null;
+    }
     return row.new_slug;
 }
 
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
     const post = await fetchPost(params.slug, DEFAULT_LANGUAGE);
-    if (!post) {
+    if (!post || !isPublicContentPost(post)) {
         return { title: "Post Not Found" };
     }
 
@@ -324,8 +337,12 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         notFound();
     }
 
+    if (!isPublicContentPost(post)) {
+        notFound();
+    }
+
     const variants = await fetchVariants(post.variant_group_id);
-    const relatedPosts = await fetchRelatedPosts(post.id);
+    const relatedPosts = filterPublicContentPosts(await fetchRelatedPosts(post.id, post.language));
     const relatedProducts = await fetchRelatedProducts(post.id);
     const languageLabels: Record<BlogVariant["language"], string> = {
         en: "English",
@@ -338,21 +355,36 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         ? stripHtml(post.full_page_html || "")
         : extractTextFromLayout(post.builder_layout);
     const readTime = estimateReadTime(contentText);
-    const shareUrl = post.seo_canonical_url || `${getSiteUrl()}${getBlogBasePath(post.language)}/${post.slug}`;
+    const articlePath = `${getBlogBasePath(post.language)}/${post.slug}`;
+    const shareUrl = post.seo_canonical_url || `${getSiteUrl()}${articlePath}`;
 
-    const schemaJson = post.schema_markup_enabled
-        ? {
-            "@context": "https://schema.org",
-            "@type": "BlogPosting",
-            headline: post.seo_meta_title || post.title,
-            description: post.seo_meta_description || post.excerpt || "",
-            image: post.og_media?.public_url || post.cover_media?.public_url || undefined,
-            datePublished: post.published_at || undefined,
-            author: post.author_name ? { "@type": "Person", name: post.author_name } : undefined,
-            inLanguage: post.language,
-            mainEntityOfPage: post.seo_canonical_url || `${getSiteUrl()}${getBlogBasePath(post.language)}/${post.slug}`,
-        }
-        : null;
+    const schemaMarkup: Array<Record<string, unknown>> = [
+        buildWebPageSchema({
+            path: articlePath,
+            title: post.seo_meta_title || post.title,
+            description: post.seo_meta_description || post.excerpt || post.title,
+            type: "Article",
+        }),
+        buildBreadcrumbSchema([
+            { name: "Home", path: "/" },
+            { name: "Blog", path: getBlogBasePath(post.language) },
+            { name: post.title, path: articlePath },
+        ]),
+    ];
+
+    if (post.schema_markup_enabled) {
+        schemaMarkup.push(
+            buildArticleSchema({
+                path: articlePath,
+                headline: post.seo_meta_title || post.title,
+                description: post.seo_meta_description || post.excerpt || post.title,
+                image: post.og_media?.public_url || post.cover_media?.public_url,
+                datePublished: post.published_at,
+                authorName: post.author_name,
+                inLanguage: post.language,
+            }),
+        );
+    }
 
     return (
         <>
@@ -380,12 +412,13 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                     </nav>
 
                     <article className="max-w-5xl mx-auto">
-                        {schemaJson && (
+                        {schemaMarkup.map((schema, index) => (
                             <script
+                                key={`blog-en-schema-${index}`}
                                 type="application/ld+json"
-                                dangerouslySetInnerHTML={{ __html: JSON.stringify(schemaJson) }}
+                                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
                             />
-                        )}
+                        ))}
                         {/* Header */}
                         {post.show_header !== false && (
                             <header className="text-center mb-8">
@@ -441,6 +474,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                                         src={post.cover_media.public_url}
                                         alt={post.cover_media.alt_text || post.title}
                                         fill
+                                        sizes="(max-width: 1024px) 100vw, 960px"
                                         className="object-cover"
                                         priority
                                     />
@@ -471,6 +505,32 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
                             ) : (
                                 <BlogRenderer layout={post.builder_layout} />
                             )}
+                            <div className="mt-14 rounded-2xl border border-border bg-background-secondary px-6 py-6">
+                                <p className="text-xs tracking-[0.28em] uppercase text-text-secondary">Continue Exploring</p>
+                                <h3 className="mt-2 font-serif text-2xl text-foreground">Keep Building Your Fabric Plan</h3>
+                                <div className="mt-5 flex flex-wrap gap-3">
+                                    <Link
+                                        href={getBlogBasePath(post.language)}
+                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                    >
+                                        All Journal Articles
+                                    </Link>
+                                    <Link
+                                        href="/shop"
+                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                    >
+                                        Browse Fabric Collection
+                                    </Link>
+                                    {post.category?.name && (
+                                        <Link
+                                            href={`${getBlogBasePath(post.language)}?category=${encodeURIComponent(post.category.name)}`}
+                                            className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
+                                        >
+                                            More in {post.category.name}
+                                        </Link>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </article>
                 </Container>

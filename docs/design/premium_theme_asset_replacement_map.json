@@ -1,0 +1,121 @@
+{
+  "version": "1.0.0",
+  "generatedAt": "2026-04-01",
+  "description": "One-click replacement map for temporary premium-theme image assets. Fill replacement URLs/paths and run npm run assets:replacement:apply.",
+  "replacements": [
+    {
+      "id": "home-hero-desktop",
+      "current": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1000&q=85",
+      "replacement": "__REPLACE_WITH_FINAL__/home/hero-desktop.jpg",
+      "targets": ["src/themes/classic/components/home/Hero.tsx"]
+    },
+    {
+      "id": "home-categories-fallback",
+      "current": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=900&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/category-fallback.jpg",
+      "targets": ["src/themes/classic/components/home/Categories.tsx"]
+    },
+    {
+      "id": "home-description-image-1",
+      "current": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/story-craft.jpg",
+      "targets": ["src/themes/classic/components/home/DescriptionSection.tsx"]
+    },
+    {
+      "id": "home-description-image-2",
+      "current": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/story-detail.jpg",
+      "targets": ["src/themes/classic/components/home/DescriptionSection.tsx"]
+    },
+    {
+      "id": "home-inspiration-1",
+      "current": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/inspiration-kurti.jpg",
+      "targets": ["src/themes/classic/components/home/Inspiration.tsx"]
+    },
+    {
+      "id": "home-inspiration-2",
+      "current": "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/inspiration-lehenga.jpg",
+      "targets": ["src/themes/classic/components/home/Inspiration.tsx"]
+    },
+    {
+      "id": "home-inspiration-3",
+      "current": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/inspiration-choli.jpg",
+      "targets": ["src/themes/classic/components/home/Inspiration.tsx"]
+    },
+    {
+      "id": "home-inspiration-4",
+      "current": "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/inspiration-festive.jpg",
+      "targets": ["src/themes/classic/components/home/Inspiration.tsx"]
+    },
+    {
+      "id": "home-trending-1",
+      "current": "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/trending-bespoke.jpg",
+      "targets": ["src/themes/classic/components/home/TrendingProjects.tsx"]
+    },
+    {
+      "id": "home-trending-2",
+      "current": "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/trending-resort.jpg",
+      "targets": ["src/themes/classic/components/home/TrendingProjects.tsx"]
+    },
+    {
+      "id": "home-trending-3",
+      "current": "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/trending-evening.jpg",
+      "targets": ["src/themes/classic/components/home/TrendingProjects.tsx"]
+    },
+    {
+      "id": "home-trending-4",
+      "current": "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/home/trending-luxe-home.jpg",
+      "targets": ["src/themes/classic/components/home/TrendingProjects.tsx"]
+    },
+    {
+      "id": "shop-hero",
+      "current": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1800&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/shop/shop-hero.jpg",
+      "targets": ["src/themes/classic/pages/ShopPage.tsx", "src/app/about/page.tsx"]
+    },
+    {
+      "id": "blogs-hero",
+      "current": "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=1800&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/blogs/blog-hero.jpg",
+      "targets": ["src/app/blogs/page.tsx", "src/app/hi/blogs/page.tsx", "src/components/policy/PolicyPageLayout.tsx"]
+    },
+    {
+      "id": "about-story-visual",
+      "current": "https://images.unsplash.com/photo-1612423284934-2850a4ea6b0f?w=1200&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/about/about-story.jpg",
+      "targets": ["src/app/about/page.tsx"]
+    },
+    {
+      "id": "contact-hero",
+      "current": "https://images.unsplash.com/photo-1456324504439-367cee3b3c32?w=1600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/contact/contact-hero.jpg",
+      "targets": ["src/app/contact/page.tsx"]
+    },
+    {
+      "id": "contact-store-visual",
+      "current": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1200&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/contact/contact-store.jpg",
+      "targets": ["src/app/contact/page.tsx"]
+    },
+    {
+      "id": "login-panel-visual",
+      "current": "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=1600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/auth/login-panel.jpg",
+      "targets": ["src/app/login/page.tsx"]
+    },
+    {
+      "id": "signup-panel-visual",
+      "current": "https://images.unsplash.com/photo-1612423284934-2850a4ea6b0f?w=1600&q=80",
+      "replacement": "__REPLACE_WITH_FINAL__/auth/signup-panel.jpg",
+      "targets": ["src/app/signup/page.tsx"]
+    }
+  ]
+}

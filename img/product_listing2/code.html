@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="scroll-smooth" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "secondary": "#5a6245",
+                    "on-background": "#1c1c19",
+                    "error": "#ba1a1a",
+                    "surface-container-low": "#f6f3ee",
+                    "on-error": "#ffffff",
+                    "on-tertiary-fixed": "#261a00",
+                    "on-primary": "#ffffff",
+                    "secondary-fixed": "#dee6c2",
+                    "inverse-primary": "#ffb4a3",
+                    "surface": "#fcf9f4",
+                    "surface-container": "#f0ede8",
+                    "primary-fixed-dim": "#ffb4a3",
+                    "on-tertiary": "#ffffff",
+                    "surface-container-highest": "#e5e2dd",
+                    "surface-dim": "#dcdad5",
+                    "on-secondary-fixed-variant": "#424a2f",
+                    "primary-fixed": "#ffdad2",
+                    "tertiary-container": "#977000",
+                    "surface-tint": "#a0402a",
+                    "outline-variant": "#ddc0ba",
+                    "outline": "#89726c",
+                    "on-error-container": "#93000a",
+                    "inverse-on-surface": "#f3f0eb",
+                    "tertiary": "#785900",
+                    "primary-container": "#bf573f",
+                    "tertiary-fixed-dim": "#f3bf43",
+                    "surface-container-high": "#ebe8e3",
+                    "error-container": "#ffdad6",
+                    "on-secondary-container": "#5e6649",
+                    "on-primary-fixed": "#3d0600",
+                    "on-primary-container": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#802915",
+                    "secondary-container": "#dbe4c0",
+                    "secondary-fixed-dim": "#c2caa8",
+                    "tertiary-fixed": "#ffdf9e",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-bright": "#fcf9f4",
+                    "background": "#fcf9f4",
+                    "surface-variant": "#e5e2dd",
+                    "on-surface-variant": "#56423d",
+                    "primary": "#9f3f29",
+                    "on-surface": "#1c1c19",
+                    "on-tertiary-container": "#ffffff",
+                    "inverse-surface": "#31302d",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "on-secondary-fixed": "#171e08"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader"],
+                    "body": ["Manrope"],
+                    "label": ["Manrope"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #fcf9f4; color: #1c1c19; }
+        .font-serif { font-family: 'Newsreader', serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-background text-on-background">
+<!-- TopNavBar -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 dark:bg-stone-900/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-8 py-4 w-full max-w-screen-2xl mx-auto">
+<div class="text-2xl font-serif italic text-[#9f3f29] dark:text-[#bf573f]">Terra &amp; Loom</div>
+<div class="hidden md:flex items-center gap-8">
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Collections</a>
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Living</a>
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Bedroom</a>
+<a class="text-stone-600 dark:text-stone-400 font-medium hover:text-[#9f3f29] transition-colors duration-300" href="#">Artisans</a>
+</div>
+<div class="flex items-center gap-5">
+<button class="text-[#9f3f29] dark:text-[#bf573f] scale-95 active:duration-150">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+<button class="text-[#9f3f29] dark:text-[#bf573f] scale-95 active:duration-150">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-16">
+<!-- Category Banner -->
+<section class="relative h-[614px] min-h-[450px] w-full overflow-hidden">
+<div class="absolute inset-0">
+<img alt="Hand-woven textiles" class="w-full h-full object-cover" data-alt="Interior scene of a sunlit boho living room with textured hand-woven wool throws and fringed pillows draped over a wooden bench" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbLY8Uc_JXM0tkCK5KKTbdxEh-2PdZso8QsKwcCMaCjgI0lGQClj3oKbKRTkWOE1NaW-iBjeFqAm2ysZLHKT6i-xVAod-nMnrlzOVlupIEP_bPkzjmmXwJRZje-ogx8cAElWCkUv-VRE6bUmzOyXc9VfB9ChsQhRtjNgJVkl75w114FhA88_-dbnNAVDvKX7AuivQ--0aUVTuMKy20-yRkyDQIA3DRFyZIIFgmMHOxPtI4p19PpvYft1yRIU1HphKLrMnCOSqqoIo"/>
+<div class="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
+</div>
+<div class="relative h-full flex flex-col justify-end items-start px-8 md:px-24 pb-16 max-w-screen-2xl mx-auto">
+<h1 class="text-white font-serif text-5xl md:text-7xl mb-4 leading-tight">Hand-Woven Textiles</h1>
+<p class="text-white/90 font-body text-lg md:text-xl max-w-2xl leading-relaxed italic">
+                    Ancestral weaving techniques passed through generations, creating warmth and history for the modern home. Each thread tells a story of artisanal dedication.
+                </p>
+</div>
+</section>
+<!-- Mini Category Nav -->
+<nav class="bg-surface py-6 px-8 border-b border-outline-variant/10">
+<div class="max-w-screen-xl mx-auto flex items-center justify-center gap-10 overflow-x-auto no-scrollbar whitespace-nowrap">
+<a class="text-[#9f3f29] font-semibold border-b-2 border-[#9f3f29] pb-1 font-body" href="#">All</a>
+<a class="text-stone-600 font-medium hover:text-[#9f3f29] transition-colors duration-300 font-body" href="#">Throws</a>
+<a class="text-stone-600 font-medium hover:text-[#9f3f29] transition-colors duration-300 font-body" href="#">Pillows</a>
+<a class="text-stone-600 font-medium hover:text-[#9f3f29] transition-colors duration-300 font-body" href="#">Rugs</a>
+<a class="text-stone-600 font-medium hover:text-[#9f3f29] transition-colors duration-300 font-body" href="#">Tapestries</a>
+</div>
+</nav>
+<!-- Filter & Search Bar -->
+<section class="max-w-screen-xl mx-auto px-8 -mt-8 relative z-10">
+<div class="bg-surface-container-lowest rounded-xl p-4 shadow-xl shadow-on-surface/5 flex flex-col lg:flex-row items-center gap-4">
+<div class="relative flex-grow w-full lg:w-auto">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">search</span>
+<input class="w-full pl-12 pr-4 py-3 bg-surface-container-high rounded-lg border-none focus:ring-1 focus:ring-primary text-on-surface placeholder:text-outline/60 font-body" placeholder="Search products..." type="text"/>
+</div>
+<div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+<select class="bg-surface-container-high border-none rounded-lg py-3 px-4 text-on-surface-variant font-medium text-sm focus:ring-1 focus:ring-primary min-w-[120px]">
+<option>Material</option>
+<option>Organic Cotton</option>
+<option>Merino Wool</option>
+<option>Linen</option>
+</select>
+<select class="bg-surface-container-high border-none rounded-lg py-3 px-4 text-on-surface-variant font-medium text-sm focus:ring-1 focus:ring-primary min-w-[120px]">
+<option>Price Range</option>
+<option>$0 - $100</option>
+<option>$100 - $300</option>
+<option>$300+</option>
+</select>
+<select class="bg-surface-container-high border-none rounded-lg py-3 px-4 text-on-surface-variant font-medium text-sm focus:ring-1 focus:ring-primary min-w-[120px]">
+<option>Sort By</option>
+<option>Newest</option>
+<option>Price: Low to High</option>
+<option>Best Seller</option>
+</select>
+</div>
+</div>
+</section>
+<!-- Product Grid -->
+<section class="max-w-screen-xl mx-auto px-8 py-20">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+<!-- Product Card 1 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Woolen Throw" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Hand-knitted chunky wool throw blanket in cream and earth tones with heavy tassels lying on a neutral surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDK2qxA80Rfeq7_Fqd64_cu1UI35d76lF7VjSRsx3sOh5_lx01mAuCqmGVpssqErGczwHoulg9MWKxVEYN6Oyr01c0s1zVqD7oFyossFkVnMEowLXCvqWGyX1zpnBQ-91qLurG_N4RvoGNGBinuMBeYq2lyATaH_RqlE3uhz56p0hc4fHtDuk4A3iu1vfZl9qz6fdSCNZui2fIpjjjWOVemaCKk5a_UuebtnloBXyGrvs8DhjsPYRz0UcCfgmxoKrHgugXslS1kkQI"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">The Atlas Throw</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Hand-spun organic wool</p>
+</div>
+<span class="font-serif text-xl text-primary">$280</span>
+</div>
+</div>
+<!-- Product Card 2 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Indigo Pillow" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Cushion with traditional indigo dyed patterns and woven geometric motifs on a natural linen fabric background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuACH8SLNGkokfUscn8-LdexJRNMu3-QwypkSGHrjty_5V6ssVD1HzJ-sMHlJI2Ge2aXZZF2CpLZH3JliX2e4yz0J_QCOC3HUttMpRBtKrr-9aO6dXrMs3j1PVVoQhjW3KXNqULBC9B98jMJYGIos8kI09G2N1vWrBwCCCtXl6c1sTSecw2bJDF1UQARqlL9BNNfsGtHbTlHZCzYD1-01G6KD4v-L3_oMIVxYjWGm3BwFs4rOon8G9fSt87SKsWKvJ3RNMt08zYXtkg"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Dusk Indigo Cushion</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Hand-dyed botanical pigments</p>
+</div>
+<span class="font-serif text-xl text-primary">$125</span>
+</div>
+</div>
+<!-- Product Card 3 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Oaxaca Rug" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Detail of a small hand-woven runner rug with earthy red, ochre and cream stripes in a traditional Zapotec weave" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCiLnfiiHeE2wseuPkFD8Qw6uW9Mim2-qfdsKgmx9IGVPyTQksxYBp7JYkZwJxxJamPYlaFp4S_6wTY5eF540pVQq9P4BD4BYGlj0mAQsHMhhLwzgjuvrIs_shsBLEwM3DiDtz6a_ThyNmHyIUv6eLUKX8I1XjTSV-ECpJbBXXZctSym71arprkZs8j1Il3L2ovR3CIZXL6_9H4xMnFiLbBEGbHivfR9QWNr_-M0NQX0c7uSe6GxIuv0kq1PM4kK27UM20ZFBmdxFg"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Oaxaca Runner</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Flat-weave traditional wool</p>
+</div>
+<span class="font-serif text-xl text-primary">$340</span>
+</div>
+</div>
+<!-- Product Card 4 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Sage Blanket" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Soft sage green textured woven blanket with delicate fringe detailing draped over a white chair in soft lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAdCNRYzVY13jeNGRR40C_S9IKJoKnq9JdSocRxDVBfKyVzLKn2iVlO3eSaybN5nXWJYAZMW2Wi9uIkxMvrDIfma4daKjL-0FPRT8zHgmhdxvCsaHX3jazBNM-MWcybXpPdxPxW0YemZ8Kvr36f-pXE57D7NB1VXME7P1HbFdge1TVa6dR_MPj1nm3Ro1kctSqR3HlT6q5bnR7ZBXNFwjzv9vH4s9gYavAtFt07F8TOmVw3lrqfqPKJFleRUwfoym4Nz-c4WpymoqY"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Muted Sage Blanket</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Recycled cotton &amp; silk blend</p>
+</div>
+<span class="font-serif text-xl text-primary">$195</span>
+</div>
+</div>
+<!-- Product Card 5 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Linen Pillows" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Collection of stacked linen decorative pillows in earth tones including terracotta, clay, and wheat colors" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB2nVKc4iUa4W_1V_M20vN3w-y-HdSBPyLg7OdWVHud8gCVyXvPnaD5H_XkwRCNWPeMnQuJKLRXpsL3g1Z38QwdpSmB0abhzL6umvwvpSQSQxNQAFJkI_Qqr0tL126mwXITX52BaCs4bveU9EqgSJGonV66KOFHYyogSi3A45bLe_3bvw_KfHPx6c3Gjmd4mRlWhXvTJEs1QIqm_VbCXKG0HqDt1pbafFAoOp0sbW2e3kiAn9ZfX5YlRX8hg6EbS850BXZyiO_iqWc"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Earth Tier Cushion Set</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Stonewashed heavy linen</p>
+</div>
+<span class="font-serif text-xl text-primary">$110</span>
+</div>
+</div>
+<!-- Product Card 6 -->
+<div class="group cursor-pointer">
+<div class="relative aspect-[4/5] bg-surface-container-low rounded-xl overflow-hidden mb-6">
+<img alt="Macrame Hanging" class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" data-alt="Large woven wall hanging made of natural undyed cotton rope with intricate knot patterns on a wooden branch" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDlxkDnR5Ct-eabsDqb2ec86WHeys-jdLJ96MYEkrwWJfdaVC-gsNL5vYX5baBzQkozgRCKCmcDdejzzZavlvV9fIgSSjM9XLn2DL7XAHsbaiIwBtga0qaCEZtzFvUlyJoi5imWnvNWNGZa4pK4jGerGuimUeqhj8wxf6Ipw1u503PGhklz0xXEeVJhuti5XRVLyEPXhIWRaXsM7JtNWNughcdu5UzbYcl2MQBDhBEz99BU8DgZiaVcVrkA0KWh_Zs0QRV3vG9tnCQ"/>
+<button class="absolute top-4 right-4 p-2 bg-white/80 backdrop-blur-md rounded-full text-primary hover:bg-white transition-colors">
+<span class="material-symbols-outlined" data-icon="favorite">favorite</span>
+</button>
+<div class="absolute inset-0 bg-black/10 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+<button class="bg-white px-6 py-2.5 rounded-lg text-primary font-bold shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform">Quick View</button>
+</div>
+</div>
+<div class="flex justify-between items-start">
+<div>
+<h3 class="font-serif text-2xl text-on-surface">Horizon Tapestry</h3>
+<p class="text-on-surface-variant font-body text-sm mt-1">Hand-knotted jute &amp; hemp</p>
+</div>
+<span class="font-serif text-xl text-primary">$420</span>
+</div>
+</div>
+</div>
+<!-- Load More -->
+<div class="mt-20 flex flex-col items-center gap-6">
+<p class="text-on-surface-variant font-body text-sm">Showing 6 of 42 products</p>
+<div class="w-full max-w-xs h-[1px] bg-outline-variant/30 relative">
+<div class="absolute top-0 left-0 h-full w-1/7 bg-primary"></div>
+</div>
+<button class="group flex items-center gap-3 px-10 py-4 bg-primary text-white rounded-lg hover:bg-primary-container transition-all duration-300 shadow-lg shadow-primary/20">
+<span class="font-bold tracking-wide">Load More</span>
+<span class="material-symbols-outlined group-hover:translate-x-1 transition-transform" data-icon="arrow_forward">arrow_forward</span>
+</button>
+</div>
+</section>
+</main>
+<!-- Footer -->
+<footer class="w-full mt-20 bg-[#5a6245] dark:bg-stone-950">
+<div class="flex flex-col md:flex-row justify-between items-center px-12 py-16 w-full max-w-screen-2xl mx-auto">
+<div class="mb-8 md:mb-0">
+<div class="text-xl font-serif text-[#fcf9f4] mb-2">Terra &amp; Loom</div>
+<p class="text-[#fcf9f4]/80 font-body text-sm max-w-xs">© 2024 Terra &amp; Loom. Curating warmth for the modern home.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8 md:gap-12">
+<a class="text-[#fcf9f4]/80 font-body hover:text-white transition-opacity" href="#">Sustainability</a>
+<a class="text-[#fcf9f4]/80 font-body hover:text-white transition-opacity" href="#">Shipping</a>
+<a class="text-[#fcf9f4]/80 font-body hover:text-white transition-opacity" href="#">Returns</a>
+<a class="text-[#fcf9f4]/80 font-body hover:text-white transition-opacity" href="#">Privacy</a>
+</div>
+</div>
+</footer>
+</body></html>

@@ -15,10 +15,13 @@ interface ProductCardProps {
     price: number;
     originalPrice: number;
     unit: string;
-    selling_mode: "meter" | "piece";
+    selling_mode?: "meter" | "piece";
     variantId?: string | null;
     requiresOptions?: boolean;
     category: string;
+    fabricType?: string;
+    occasionTag?: string;
+    patternTag?: string;
     image: string;
     images?: string[];
   };
@@ -50,7 +53,8 @@ export default function ProductCard({ product }: ProductCardProps) {
       price: product.price,
       image: product.image,
       meters: 1,
-      selling_mode: product.selling_mode,
+      selling_mode: product.selling_mode || (product.unit === "meter" ? "meter" : "piece"),
+      analytics_source: "plp_product_card",
     });
   };
 
@@ -97,6 +101,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                 src={img}
                 alt={`${product.name} - View ${index + 1}`}
                 fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-transform duration-700 ease-premium group-hover:scale-105"
               />
             </div>
@@ -140,6 +145,25 @@ export default function ProductCard({ product }: ProductCardProps) {
           <h3 className="font-serif text-lg text-foreground mb-3 group-hover:text-accent transition-colors duration-300 line-clamp-1">
             {product.name}
           </h3>
+          {(product.fabricType || product.occasionTag || product.patternTag) && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {product.fabricType && (
+                <span className="inline-flex items-center border border-border px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase text-text-secondary">
+                  {product.fabricType}
+                </span>
+              )}
+              {product.occasionTag && (
+                <span className="inline-flex items-center border border-border px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase text-text-secondary">
+                  {product.occasionTag}
+                </span>
+              )}
+              {product.patternTag && (
+                <span className="inline-flex items-center border border-border px-2 py-0.5 text-[10px] tracking-[0.1em] uppercase text-text-secondary">
+                  {product.patternTag}
+                </span>
+              )}
+            </div>
+          )}
           <div className="flex items-center justify-between mt-3">
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-foreground font-medium">

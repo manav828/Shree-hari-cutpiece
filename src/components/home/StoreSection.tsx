@@ -1,6 +1,9 @@
 import Container from "@/components/ui/Container";
+import { brand } from "@/lib/brand";
 
 export default function StoreSection() {
+  const addressLines = brand.addressLines;
+
   return (
     <section className="section-padding bg-background-secondary border-t border-border/40 overflow-hidden">
       <Container>
@@ -8,7 +11,7 @@ export default function StoreSection() {
           {/* Map */}
           <div className="relative aspect-[4/3] sm:aspect-square lg:aspect-auto lg:h-full min-h-[400px] bg-[#EFEFEF]">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.9567941785!2d72.5831968!3d23.0233481!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e84f7b649a159%3A0xe48ab22d1cc32a10!2sTextile%20Market%2C%20Ring%20Road%2C%20Ahmedabad!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+              src={brand.mapsEmbedUrl}
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -47,8 +50,9 @@ export default function StoreSection() {
                 <div className="pt-2">
                   <h4 className="font-medium text-foreground tracking-wide mb-2 uppercase text-xs">Address</h4>
                   <p className="text-text-secondary font-light leading-relaxed">
-                    123, Textile Market, Ring Road<br />
-                    Ahmedabad, Gujarat - 380001
+                    {addressLines[0]}<br />
+                    {addressLines[1]}<br />
+                    {addressLines[2]}
                   </p>
                 </div>
               </div>
@@ -62,8 +66,8 @@ export default function StoreSection() {
                 <div className="pt-2">
                   <h4 className="font-medium text-foreground tracking-wide mb-2 uppercase text-xs">Store Hours</h4>
                   <p className="text-text-secondary font-light leading-relaxed">
-                    Monday - Saturday: 10:00 AM - 8:00 PM<br />
-                    Sunday: 11:00 AM - 6:00 PM
+                    {brand.storeHoursWeekday}<br />
+                    {brand.storeHoursWeekend}
                   </p>
                 </div>
               </div>
@@ -77,8 +81,8 @@ export default function StoreSection() {
                 <div className="pt-2">
                   <h4 className="font-medium text-foreground tracking-wide mb-2 uppercase text-xs">Contact</h4>
                   <p className="text-text-secondary font-light leading-relaxed">
-                    +91 XXXXX XXXXX<br />
-                    info@shreeharicutpiece.com
+                    {brand.phoneDisplay}<br />
+                    {brand.email}
                   </p>
                 </div>
               </div>
@@ -87,7 +91,7 @@ export default function StoreSection() {
             {/* CTA */}
             <div className="mt-14">
               <a
-                href="https://maps.google.com"
+                href={brand.mapsUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-3 text-foreground hover:text-accent transition-colors duration-300 font-medium tracking-wide text-sm uppercase group"

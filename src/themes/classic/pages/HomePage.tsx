@@ -6,6 +6,7 @@ import Categories from "../components/home/Categories";
 import DescriptionSection from "../components/home/DescriptionSection";
 import TrendingProjects from "../components/home/TrendingProjects";
 import FeaturedProducts from "../components/home/FeaturedProducts";
+import JournalPreview from "../components/home/JournalPreview";
 import InstagramReels from "../components/home/InstagramReels";
 import TrustSection from "../components/home/TrustSection";
 import Inspiration from "../components/home/Inspiration";
@@ -39,6 +40,7 @@ export default async function ClassicHomePage() {
                 <TrendingProjects />
                 <DescriptionSection />
                 <FeaturedProducts />
+                <JournalPreview />
                 <InstagramReels />
                 <TrustSection />
                 <Inspiration />

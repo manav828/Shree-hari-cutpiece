@@ -2,30 +2,62 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { useEffect, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 
 export default function CartSidebar() {
   const { items, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
+  const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  useEffect(() => {
+    if (!isCartOpen) {
+      return undefined;
+    }
+
+    const closeOnEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setIsCartOpen(false);
+      }
+    };
+
+    document.body.style.overflow = "hidden";
+    closeButtonRef.current?.focus();
+    window.addEventListener("keydown", closeOnEsc);
+
+    return () => {
+      document.body.style.overflow = "";
+      window.removeEventListener("keydown", closeOnEsc);
+    };
+  }, [isCartOpen, setIsCartOpen]);
 
   if (!isCartOpen) return null;
 
   return (
     <>
       {/* Backdrop */}
-      <div 
+      <button
+        type="button"
         className="fixed inset-0 bg-black/50 z-50"
+        aria-label="Close cart"
         onClick={() => setIsCartOpen(false)}
       />
       
       {/* Sidebar */}
-      <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cart-sidebar-title"
+        className="fixed top-0 right-0 h-full w-full max-w-md bg-white z-50 shadow-2xl flex flex-col"
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border">
-          <h2 className="font-serif text-2xl">Your Cart</h2>
-          <button 
+          <h2 id="cart-sidebar-title" className="font-serif text-2xl">Your Cart</h2>
+          <button
+            ref={closeButtonRef}
             onClick={() => setIsCartOpen(false)}
             className="p-2 hover:bg-background-secondary rounded-full transition-colors"
+            aria-label="Close cart drawer"
           >
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M6 18L18 6M6 6l12 12" />
@@ -81,6 +113,7 @@ export default function CartSidebar() {
                         <button 
                           onClick={() => updateQuantity(item.id, item.meters - 1)}
                           className="px-3 py-1 hover:bg-background-secondary transition-colors"
+                          aria-label={`Decrease quantity for ${item.name}`}
                         >
                           -
                         </button>
@@ -90,6 +123,7 @@ export default function CartSidebar() {
                         <button 
                           onClick={() => updateQuantity(item.id, item.meters + 1)}
                           className="px-3 py-1 hover:bg-background-secondary transition-colors"
+                          aria-label={`Increase quantity for ${item.name}`}
                         >
                           +
                         </button>
@@ -97,6 +131,7 @@ export default function CartSidebar() {
                       <button 
                         onClick={() => removeFromCart(item.id)}
                         className="text-text-secondary hover:text-accent transition-colors"
+                        aria-label={`Remove ${item.name} from cart`}
                       >
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

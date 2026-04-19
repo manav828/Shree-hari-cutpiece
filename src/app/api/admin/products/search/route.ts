@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
         const idsParam = (searchParams.get("ids") || "").trim();
         const limit = clampLimit(Number(searchParams.get("limit") || DEFAULT_LIMIT));
 
-        let baseQuery = supabaseAdmin
+        const baseQuery = supabaseAdmin
             .from("products")
             .select("id, name, slug")
             .eq("is_active", true);

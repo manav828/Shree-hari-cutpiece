@@ -13,7 +13,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
 
-// Sample reviews data
+// Static reviews data
 const reviewsData = [
   { id: 1, name: "Priya Sharma", rating: 5, date: "2 weeks ago", comment: "Excellent fabric quality!", verified: true },
   { id: 2, name: "Anjali Patel", rating: 4, date: "1 month ago", comment: "Good quality fabric.", verified: true },
@@ -284,10 +284,26 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const faqItems = Array.isArray(product.faqs) ? product.faqs : [];
   const fabricRows = Array.isArray(product.fabric_details) ? product.fabric_details : [];
 
-  const media = selectedVariant?.variant_images?.map((img: any) => ({
+  const galleryStoryLabels = [
+    "Fabric hero",
+    "Texture close-up",
+    "Drape preview",
+    "Outfit use-case",
+    "Additional detail",
+  ];
+
+  const media = (Array.isArray(selectedVariant?.variant_images)
+    ? [...selectedVariant.variant_images]
+      .filter((img: any) => Boolean(img?.image_url))
+      .sort((a: any, b: any) => Number(Boolean(b?.is_primary)) - Number(Boolean(a?.is_primary)))
+    : []
+  ).map((img: any, idx: number) => ({
     type: img.media_type || "image",
-    url: img.image_url
-  })) || [];
+    url: img.image_url,
+    label: img.media_type === "video"
+      ? "Fabric motion preview"
+      : galleryStoryLabels[idx] || `Gallery view ${idx + 1}`,
+  }));
 
   const detailTabs = [
     { id: "description", label: "Description" },
@@ -324,7 +340,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                             <svg className="w-6 h-6 text-black/50" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
                           </div>
                         ) : (
-                          <Image src={item.url} alt={`${product.name} thumbnail ${idx + 1}`} fill className="object-cover" />
+                          <Image src={item.url} alt={`${product.name} ${item.label.toLowerCase()} thumbnail`} fill sizes="96px" className="object-cover" />
                         )}
                       </button>
                     ))}
@@ -335,10 +351,22 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                     <video src={media[activeMedia].url} controls autoPlay loop muted className="w-full h-full object-contain" />
                   ) : (
                     media.length > 0 ? (
-                      <Image src={media[activeMedia]?.url} alt={product.name} fill className="object-contain" priority />
+                      <Image
+                        src={media[activeMedia]?.url}
+                        alt={product.name}
+                        fill
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        className="object-contain"
+                        priority={activeMedia === 0}
+                      />
                     ) : (
                       <div className="w-full h-full bg-border flex items-center justify-center text-text-secondary text-sm">No Image</div>
                     )
+                  )}
+                  {media[activeMedia]?.label && (
+                    <p className="absolute top-4 right-4 z-10 bg-black/55 text-white text-[10px] tracking-[0.14em] uppercase px-3 py-2">
+                      {media[activeMedia].label}
+                    </p>
                   )}
                   {selectedVariant?.original_price > selectedVariant?.price && (
                     <div className="absolute top-4 left-4 bg-accent text-white text-sm px-4 py-2 z-10">
@@ -353,7 +381,16 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   {media[activeMedia]?.type === "video" ? (
                     <video src={media[activeMedia].url} controls autoPlay loop muted className="absolute inset-0 w-full h-full object-contain" />
                   ) : (
-                    media.length > 0 && <Image src={media[activeMedia]?.url} alt={product.name} fill className="absolute inset-0 object-contain" priority />
+                    media.length > 0 && (
+                      <Image
+                        src={media[activeMedia]?.url}
+                        alt={product.name}
+                        fill
+                        sizes="100vw"
+                        className="absolute inset-0 object-contain"
+                        priority={activeMedia === 0}
+                      />
+                    )
                   )}
                   {selectedVariant?.original_price > selectedVariant?.price && (
                     <div className="absolute top-4 left-4 bg-accent text-white text-xs px-3 py-1.5 font-medium tracking-wide z-10">
@@ -368,7 +405,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                         {item.type === "video" ? (
                           <div className="w-full h-full bg-black/10 flex items-center justify-center"><svg className="w-4 h-4 text-black/50" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg></div>
                         ) : (
-                          <Image src={item.url} alt="thumbnail" fill className="object-cover" />
+                          <Image src={item.url} alt={`${product.name} ${item.label.toLowerCase()} mobile thumbnail`} fill sizes="80px" className="object-cover" />
                         )}
                       </button>
                     ))}
@@ -658,7 +695,13 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   <Link key={relProduct.id} href={`/shop/${relProduct.slug}`} className="group">
                     <div className="aspect-[4/5] relative overflow-hidden bg-background-secondary mb-4">
                       {relProduct.image ? (
-                        <Image src={relProduct.image} alt={relProduct.name} fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                        <Image
+                          src={relProduct.image}
+                          alt={relProduct.name}
+                          fill
+                          sizes="(max-width: 1024px) 50vw, 25vw"
+                          className="object-cover transition-transform duration-700 group-hover:scale-105"
+                        />
                       ) : (
                         <div className="w-full h-full bg-border flex items-center justify-center" />
                       )}

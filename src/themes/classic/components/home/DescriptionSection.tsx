@@ -31,8 +31,9 @@ export default async function DescriptionSection() {
               <div className="col-span-7 aspect-[3/4] relative overflow-hidden bg-[#F5F5F5] rounded-xl lg:rounded-none">
                 <Image
                   src={descImage1}
-                  alt="Premium fabric texture"
+                  alt="Premium cutpiece fabric texture and weave close-up"
                   fill
+                  sizes="(max-width: 1024px) 58vw, 34vw"
                   className="object-cover"
                 />
               </div>
@@ -40,8 +41,9 @@ export default async function DescriptionSection() {
                 <div className="aspect-square relative overflow-hidden bg-[#F5F5F5] rounded-xl lg:rounded-none">
                   <Image
                     src={descImage2}
-                    alt="Fabric detail"
+                    alt="Fabric drape detail for tailoring preview"
                     fill
+                    sizes="(max-width: 1024px) 42vw, 18vw"
                     className="object-cover"
                   />
                 </div>

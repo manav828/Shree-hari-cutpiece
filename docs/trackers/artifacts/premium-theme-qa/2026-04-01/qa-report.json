@@ -1,0 +1,311 @@
+{
+  "generatedAt": "2026-04-01T17:22:46.307Z",
+  "baseUrl": "http://localhost:3000",
+  "routeSummary": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0
+  },
+  "routeChecks": [
+    {
+      "viewport": "desktop-1440",
+      "route": "/",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__home.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/shop",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__shop.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/about",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__about.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/contact",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__contact.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/hi/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__hi-blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/shipping-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__shipping-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/returns-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__returns-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/privacy-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__privacy-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/terms-of-service",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__terms-of-service.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/login",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__login.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/signup",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/desktop-1440__signup.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__home.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/shop",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__shop.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/about",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__about.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/contact",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__contact.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/hi/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__hi-blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/shipping-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__shipping-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/returns-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__returns-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/privacy-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__privacy-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/terms-of-service",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__terms-of-service.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/login",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__login.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/signup",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-04-01/screenshots/mobile-390__signup.png",
+      "ok": true
+    }
+  ],
+  "analyticsReport": {
+    "baseUrl": "http://localhost:3000",
+    "checks": {
+      "view_item": true,
+      "add_to_cart": true,
+      "filter_use": true,
+      "whatsapp_click": true
+    },
+    "events": [
+      {
+        "event": "add_to_cart",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:38.256Z",
+        "product_id": "db00b691-1b24-4eab-879b-5f2e18cd9227",
+        "product_name": "Designer Chiffon Floral",
+        "variant_id": "28a3961b-c6ed-4d09-a786-14909374bb78",
+        "unit_price": 349,
+        "quantity": 1,
+        "selling_mode": "meter",
+        "source": "plp_product_card",
+        "has_options": false,
+        "currency": "INR"
+      },
+      {
+        "event": "filter_use",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:39.396Z",
+        "category": "all",
+        "sort_by": "price-low",
+        "fabric_type": "all",
+        "occasion": "all",
+        "pattern": "all",
+        "color_family": "all",
+        "price_band": "all",
+        "active_filter_count": 0,
+        "result_count": 8
+      },
+      {
+        "event": "filter_use",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:40.140Z",
+        "category": "all",
+        "sort_by": "price-low",
+        "fabric_type": "Chiffon",
+        "occasion": "all",
+        "pattern": "all",
+        "color_family": "all",
+        "price_band": "all",
+        "active_filter_count": 1,
+        "result_count": 1
+      },
+      {
+        "event": "add_to_cart",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:38.256Z",
+        "product_id": "db00b691-1b24-4eab-879b-5f2e18cd9227",
+        "product_name": "Designer Chiffon Floral",
+        "variant_id": "28a3961b-c6ed-4d09-a786-14909374bb78",
+        "unit_price": 349,
+        "quantity": 1,
+        "selling_mode": "meter",
+        "source": "plp_product_card",
+        "has_options": false,
+        "currency": "INR"
+      },
+      {
+        "event": "filter_use",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:39.396Z",
+        "category": "all",
+        "sort_by": "price-low",
+        "fabric_type": "all",
+        "occasion": "all",
+        "pattern": "all",
+        "color_family": "all",
+        "price_band": "all",
+        "active_filter_count": 0,
+        "result_count": 8
+      },
+      {
+        "event": "filter_use",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:40.140Z",
+        "category": "all",
+        "sort_by": "price-low",
+        "fabric_type": "Chiffon",
+        "occasion": "all",
+        "pattern": "all",
+        "color_family": "all",
+        "price_band": "all",
+        "active_filter_count": 1,
+        "result_count": 1
+      },
+      {
+        "event": "view_item",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:42.788Z",
+        "product_id": "db00b691-1b24-4eab-879b-5f2e18cd9227",
+        "product_slug": "designer-chiffon-floral",
+        "product_name": "Designer Chiffon Floral",
+        "variant_id": "28a3961b-c6ed-4d09-a786-14909374bb78",
+        "unit_price": 349,
+        "selling_mode": "meter",
+        "category": "Chiffon",
+        "currency": "INR"
+      },
+      {
+        "event": "add_to_cart",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:43.284Z",
+        "product_id": "db00b691-1b24-4eab-879b-5f2e18cd9227",
+        "product_name": "Designer Chiffon Floral (Peach)",
+        "variant_id": "28a3961b-c6ed-4d09-a786-14909374bb78",
+        "unit_price": 349,
+        "quantity": 1,
+        "selling_mode": "meter",
+        "source": "pdp_primary_cta",
+        "has_options": false,
+        "currency": "INR"
+      },
+      {
+        "event": "whatsapp_click",
+        "event_source": "storefront",
+        "timestamp": "2026-04-01T17:22:44.399Z",
+        "location": "pdp_stylist_cta",
+        "order_number": null,
+        "product_id": "db00b691-1b24-4eab-879b-5f2e18cd9227",
+        "product_slug": "designer-chiffon-floral"
+      }
+    ],
+    "notes": []
+  }
+}

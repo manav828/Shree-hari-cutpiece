@@ -1,6 +1,7 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Check, ImagePlus, Search, Trash2, X } from "lucide-react";
 
 export type BlogMediaItem = {
@@ -67,7 +68,7 @@ export default function BlogMediaLibraryModal({ open, title, onClose, onSelect }
         return params.toString();
     }, [page, search, dateFrom, dateTo]);
 
-    const loadMedia = async () => {
+    const loadMedia = useCallback(async () => {
         setLoading(true);
         setMessage("");
         try {
@@ -81,12 +82,12 @@ export default function BlogMediaLibraryModal({ open, title, onClose, onSelect }
         } finally {
             setLoading(false);
         }
-    };
+    }, [queryString]);
 
     useEffect(() => {
         if (!open) return;
         loadMedia();
-    }, [open, queryString]);
+    }, [open, loadMedia]);
 
     useEffect(() => {
         if (!open) return;

@@ -16,31 +16,39 @@ export default function HeroBannerCarousel({ banners, layoutMode = "contained" }
     [banners],
   );
   const [currentIndex, setCurrentIndex] = useState(0);
-
-  if (slides.length === 0) return null;
+  const slideCount = slides.length;
 
   useEffect(() => {
-    if (slides.length <= 1) return;
+    if (slideCount <= 1) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % slides.length);
+      setCurrentIndex((prev) => (prev + 1) % slideCount);
     }, 4500);
 
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, [slideCount]);
 
   useEffect(() => {
-    if (currentIndex >= slides.length) {
+    if (slideCount === 0) {
+      if (currentIndex !== 0) {
+        setCurrentIndex(0);
+      }
+      return;
+    }
+
+    if (currentIndex >= slideCount) {
       setCurrentIndex(0);
     }
-  }, [currentIndex, slides.length]);
+  }, [currentIndex, slideCount]);
+
+  if (slideCount === 0) return null;
 
   const goPrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + slides.length) % slides.length);
+    setCurrentIndex((prev) => (prev - 1 + slideCount) % slideCount);
   };
 
   const goNext = () => {
-    setCurrentIndex((prev) => (prev + 1) % slides.length);
+    setCurrentIndex((prev) => (prev + 1) % slideCount);
   };
 
   return (
@@ -51,7 +59,7 @@ export default function HeroBannerCarousel({ banners, layoutMode = "contained" }
             className="flex transition-transform duration-700 ease-out"
             style={{ transform: `translateX(-${currentIndex * 100}%)` }}
           >
-            {slides.map((banner) => (
+            {slides.map((banner, idx) => (
               <Link
                 key={banner.id}
                 href={banner.link_url || "/shop"}
@@ -66,7 +74,7 @@ export default function HeroBannerCarousel({ banners, layoutMode = "contained" }
                   fill
                   sizes="100vw"
                   className="object-cover"
-                  priority
+                  priority={idx === 0}
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/45 via-black/12 to-transparent" />

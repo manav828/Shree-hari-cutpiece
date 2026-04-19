@@ -1,16 +1,17 @@
 import Container from "@/components/ui/Container";
 import { getSiteConfigMap } from "@/lib/cms";
+import { brand } from "@/lib/brand";
 
 export default async function StoreSection() {
   const config = await getSiteConfigMap();
 
-  const storeAddress = config.store_address ?? "123, Textile Market, Ring Road, Ahmedabad, Gujarat - 380001";
-  const storeHoursWeekday = config.store_hours_weekday ?? "Monday - Saturday: 10:00 AM - 8:00 PM";
-  const storeHoursWeekend = config.store_hours_weekend ?? "Sunday: 11:00 AM - 6:00 PM";
-  const storePhone = config.store_phone ?? "+91 XXXXX XXXXX";
-  const storeEmail = config.store_email ?? "info@shreeharicutpiece.com";
-  const storeMapsUrl = config.store_maps_url ?? "https://maps.google.com";
-  const storeEmbedUrl = config.store_embed_url ?? "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3671.9567941785!2d72.5831968!3d23.0233481!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x395e84f7b649a159%3A0xe48ab22d1cc32a10!2sTextile%20Market%2C%20Ring%20Road%2C%20Ahmedabad!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin";
+  const storeAddress = config.store_address ?? brand.addressLines.join("\n");
+  const storeHoursWeekday = config.store_hours_weekday ?? brand.storeHoursWeekday;
+  const storeHoursWeekend = config.store_hours_weekend ?? brand.storeHoursWeekend;
+  const storePhone = config.store_phone ?? brand.phoneDisplay;
+  const storeEmail = config.store_email ?? brand.email;
+  const storeMapsUrl = config.store_maps_url ?? brand.mapsUrl;
+  const storeEmbedUrl = config.store_embed_url ?? brand.mapsEmbedUrl;
 
   const addressLines = storeAddress.split("\n").filter(Boolean);
 

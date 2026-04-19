@@ -7,14 +7,16 @@ const projects = [
         id: 1,
         title: "Bespoke Tailoring",
         description: "Suits, Blazers & Formal Wear",
-        image: "https://images.unsplash.com/photo-1594938298598-70f70df33100?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+        alt: "Bespoke tailoring fabric with sharp weave detail",
         link: "/shop",
     },
     {
         id: 2,
         title: "Resort Essentials",
         description: "Linens & Lightweight Cottons",
-        image: "https://images.unsplash.com/photo-1515347619252-12e6bfb6a4dc?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+        alt: "Lightweight linen cotton fabric for resort wear",
         link: "/shop",
     },
     {
@@ -22,6 +24,7 @@ const projects = [
         title: "Evening Glam",
         description: "Silks, Satins & Brocades",
         image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80",
+        alt: "Evening wear fabric featuring silk-like drape",
         link: "/shop",
     },
     {
@@ -29,6 +32,7 @@ const projects = [
         title: "Luxe Home",
         description: "Velvets & Heavy Textures",
         image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80",
+        alt: "Heavy textured upholstery-style premium fabric",
         link: "/shop",
     },
 ];
@@ -55,8 +59,9 @@ export default function TrendingProjects() {
                             <Link href={project.link} className="block relative aspect-square sm:aspect-[4/5] lg:aspect-square overflow-hidden bg-background-secondary">
                                 <Image
                                     src={project.image}
-                                    alt={project.title}
+                                    alt={project.alt}
                                     fill
+                                    sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                                     className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                                 />
                             </Link>

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0..72,200..800;1..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-container": "#ffffff",
+                    "surface-container": "#f0ede8",
+                    "surface-container-high": "#ebe8e3",
+                    "on-tertiary-fixed": "#261a00",
+                    "surface-variant": "#e5e2dd",
+                    "primary-fixed-dim": "#ffb4a3",
+                    "on-background": "#1c1c19",
+                    "secondary-fixed-dim": "#c2caa8",
+                    "on-secondary-container": "#5e6649",
+                    "surface-container-low": "#f6f3ee",
+                    "secondary-fixed": "#dee6c2",
+                    "secondary-container": "#dbe4c0",
+                    "outline-variant": "#ddc0ba",
+                    "on-surface": "#1c1c19",
+                    "on-secondary-fixed-variant": "#424a2f",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "tertiary-fixed-dim": "#f3bf43",
+                    "tertiary-fixed": "#ffdf9e",
+                    "surface-dim": "#dcdad5",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#3d0600",
+                    "on-primary-container": "#ffffff",
+                    "inverse-on-surface": "#f3f0eb",
+                    "secondary": "#5a6245",
+                    "on-primary": "#ffffff",
+                    "tertiary-container": "#977000",
+                    "on-error": "#ffffff",
+                    "inverse-primary": "#ffb4a3",
+                    "error": "#ba1a1a",
+                    "primary-container": "#bf573f",
+                    "surface-container-highest": "#e5e2dd",
+                    "primary": "#9f3f29",
+                    "surface": "#fcf9f4",
+                    "on-surface-variant": "#56423d",
+                    "on-secondary": "#ffffff",
+                    "on-primary-fixed-variant": "#802915",
+                    "primary-fixed": "#ffdad2",
+                    "on-tertiary": "#ffffff",
+                    "inverse-surface": "#31302d",
+                    "surface-bright": "#fcf9f4",
+                    "tertiary": "#785900",
+                    "surface-container-lowest": "#ffffff",
+                    "outline": "#89726c",
+                    "on-secondary-fixed": "#171e08",
+                    "background": "#fcf9f4",
+                    "surface-tint": "#a0402a"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader", "serif"],
+                    "body": ["Manrope", "sans-serif"],
+                    "label": ["Manrope", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        body { font-family: 'Manrope', sans-serif; }
+        h1, h2, h3 { font-family: 'Newsreader', serif; }
+    </style>
+</head>
+<body class="bg-background text-on-background selection:bg-primary-fixed selection:text-on-primary-fixed">
+<!-- Top Navigation Shell -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 dark:bg-stone-950/80 backdrop-blur-md">
+<div class="flex justify-between items-center px-8 py-6 max-w-screen-2xl mx-auto">
+<a class="text-2xl font-['Newsreader'] font-bold text-[#9f3f29] dark:text-[#BF573F]" href="#">Terra &amp; Loom</a>
+<div class="hidden md:flex items-center space-x-8">
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors font-['Newsreader'] serif italic tracking-tight" href="#">Collections</a>
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors font-['Newsreader'] serif italic tracking-tight" href="#">Archives</a>
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors font-['Newsreader'] serif italic tracking-tight" href="#">The Studio</a>
+</div>
+<div class="flex items-center space-x-6 text-[#9f3f29]">
+<button class="hover:opacity-80 transition-opacity scale-95 active:duration-150">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+<button class="hover:opacity-80 transition-opacity scale-95 active:duration-150">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-32 pb-20 px-4 md:px-8 max-w-screen-xl mx-auto">
+<header class="mb-12">
+<h1 class="text-4xl md:text-5xl font-bold text-primary mb-2">Your Curated Collection</h1>
+<p class="text-secondary font-body italic">3 items ready for your home</p>
+</header>
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+<!-- Cart Items Section -->
+<div class="lg:col-span-8 space-y-px bg-outline-variant/10">
+<!-- Cart Item 1 -->
+<div class="bg-surface p-6 flex gap-6 items-center">
+<div class="w-24 h-32 md:w-32 md:h-40 overflow-hidden rounded bg-surface-container flex-shrink-0">
+<img alt="Artisanal ceramic vase" class="w-full h-full object-cover" data-alt="close-up of a handcrafted terracotta vase with organic texture and minimalist silhouette on a neutral stone surface" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAzKHstOzoVpUs_k2ZZ29J7SAtWTGZWqfG1p1LjKpC_Fnt5iebAxJJ0ZdLqFBTKahfjD7elURXzErLFiHcBdIyLUhem6QHNZ3cM1pdkFMYxem7MBSUInJkUibtBd24A3WKscpT_AJiLEEbU-MRDnXgxSCrT_1wBFjSEsZQpYviEeFfCasccpKsP4XWq43CgGynNYDMal_knb8a_LbTe57sWPPpDNVEuwKHtfFW3srWzIBQa1hhZhjHI0WgiUGGy63Cj0ict4K4rf3s"/>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<h3 class="text-xl font-headline font-semibold text-on-surface">Earth-Fired Ceramic Vase</h3>
+<p class="text-sm text-secondary font-body">Stone Grey • Large</p>
+<div class="mt-4 flex gap-4 text-xs font-label uppercase tracking-wider text-secondary">
+<button class="hover:text-primary transition-colors">Remove</button>
+<span class="text-outline-variant">|</span>
+<button class="hover:text-primary transition-colors">Save for Later</button>
+</div>
+</div>
+<div class="flex md:flex-col justify-between md:items-end">
+<div class="flex items-center border border-outline-variant/30 rounded-lg overflow-hidden bg-surface-container-lowest">
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="px-4 py-1 text-sm font-bold font-body">1</span>
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="text-lg font-bold font-body text-primary">$124.00</p>
+</div>
+</div>
+</div>
+<!-- Cart Item 2 -->
+<div class="bg-surface p-6 flex gap-6 items-center border-t border-outline-variant/10">
+<div class="w-24 h-32 md:w-32 md:h-40 overflow-hidden rounded bg-surface-container flex-shrink-0">
+<img alt="Handwoven wool throw" class="w-full h-full object-cover" data-alt="soft textured cream and sage green hand-woven wool throw blanket draped over a wooden chair in soft morning light" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCThg39R2ZHPN56TGoQIX7CItJ24ct4AhXPHAnd0gOJHGr7oAa_ZQ5qVIRsIku7qFrIWM4Kvv2dVMONgzFTxCyOiVegnpUxTGxmwh5ALeW-hKztIJEGFDtOX_7EOLm9ARzU3CrisYzRgOHe5FMlfnG1VUrvXdXt18uPDe7krd02jSOwqk_p08FRDLPcX-VOVPvX6agTEzcj9SBdsMD1ODhGX88HREGIc2s7VZ3iL7mgoTkyKi05gcQ-b1SZN6Yw6B54VL2anOtm5eo"/>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<h3 class="text-xl font-headline font-semibold text-on-surface">The Weaver's Throw</h3>
+<p class="text-sm text-secondary font-body">Sage Mix • Queen</p>
+<div class="mt-4 flex gap-4 text-xs font-label uppercase tracking-wider text-secondary">
+<button class="hover:text-primary transition-colors">Remove</button>
+<span class="text-outline-variant">|</span>
+<button class="hover:text-primary transition-colors">Save for Later</button>
+</div>
+</div>
+<div class="flex md:flex-col justify-between md:items-end">
+<div class="flex items-center border border-outline-variant/30 rounded-lg overflow-hidden bg-surface-container-lowest">
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="px-4 py-1 text-sm font-bold font-body">1</span>
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="text-lg font-bold font-body text-primary">$185.00</p>
+</div>
+</div>
+</div>
+<!-- Cart Item 3 -->
+<div class="bg-surface p-6 flex gap-6 items-center border-t border-outline-variant/10">
+<div class="w-24 h-32 md:w-32 md:h-40 overflow-hidden rounded bg-surface-container flex-shrink-0">
+<img alt="Organic linen napkin set" class="w-full h-full object-cover" data-alt="set of four folded mustard yellow linen napkins on an aged oak table with a sprig of dried lavender" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC_vdBWb2focIsddkcrvuydI-kSCvfeHdqfGg6w1rDNlJ4NbV1VFhOvdFuA1y5LEpItgrBLij3ztEIl9Ow3d9yY983t221CxKXRrYGHWqVjRS9xxTyTzGUxe7vca7Au1f8LrL5NQBKagojdW4IWKHXXWRRMkYeXkMQv18Y7voKtI7s94m8K8j49fMmfhVKdkXodMCuMfh0fGVQSqiILJDz0LWlsazgtcZkksJeG1wwxwtdTZgWJFcdp5NErD__28MVrCwW1WkjF29s"/>
+</div>
+<div class="flex-grow grid grid-cols-1 md:grid-cols-2 gap-4">
+<div>
+<h3 class="text-xl font-headline font-semibold text-on-surface">Linen Napkin Set</h3>
+<p class="text-sm text-secondary font-body">Mustard • Set of 4</p>
+<div class="mt-4 flex gap-4 text-xs font-label uppercase tracking-wider text-secondary">
+<button class="hover:text-primary transition-colors">Remove</button>
+<span class="text-outline-variant">|</span>
+<button class="hover:text-primary transition-colors">Save for Later</button>
+</div>
+</div>
+<div class="flex md:flex-col justify-between md:items-end">
+<div class="flex items-center border border-outline-variant/30 rounded-lg overflow-hidden bg-surface-container-lowest">
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">remove</span></button>
+<span class="px-4 py-1 text-sm font-bold font-body">2</span>
+<button class="px-3 py-1 hover:bg-surface-container transition-colors"><span class="material-symbols-outlined text-sm">add</span></button>
+</div>
+<p class="text-lg font-bold font-body text-primary">$48.00</p>
+</div>
+</div>
+</div>
+<div class="bg-surface-container-low p-6 flex items-center gap-4 group cursor-pointer mt-8">
+<span class="material-symbols-outlined text-primary group-hover:translate-x-1 transition-transform">arrow_forward</span>
+<span class="font-headline italic text-lg text-secondary">Continue exploring our latest Collection</span>
+</div>
+</div>
+<!-- Order Summary Section -->
+<aside class="lg:col-span-4 sticky top-32">
+<div class="bg-surface p-8 border border-outline-variant/20 rounded-lg">
+<h2 class="text-2xl font-headline font-bold text-on-surface mb-6">Order Summary</h2>
+<div class="space-y-4 font-body text-sm mb-8">
+<div class="flex justify-between text-secondary">
+<span>Subtotal</span>
+<span class="text-on-surface font-semibold">$357.00</span>
+</div>
+<div class="flex justify-between text-secondary">
+<span>Shipping</span>
+<span class="text-on-surface font-semibold">$12.00</span>
+</div>
+<div class="flex justify-between text-secondary">
+<span>Estimated Tax</span>
+<span class="text-on-surface font-semibold">$28.56</span>
+</div>
+<div class="pt-4 border-t border-outline-variant/20 flex justify-between text-lg font-bold">
+<span class="text-on-surface">Total</span>
+<span class="text-primary">$397.56</span>
+</div>
+</div>
+<button class="w-full bg-primary text-on-primary py-4 rounded-lg font-bold text-lg hover:bg-primary-container transition-colors mb-6 shadow-sm">
+                        Secure Checkout
+                    </button>
+<div class="space-y-4 pt-6 border-t border-outline-variant/20">
+<div class="flex items-center gap-3 text-secondary text-sm">
+<span class="material-symbols-outlined text-primary-container" style="font-variation-settings: 'FILL' 1;">verified_user</span>
+<span>Secure SSL encrypted payment</span>
+</div>
+<div class="flex items-center gap-3 text-secondary text-sm">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">package_2</span>
+<span>Sustainable, plastic-free packaging</span>
+</div>
+<div class="flex items-center gap-3 text-secondary text-sm">
+<span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">eco</span>
+<span>Carbon-neutral delivery available</span>
+</div>
+</div>
+<div class="mt-8">
+<label class="block text-xs font-label uppercase tracking-widest text-secondary mb-2">Promo Code</label>
+<div class="flex gap-2">
+<input class="flex-grow bg-surface-container-high border-none rounded-lg px-4 py-2 text-sm focus:ring-1 focus:ring-primary" placeholder="Enter code" type="text"/>
+<button class="px-4 py-2 border border-outline-variant text-secondary rounded-lg text-sm font-bold hover:bg-surface-container-low transition-colors">Apply</button>
+</div>
+</div>
+</div>
+<div class="mt-6 p-4 bg-secondary-container/20 rounded-lg flex gap-4 items-center">
+<span class="material-symbols-outlined text-secondary">info</span>
+<p class="text-xs font-body text-on-secondary-container leading-relaxed">
+                        Shipping times may vary for handcrafted items. Typical delivery is 5-7 business days.
+                    </p>
+</div>
+</aside>
+</div>
+</main>
+<!-- Footer -->
+<footer class="w-full pt-20 pb-10 bg-[#fcf9f4] dark:bg-stone-900 flex flex-col items-center gap-8 px-12 border-t border-[#9f3f29]/10">
+<div class="text-lg font-['Newsreader'] text-[#9f3f29]">Terra &amp; Loom</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="font-['Manrope'] sans-serif text-sm tracking-wide text-[#5a6245] opacity-70 hover:opacity-100 underline decoration-[#9f3f29]/30 transition-all duration-300" href="#">Shipping &amp; Returns</a>
+<a class="font-['Manrope'] sans-serif text-sm tracking-wide text-[#5a6245] opacity-70 hover:opacity-100 underline decoration-[#9f3f29]/30 transition-all duration-300" href="#">Privacy Policy</a>
+<a class="font-['Manrope'] sans-serif text-sm tracking-wide text-[#5a6245] opacity-70 hover:opacity-100 underline decoration-[#9f3f29]/30 transition-all duration-300" href="#">Sustainability Manifesto</a>
+<a class="font-['Manrope'] sans-serif text-sm tracking-wide text-[#5a6245] opacity-70 hover:opacity-100 underline decoration-[#9f3f29]/30 transition-all duration-300" href="#">Contact</a>
+</div>
+<div class="font-['Manrope'] sans-serif text-sm tracking-wide text-[#5a6245] opacity-70">
+            © 2024 Terra &amp; Loom. Curating the artisanal home.
+        </div>
+</footer>
+</body></html>

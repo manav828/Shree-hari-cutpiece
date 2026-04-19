@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Container from "@/components/ui/Container";
+import { getWhatsAppUrl } from "@/lib/brand";
 
 const inspirationItems = [
   {
@@ -25,6 +26,8 @@ const inspirationItems = [
 ];
 
 export default function Inspiration() {
+  const consultationMessage = "Hi! I have a design idea and need fabric suggestions.";
+
   return (
     <section className="section-padding bg-background">
       <Container>
@@ -76,7 +79,7 @@ export default function Inspiration() {
             Have a design in mind? Share it with us!
           </p>
           <a
-            href="https://wa.me/91XXXXXXXXXX?text=Hi!%20I%20have%20a%20design%20idea%20and%20need%20fabric%20suggestions."
+            href={getWhatsAppUrl(consultationMessage)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-foreground text-foreground hover:bg-foreground hover:text-white transition-all duration-[400ms] ease-premium tracking-wide text-sm uppercase"

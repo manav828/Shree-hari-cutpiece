@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,200..800;1,6..72,200..800&amp;family=Manrope:wght@200..800&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "inverse-on-surface": "#f3f0eb",
+                    "on-primary-fixed-variant": "#802915",
+                    "surface-tint": "#a0402a",
+                    "surface-bright": "#fcf9f4",
+                    "surface-container-highest": "#e5e2dd",
+                    "primary-fixed": "#ffdad2",
+                    "error": "#ba1a1a",
+                    "outline": "#89726c",
+                    "tertiary": "#785900",
+                    "secondary-container": "#dbe4c0",
+                    "on-secondary": "#ffffff",
+                    "tertiary-container": "#977000",
+                    "surface-container-low": "#f6f3ee",
+                    "surface-container-high": "#ebe8e3",
+                    "primary": "#9f3f29",
+                    "on-primary-fixed": "#3d0600",
+                    "surface-dim": "#dcdad5",
+                    "on-tertiary-fixed-variant": "#5b4300",
+                    "error-container": "#ffdad6",
+                    "surface-container": "#f0ede8",
+                    "on-tertiary-fixed": "#261a00",
+                    "tertiary-fixed": "#ffdf9e",
+                    "on-primary-container": "#ffffff",
+                    "inverse-primary": "#ffb4a3",
+                    "outline-variant": "#ddc0ba",
+                    "on-secondary-fixed": "#171e08",
+                    "on-background": "#1c1c19",
+                    "on-surface": "#1c1c19",
+                    "on-secondary-fixed-variant": "#424a2f",
+                    "on-primary": "#ffffff",
+                    "on-secondary-container": "#5e6649",
+                    "secondary-fixed-dim": "#c2caa8",
+                    "primary-container": "#bf573f",
+                    "surface": "#fcf9f4",
+                    "surface-container-lowest": "#ffffff",
+                    "surface-variant": "#e5e2dd",
+                    "secondary": "#5a6245",
+                    "inverse-surface": "#31302d",
+                    "on-tertiary": "#ffffff",
+                    "secondary-fixed": "#dee6c2",
+                    "on-tertiary-container": "#ffffff",
+                    "tertiary-fixed-dim": "#f3bf43",
+                    "on-error-container": "#93000a",
+                    "on-error": "#ffffff",
+                    "background": "#fcf9f4",
+                    "on-surface-variant": "#56423d",
+                    "primary-fixed-dim": "#ffb4a3"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px"
+            },
+            "fontFamily": {
+                    "headline": ["Newsreader", "serif"],
+                    "body": ["Manrope", "sans-serif"],
+                    "label": ["Manrope", "sans-serif"]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body { font-family: 'Manrope', sans-serif; background-color: #fcf9f4; color: #1c1c19; }
+        .font-serif { font-family: 'Newsreader', serif; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24; }
+    </style>
+</head>
+<body class="bg-surface text-on-surface">
+<!-- TopNavBar from JSON -->
+<nav class="fixed top-0 w-full z-50 bg-[#fcf9f4]/80 backdrop-blur-md tonal-shift-surface-container-low">
+<div class="flex justify-between items-center px-8 h-20 w-full max-w-screen-2xl mx-auto">
+<div class="text-2xl font-semibold italic text-[#9f3f29] font-['Newsreader'] tracking-tight">Terra &amp; Loom</div>
+<div class="hidden md:flex items-center gap-8 font-['Newsreader'] tracking-tight">
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300" href="#">Collections</a>
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300" href="#">New Arrivals</a>
+<a class="text-[#9f3f29] font-medium border-b border-[#9f3f29]/30" href="#">Textiles</a>
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300" href="#">Furniture</a>
+<a class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300" href="#">Artisanal Goods</a>
+</div>
+<div class="flex items-center gap-6">
+<button class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300 scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
+</button>
+<button class="text-[#5a6245] hover:text-[#9f3f29] transition-colors duration-300 scale-95 duration-200">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+</button>
+</div>
+</div>
+</nav>
+<main class="pt-20">
+<!-- Full-Width Hero Banner -->
+<header class="relative w-full h-[614px] flex items-center justify-center overflow-hidden">
+<img alt="" class="absolute inset-0 w-full h-full object-cover" data-alt="Close-up of textured hand-woven linen textiles in neutral earth tones draped over a rustic wooden bench in natural morning sunlight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCUqfLd3chRl8iLG_4ZCEVY3dwc5nqC8RemCQWkpnncETzZFjX1EdLNItovuGf3PMJknvKwda4UubJVW2LPGEUDiZhL6nqzUW_cDc6NezHdfpMgZjyrt_kG1SbFHGCdWPFw9Fl3943b4Rtn2kjth2_9ClhYN3TgPwfqaSWmsUbY2uG7yxXLf6mESa2urdaahJUhMTT7VnRsT4bgBqEg53UipmUN9s3YEoW8H_pA8nIq_CSFaijvstuu_mAZcEKhSYCoxaAIhSseoqI"/>
+<div class="absolute inset-0 bg-on-background/10"></div>
+<div class="relative z-10 text-center px-6">
+<h1 class="font-serif text-5xl md:text-7xl text-surface-bright italic tracking-tight drop-shadow-sm mb-4">Hand-Woven Textiles</h1>
+<p class="font-body text-surface-bright/90 text-lg md:text-xl max-w-2xl mx-auto font-light tracking-wide">Tactile stories woven from sustainable fibers, designed for the slow-living sanctuary.</p>
+</div>
+</header>
+<!-- Product Listing Layout -->
+<div class="max-w-screen-2xl mx-auto px-8 py-16 flex flex-col md:flex-row gap-12">
+<!-- Left Sticky Sidebar Filters -->
+<aside class="w-full md:w-64 shrink-0">
+<div class="sticky top-28 flex flex-col gap-10">
+<div>
+<h3 class="font-body font-bold text-xs uppercase tracking-widest text-secondary mb-6">The Archive</h3>
+<div class="flex flex-col gap-4">
+<div class="group cursor-pointer">
+<div class="flex justify-between items-center mb-4">
+<span class="font-serif text-lg text-on-surface">Category</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer group-hover:text-primary transition-colors">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20 transition-all" type="checkbox"/>
+<span>Throw Blankets</span>
+</label>
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Cushion Covers</span>
+</label>
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Table Linens</span>
+</label>
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Wall Hangings</span>
+</label>
+</div>
+</div>
+<div class="pt-6 border-t border-surface-container-highest">
+<div class="flex justify-between items-center mb-4">
+<span class="font-serif text-lg text-on-surface">Material</span>
+<span class="material-symbols-outlined text-sm">expand_more</span>
+</div>
+<div class="space-y-3">
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Organic Cotton</span>
+</label>
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Belgian Linen</span>
+</label>
+<label class="flex items-center gap-3 text-sm font-body text-on-surface-variant cursor-pointer">
+<input class="w-4 h-4 rounded-sm border-outline-variant text-primary focus:ring-primary/20" type="checkbox"/>
+<span>Recycled Wool</span>
+</label>
+</div>
+</div>
+<div class="pt-6 border-t border-surface-container-highest">
+<div class="flex justify-between items-center mb-4">
+<span class="font-serif text-lg text-on-surface">Color Palette</span>
+</div>
+<div class="flex flex-wrap gap-3">
+<button class="w-6 h-6 rounded-full bg-[#9f3f29] ring-2 ring-offset-2 ring-primary/20 transition-all"></button>
+<button class="w-6 h-6 rounded-full bg-[#5a6245] transition-all hover:ring-2 hover:ring-offset-2 hover:ring-secondary/20"></button>
+<button class="w-6 h-6 rounded-full bg-[#f2ede4] border border-outline-variant transition-all hover:ring-2 hover:ring-offset-2 hover:ring-outline/20"></button>
+<button class="w-6 h-6 rounded-full bg-[#3d3d3d] transition-all hover:ring-2 hover:ring-offset-2 hover:ring-on-surface/20"></button>
+<button class="w-6 h-6 rounded-full bg-[#c2caa8] transition-all hover:ring-2 hover:ring-offset-2 hover:ring-secondary-fixed-dim/20"></button>
+</div>
+</div>
+<div class="pt-6 border-t border-surface-container-highest">
+<div class="flex justify-between items-center mb-4">
+<span class="font-serif text-lg text-on-surface">Price Range</span>
+</div>
+<input class="w-full accent-primary h-1 bg-surface-container-highest rounded-full appearance-none cursor-pointer" max="500" min="50" type="range"/>
+<div class="flex justify-between text-xs font-body text-secondary mt-2">
+<span>$50</span>
+<span>$500+</span>
+</div>
+</div>
+</div>
+<button class="mt-10 w-full py-3 bg-secondary text-surface-bright font-body text-sm tracking-widest uppercase hover:bg-secondary/90 transition-colors rounded-lg">
+                            Apply Filters
+                        </button>
+</div>
+</div>
+</aside>
+<!-- Right Side Product Content -->
+<section class="flex-1">
+<!-- Utility Bar -->
+<div class="flex flex-col md:flex-row justify-between items-center gap-4 mb-10 pb-6 border-b border-surface-container-highest">
+<div class="font-body text-sm text-secondary">
+                        Showing <span class="font-bold text-on-surface">12</span> of 48 results
+                    </div>
+<div class="flex items-center gap-6">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3 text-secondary text-lg">search</span>
+<input class="pl-10 pr-4 py-2 bg-surface-container-low border-none focus:ring-1 focus:ring-primary/30 rounded-full text-sm font-body w-64 transition-all" placeholder="Find something specific..." type="text"/>
+</div>
+<div class="flex items-center gap-2 text-sm font-body text-on-surface">
+<span class="text-secondary">Sort by:</span>
+<select class="bg-transparent border-none focus:ring-0 cursor-pointer font-medium p-0">
+<option>Curated Selection</option>
+<option>Newest Arrivals</option>
+<option>Price: Low to High</option>
+<option>Price: High to Low</option>
+</select>
+</div>
+</div>
+</div>
+<!-- Product Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-8 gap-y-16">
+<!-- Card 1 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A textured cream-colored hand-woven throw blanket with chunky tassels, folded neatly on an oak chair in a minimalist living room" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCV94lDjRNBvql1-sAuBHx3RcKcyzhXAvWpXD0-J5ZoGJnPqCQMHn8sI62il0QbNyOUir-urdoglPzkT9hegl0DWnSOV7PCGVF4YNLEGpXm-mTU0dJIwUT-dYa6CPz-Gtv-DO0N2M6wD_ii6eMV8STRGv6SoihShyA2MSGJnKynzpoOVZBPPpAg0PvQ9SONySxB0iI3UXupnqxM7XWj-Gm7UOjaHVz7mpU9HEv_ne-A8zK83r-g73cabXxwPN7-iu6B2_TR2SRfAHQ"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Sustainable Linen</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">The Solstice Throw</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$185.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A set of organic cotton artisanal napkins in deep terracotta red with delicate frayed edges, arranged on a rustic wooden table" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAP0B3_NaVEA3SBcsvM7s1GbJMidZaWbvid3y3TlpFZ-qiwEb1hsGY5LDSAE83C_Wf-4p56G1wk9vNuDGNumfQiseGwPiZg8qLNfd-ACVGiedHsxeMdVKZQezvEeENP8GYj4FkthP-xZgDrYFCgpxCo8TqQ_OlFeZFESd04wmqO1Oc98vHyyUPgNky9FjM-qjFBXeuUs1PKgpW8pglgLrfY56kDUvu1CH3WeJm56fWy8bj4okb7tOjbhsI_4Yq85rXs5e06ZjPV1w0"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Organic Cotton</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">Earthen Napkin Set</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$45.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A large hand-woven wall hanging made of natural wool and jute with geometric abstract patterns in sage and charcoal" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJleu9GsGVN9amQqXU7dDZIylqOQeLk7Q1j9re1k42XoeXEBgtj015FU9pyvrPYMwgsmszqpxlGbT5ZeKAqFdsMkx7TRimUU9c0jrdCGcL7LOsTqI1DKBXURruURy1LSObUV50PMJGPaSM2HbQaqfQ4fxRhr13aVx5GPqvAcJNu56RmvErtSCWwvtt5-oYV_Xt0ZKjVoPv9Mk_KJ6WyrTA6hXIwiTQmXF4IJcRXAjVzVe5lnMeBMOBmWaJ1oU28gSiL7HifdmzVFQ"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Jute &amp; Wool</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">Nomad Wall Tapestry</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$320.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+<!-- Card 4 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="Textured sage green waffle-weave cushion covers on a soft cream sofa, styled with a ceramic vase nearby" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBOhv7gSiZnLqZ2iPGsN6JvN6JjhaXmW0q5XufQSZMpQXjRCSUmUI0gWMNwUi_RlwutY0j4KEFBhFxc0yAAUhVEu6Zmu_qcDU3ybkE4iWCnauSgp8N7cgv2JUY2jo_KMUuvvzNJqtc1aO-uwm0jaHnz9Jlncxo2VqYrMlQXSZFN9bPzUhXcwYBa07xHvwy0W7l3yxtoG4xk8LzfA4-64mQbIgwzYr6euPeyC0UbrX_NT1MlH24yUAxsTG5BnjiII3t2qVL40MmkujQ"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Belgian Linen</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">Sage Waffle Cushion</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$65.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+<!-- Card 5 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A mustard yellow hand-woven bed runner with intricate herringbone patterns, draped across white bed linens" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBIiNfJseCHzvelERnUORKQSU_famV441nW951xqtd2c4h8eO2NPy2cNXr0jKEnV5VenmZYJo_4-mmec-aVyKWJgVnqJNznnKgm10KD5ApT-nZCK_JM95YBrLrfgbp9q7DQvDOG-bdXPCudVABi99sh0X9Cgu2_499op6Ik0hMyAAgyICgZJJY9ehl5QC1eRVnIGO4xVHy1bpoapT4Wqyk7ONIQfW_5whcnkSXedv3LoA5lKalIB4aDlYbc4VeYTw07MCBaWyPUTBs"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Recycled Wool</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">Amber Bed Runner</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$145.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+<!-- Card 6 -->
+<div class="group flex flex-col">
+<div class="aspect-[4/5] overflow-hidden mb-6 bg-surface-container rounded-xl">
+<img alt="" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" data-alt="A close-up of charcoal grey and ivory striped table runner on a dark wood dining table with artisanal ceramics" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBotdZHkARTAKMSfeysghfXkjGuHkp-rEbysTytjTN9mpjIhQZTSPAO22iAmBI3P40dagxgO2-nEdKmpKtgOY881OLdfkXBZbeYqJ6VfwV8G3tRC_Oa3B2YuTQTLuWAzRGtYsWQmjsgB7K0r0aaPRpV7CiRJwOLPXWl7fBRz6Y09TqQntRRDYX7xpOerW5IROyepoGQAFFmmUOEEPL610fB0imqgWxrzyhQciAwOGyUwa5bClWItwc0IfUr2cxEnXeQ6W6rxWqUDpE"/>
+</div>
+<div class="flex flex-col gap-1">
+<span class="font-body text-[10px] uppercase tracking-[0.2em] text-secondary">Sustainable Cotton</span>
+<h3 class="font-serif text-xl text-on-surface group-hover:text-primary transition-colors">Tectonic Table Runner</h3>
+<div class="flex justify-between items-baseline mt-2">
+<p class="font-body text-sm text-on-surface-variant">$88.00</p>
+<button class="text-xs font-body uppercase tracking-wider text-secondary hover:text-primary transition-colors">+ Quick Add</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination -->
+<div class="mt-24 flex justify-center items-center gap-8">
+<button class="flex items-center gap-2 text-sm font-body text-secondary hover:text-primary transition-colors">
+<span class="material-symbols-outlined text-base">arrow_back</span>
+                        Previous
+                    </button>
+<div class="flex gap-4">
+<span class="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-surface-bright text-xs font-bold">1</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-xs cursor-pointer">2</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-xs cursor-pointer">3</span>
+<span class="w-8 h-8 flex items-center justify-center text-xs">...</span>
+<span class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-high transition-colors text-xs cursor-pointer">8</span>
+</div>
+<button class="flex items-center gap-2 text-sm font-body text-secondary hover:text-primary transition-colors">
+                        Next
+                        <span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</div>
+</section>
+</div>
+</main>
+<!-- Footer from JSON -->
+<footer class="w-full mt-24 bg-[#5a6245] flex flex-col md:flex-row justify-between items-center px-12 py-16 gap-8 text-[#fcf9f4] font-['Manrope'] text-sm tracking-normal">
+<div class="flex flex-col gap-2 text-center md:text-left">
+<div class="text-lg font-serif text-[#fcf9f4]">Terra &amp; Loom</div>
+<p class="opacity-80">© 2024 Terra &amp; Loom. Crafted for the slow-living soul.</p>
+</div>
+<div class="flex flex-wrap justify-center gap-8">
+<a class="opacity-80 hover:opacity-100 transition-opacity" href="#">Privacy Policy</a>
+<a class="opacity-80 hover:opacity-100 transition-opacity" href="#">Shipping &amp; Returns</a>
+<a class="opacity-80 hover:opacity-100 transition-opacity" href="#">Sustainability Oath</a>
+<a class="opacity-80 hover:opacity-100 transition-opacity" href="#">Contact Us</a>
+</div>
+</footer>
+</body></html>

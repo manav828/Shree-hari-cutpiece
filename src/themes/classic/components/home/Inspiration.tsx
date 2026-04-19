@@ -1,30 +1,37 @@
 import Image from "next/image";
 import Container from "@/components/ui/Container";
+import { getWhatsAppUrl } from "@/lib/brand";
 
 const inspirationItems = [
   {
     id: 1,
     title: "Designer Kurti",
     image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    alt: "Designer kurti silhouette in premium cutpiece fabric",
   },
   {
     id: 2,
     title: "Elegant Lehenga",
     image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80",
+    alt: "Elegant lehenga drape in festive premium textile",
   },
   {
     id: 3,
     title: "Traditional Choli",
     image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    alt: "Traditional choli styling with textured fabric detail",
   },
   {
     id: 4,
     title: "Festive Dress",
     image: "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+    alt: "Festive dress concept in flowing premium fabric",
   },
 ];
 
 export default function Inspiration() {
+  const consultationMessage = "Hi! I have a design idea and need fabric suggestions.";
+
   return (
     <section className="section-padding bg-background">
       <Container>
@@ -51,7 +58,7 @@ export default function Inspiration() {
             >
               <Image
                 src={item.image}
-                alt={item.title}
+                alt={item.alt}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
                 className="object-cover transition-transform duration-[10000ms] ease-out group-hover:scale-110"
@@ -76,7 +83,7 @@ export default function Inspiration() {
             Have a design in mind? Share it with us!
           </p>
           <a
-            href="https://wa.me/91XXXXXXXXXX?text=Hi!%20I%20have%20a%20design%20idea%20and%20need%20fabric%20suggestions."
+            href={getWhatsAppUrl(consultationMessage)}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-foreground text-foreground hover:bg-foreground hover:text-white transition-all duration-[400ms] ease-premium tracking-wide text-sm uppercase"
