@@ -12,6 +12,7 @@ type Category = {
     image: string | null;
     sort_order: number;
     is_active: boolean;
+    filter_layout?: string;
 };
 
 type Draft = {
@@ -21,6 +22,7 @@ type Draft = {
     description: string;
     image: string;
     is_active: boolean;
+    filter_layout?: string;
 };
 
 function toSlug(input: string): string {
@@ -45,6 +47,7 @@ export default function CategoriesManager() {
         description: "",
         image: "",
         is_active: true,
+        filter_layout: "sidebar",
     });
 
     const load = async () => {
@@ -73,7 +76,7 @@ export default function CategoriesManager() {
     );
 
     const resetDraft = () => {
-        setDraft({ name: "", slug: "", description: "", image: "", is_active: true });
+        setDraft({ name: "", slug: "", description: "", image: "", is_active: true, filter_layout: "sidebar" });
     };
 
     const startEdit = (c: Category) => {
@@ -86,6 +89,7 @@ export default function CategoriesManager() {
             description: c.description || "",
             image: c.image || "",
             is_active: c.is_active,
+            filter_layout: c.filter_layout || "sidebar",
         });
     };
 
@@ -102,6 +106,7 @@ export default function CategoriesManager() {
                     description: draft.description,
                     image: draft.image,
                     is_active: draft.is_active,
+                    filter_layout: draft.filter_layout || "sidebar",
                 }),
             });
             const json = await res.json();
@@ -133,6 +138,7 @@ export default function CategoriesManager() {
                     description: draft.description,
                     image: draft.image,
                     is_active: draft.is_active,
+                    filter_layout: draft.filter_layout || "sidebar",
                 }),
             });
             const json = await res.json();
@@ -273,6 +279,17 @@ export default function CategoriesManager() {
                             placeholder="Image URL"
                             className="px-3 py-2 rounded-md border border-gray-300 text-sm md:col-span-2"
                         />
+                        <div className="flex flex-col gap-1 md:col-span-2">
+                            <label className="text-xs font-semibold text-gray-700">Filter Layout Design</label>
+                            <select
+                                value={draft.filter_layout || "sidebar"}
+                                onChange={(e) => setDraft((prev) => ({ ...prev, filter_layout: e.target.value }))}
+                                className="px-3 py-2 rounded-md border border-gray-300 text-sm bg-white"
+                            >
+                                <option value="sidebar">Filter on Sidebar (Textile Design)</option>
+                                <option value="top">Filter on Top Select (Ceramics Design)</option>
+                            </select>
+                        </div>
                         <div className="md:col-span-2 space-y-2">
                             <input
                                 type="file"
@@ -341,6 +358,9 @@ export default function CategoriesManager() {
                                     <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
                                     <p className="text-xs text-gray-500 truncate">/{c.slug}</p>
                                 </div>
+                                <span className={`text-xs px-2 py-1 rounded font-medium ${c.filter_layout === "top" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                                    {c.filter_layout === "top" ? "Top Select Filter" : "Sidebar Filter"}
+                                </span>
                                 <span className={`text-xs px-2 py-1 rounded ${c.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
                                     {c.is_active ? "Active" : "Inactive"}
                                 </span>

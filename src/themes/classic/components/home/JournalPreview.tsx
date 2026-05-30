@@ -27,7 +27,7 @@ async function fetchRecentJournalPosts(): Promise<JournalPost[]> {
         return [];
     }
 
-    return filterPublicContentPosts(data as JournalPost[]).slice(0, 3);
+    return filterPublicContentPosts(data as any as JournalPost[]).slice(0, 3);
 }
 
 function formatDate(date: string | null): string {

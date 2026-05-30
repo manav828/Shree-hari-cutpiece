@@ -20,7 +20,6 @@ export const supabase =
             detectSessionInUrl: false,
             persistSession: true,
             autoRefreshToken: true,
-            multiTab: false,
             storageKey: "shreehari.auth.token",
         },
     });

@@ -9,6 +9,7 @@ type CategoryPayload = {
     image?: string;
     is_active?: boolean;
     sort_order?: number;
+    filter_layout?: string;
 };
 
 function slugify(input: string): string {
@@ -27,7 +28,7 @@ export async function GET() {
     try {
         const { data, error } = await supabaseAdmin
             .from("categories")
-            .select("id, name, slug, description, image, sort_order, is_active, deleted_at, created_at, updated_at")
+            .select("id, name, slug, description, image, sort_order, is_active, filter_layout, deleted_at, created_at, updated_at")
             .is("deleted_at", null)
             .order("sort_order", { ascending: true });
 
@@ -138,6 +139,7 @@ export async function POST(req: NextRequest) {
         const name = String(payload.name || "").trim();
         const rawSlug = String(payload.slug || "").trim();
         const slug = rawSlug ? slugify(rawSlug) : slugify(name);
+        const filterLayout = String(payload.filter_layout || "sidebar").trim();
 
         if (!name) {
             return NextResponse.json({ error: "Category name is required." }, { status: 400 });
@@ -145,6 +147,10 @@ export async function POST(req: NextRequest) {
 
         if (!slug || !isValidSlug(slug)) {
             return NextResponse.json({ error: "Slug must contain only lowercase letters, numbers, and hyphens." }, { status: 400 });
+        }
+
+        if (!["sidebar", "top"].includes(filterLayout)) {
+            return NextResponse.json({ error: "Invalid filter layout selection." }, { status: 400 });
         }
 
         const { data: existing, error: existingError } = await supabaseAdmin
@@ -177,6 +183,7 @@ export async function POST(req: NextRequest) {
                 description: payload.description?.trim() || null,
                 image: payload.image || null,
                 is_active: payload.is_active ?? true,
+                filter_layout: filterLayout,
                 sort_order: typeof payload.sort_order === "number" ? payload.sort_order : ((maxRow?.sort_order ?? -1) + 1),
             });
 
@@ -196,6 +203,7 @@ export async function PATCH(req: NextRequest) {
         const name = String(payload.name || "").trim();
         const rawSlug = String(payload.slug || "").trim();
         const slug = rawSlug ? slugify(rawSlug) : slugify(name);
+        const filterLayout = String(payload.filter_layout || "sidebar").trim();
 
         if (!id) {
             return NextResponse.json({ error: "Category id is required." }, { status: 400 });
@@ -207,6 +215,10 @@ export async function PATCH(req: NextRequest) {
 
         if (!slug || !isValidSlug(slug)) {
             return NextResponse.json({ error: "Slug must contain only lowercase letters, numbers, and hyphens." }, { status: 400 });
+        }
+
+        if (!["sidebar", "top"].includes(filterLayout)) {
+            return NextResponse.json({ error: "Invalid filter layout selection." }, { status: 400 });
         }
 
         const { data: existing, error: existingError } = await supabaseAdmin
@@ -230,6 +242,7 @@ export async function PATCH(req: NextRequest) {
                 description: payload.description?.trim() || null,
                 image: payload.image || null,
                 is_active: payload.is_active ?? true,
+                filter_layout: filterLayout,
             })
             .eq("id", id)
             .is("deleted_at", null);

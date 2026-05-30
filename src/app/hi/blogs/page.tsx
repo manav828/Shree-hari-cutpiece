@@ -58,11 +58,11 @@ async function fetchPublishedPosts(language: "en" | "hi" | "other") {
         .order("published_at", { ascending: false });
 
     if (error) {
-        return [] as BlogListRow[];
+        return [] as any as BlogListRow[];
     }
 
     if ((data ?? []).length > 0) {
-        return (data ?? []) as BlogListRow[];
+        return (data ?? []) as any as BlogListRow[];
     }
 
     const { data: fallbackData, error: fallbackError } = await supabaseAdmin
@@ -72,10 +72,10 @@ async function fetchPublishedPosts(language: "en" | "hi" | "other") {
         .order("published_at", { ascending: false });
 
     if (fallbackError) {
-        return [] as BlogListRow[];
+        return [] as any as BlogListRow[];
     }
 
-    return (fallbackData ?? []) as BlogListRow[];
+    return (fallbackData ?? []) as any as BlogListRow[];
 }
 
 export default async function BlogsHindiPage({ searchParams }: BlogsHindiPageProps) {

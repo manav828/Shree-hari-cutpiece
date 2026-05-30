@@ -40,18 +40,28 @@ function validateUpdates(updates: ConfigUpdate[]): string | null {
 
 export async function GET() {
     try {
-        const { data, error } = await supabaseAdmin
-            .from("site_config")
-            .select("key, value, label, group, type, updated_at");
+        const [configRes, themeRes] = await Promise.all([
+            supabaseAdmin
+                .from("site_config")
+                .select("key, value, label, group, type, updated_at"),
+            supabaseAdmin
+                .from("site_settings")
+                .select("value")
+                .eq("key", "active_theme")
+                .maybeSingle()
+        ]);
 
-        if (error) throw error;
+        if (configRes.error) throw configRes.error;
 
+        const data = configRes.data;
         const map = (data ?? []).reduce<Record<string, string>>((acc, row) => {
             acc[row.key] = row.value ?? "";
             return acc;
         }, {});
 
-        return NextResponse.json({ items: data ?? [], map });
+        const activeTheme = themeRes.data?.value || "classic";
+
+        return NextResponse.json({ items: data ?? [], map, activeTheme });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to load site config";
         return NextResponse.json({ error: message }, { status: 500 });

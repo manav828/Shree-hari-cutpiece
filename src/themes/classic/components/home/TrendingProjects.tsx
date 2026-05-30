@@ -1,13 +1,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import Container from "@/components/ui/Container";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 const projects = [
     {
         id: 1,
         title: "Bespoke Tailoring",
         description: "Suits, Blazers & Formal Wear",
-        image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&w=1800&q=88",
         alt: "Bespoke tailoring fabric with sharp weave detail",
         link: "/shop",
     },
@@ -15,7 +16,7 @@ const projects = [
         id: 2,
         title: "Resort Essentials",
         description: "Linens & Lightweight Cottons",
-        image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+        image: "https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1800",
         alt: "Lightweight linen cotton fabric for resort wear",
         link: "/shop",
     },
@@ -23,7 +24,7 @@ const projects = [
         id: 3,
         title: "Evening Glam",
         description: "Silks, Satins & Brocades",
-        image: "https://images.unsplash.com/photo-1539109136881-3be0616acf4b?w=600&q=80",
+        image: "https://cdn.pixabay.com/photo/2016/03/27/22/16/fashion-1284496_1280.jpg",
         alt: "Evening wear fabric featuring silk-like drape",
         link: "/shop",
     },
@@ -31,7 +32,7 @@ const projects = [
         id: 4,
         title: "Luxe Home",
         description: "Velvets & Heavy Textures",
-        image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=600&q=80",
+        image: "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?auto=format&fit=crop&w=2000&q=88",
         alt: "Heavy textured upholstery-style premium fabric",
         link: "/shop",
     },
@@ -58,7 +59,7 @@ export default function TrendingProjects() {
                         >
                             <Link href={project.link} className="block relative aspect-square sm:aspect-[4/5] lg:aspect-square overflow-hidden bg-background-secondary">
                                 <Image
-                                    src={project.image}
+                                    src={getHighQualityImageUrl(project.image, "sectionCard")}
                                     alt={project.alt}
                                     fill
                                     sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

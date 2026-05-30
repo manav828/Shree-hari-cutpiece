@@ -55,8 +55,9 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
         return;
       }
 
-      setProduct(data);
-      const groups = Array.isArray(data.product_option_groups) ? data.product_option_groups : [];
+      const resData = data as any;
+      setProduct(resData);
+      const groups = Array.isArray(resData.product_option_groups) ? resData.product_option_groups : [];
       const defaults: Record<string, string | string[]> = {};
       groups.forEach((group: any) => {
         if (group?.is_active === false) return;
@@ -73,11 +74,11 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
       });
       setSelectedOptions(defaults);
       setOptionErrors({});
-      const defVariant = data.product_variants.find((v: any) => v.is_default) || data.product_variants[0];
+      const defVariant = resData.product_variants.find((v: any) => v.is_default) || resData.product_variants[0];
       setSelectedVariant(defVariant);
 
-      const relatedIds = Array.isArray(data.related_product_ids)
-        ? data.related_product_ids.filter((id: string) => id && id !== data.id)
+      const relatedIds = Array.isArray(resData.related_product_ids)
+        ? resData.related_product_ids.filter((id: string) => id && id !== resData.id)
         : [];
       if (relatedIds.length > 0) {
         const { data: related } = await supabase
@@ -89,7 +90,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
         if (related) {
           const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
           const formattedRelated = related
-            .sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+            .sort((a: any, b: any) => Number(orderMap.get(a.id) ?? 0) - Number(orderMap.get(b.id) ?? 0))
             .map((p: any) => {
               const dv = p.product_variants.find((v: any) => v.is_default) || p.product_variants[0];
               const img = dv?.variant_images?.find((i: any) => i.is_primary)?.image_url || dv?.variant_images?.[0]?.image_url || "";
@@ -572,7 +573,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                 <div className="flex items-center gap-4">
                   <div className="flex items-center border border-border">
                     <button onClick={() => setMeters(Math.max(1, meters - 1))} className="px-4 py-3 hover:bg-background-secondary transition-colors text-lg">-</button>
-                    <input type="number" value={meters} onChange={(e) => setMeters(Math.max(1, parseInt(e.target.value) || 1))} className="w-20 text-center py-3 border-x border-border focus:outline-none text-lg" min="1" />
+                    <input type="number" value={meters} onChange={(e) => setMeters(Math.max(1, parseInt(e.target.value) || 1))} className="w-20 text-center py-3 border-x border-border focus:outline-none text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none" min="1" />
                     <button onClick={() => setMeters(meters + 1)} className="px-4 py-3 hover:bg-background-secondary transition-colors text-lg">+</button>
                   </div>
                   <span className="text-text-secondary">Total: <strong className="text-foreground">{formatPrice((selectedVariant?.price || 0) * meters)}</strong></span>

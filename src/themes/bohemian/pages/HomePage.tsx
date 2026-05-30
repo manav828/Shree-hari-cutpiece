@@ -19,6 +19,7 @@ import { getActiveCmsBannersByPlacement, getActiveCmsCategories, getSiteConfigMa
 import Navbar from "@/themes/bohemian/components/layout/Navbar";
 import Footer from "@/themes/bohemian/components/layout/Footer";
 import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/siteStyles";
+import { supabase } from "@/lib/supabase";
 
 const manrope = Plus_Jakarta_Sans({
   subsets: ["latin"],
@@ -168,8 +169,8 @@ const faqs = [
 ];
 
 function buildArchiveCardsFromCms(categories: CmsCategory[]) {
-  return archiveCardsFallback.map((fallback, index) => {
-    const category = categories[index];
+  return archiveCardsFallback.map((fallback) => {
+    const category = categories.find((c) => c.slug === fallback.slug);
 
     return {
       ...fallback,
@@ -183,27 +184,109 @@ function buildArchiveCardsFromCms(categories: CmsCategory[]) {
 }
 
 export default async function BohemianHomePage() {
-  const [heroBanners, siteConfig, cmsCategories] = await Promise.all([
+  const [heroBanners, siteConfig, cmsCategories, featuredProductRes, newArrivalsRes] = await Promise.all([
     getActiveCmsBannersByPlacement("homepage_hero"),
     getSiteConfigMap(),
     getActiveCmsCategories(),
+    supabase
+      .from("products")
+      .select(`
+        id,
+        name,
+        slug,
+        description,
+        short_description,
+        product_variants (
+          id,
+          price,
+          original_price,
+          material_label,
+          is_default,
+          variant_images ( image_url, is_primary )
+        )
+      `)
+      .eq("slug", "saharan-drift-throw")
+      .eq("is_active", true)
+      .maybeSingle(),
+    supabase
+      .from("products")
+      .select(`
+        id,
+        name,
+        slug,
+        short_description,
+        categories ( slug ),
+        product_variants (
+          id,
+          price,
+          original_price,
+          is_default,
+          variant_images ( image_url, is_primary )
+        )
+      `)
+      .eq("is_new_arrival", true)
+      .eq("is_active", true)
   ]);
 
   const heroBanner = heroBanners.find((banner) => banner.image_url?.trim());
-  const heroImage = siteConfig.hero_desktop_image?.trim()
+  const heroImage = siteConfig.bohemian_hero_desktop_image?.trim()
     || heroBanner?.image_url?.trim()
     || "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=2400&q=80";
 
-  const heroBadge = siteConfig.hero_badge?.trim() || "TERRA & LOOM PRESENTS";
-  const heroHeadline = (siteConfig.hero_headline?.trim() || heroBanner?.title?.trim() || "Embrace the Warmth.")
+  const heroBadge = siteConfig.bohemian_hero_badge?.trim() || "TERRA & LOOM PRESENTS";
+  const heroHeadline = (siteConfig.bohemian_hero_headline?.trim() || heroBanner?.title?.trim() || "Embrace the Warmth.")
     .replace(/\\n/g, "\n");
-  const heroDescription = siteConfig.hero_description?.trim()
+  const heroDescription = siteConfig.bohemian_hero_description?.trim()
     || heroBanner?.content_text?.trim()
     || "Curating the finest bohemian treasures - from hand-tufted textiles to sun-baked ceramics - to transform your space into a sanctuary of natural beauty.";
-  const heroCtaLabel = siteConfig.hero_cta1_label?.trim() || "Explore Collection";
-  const heroCtaUrl = siteConfig.hero_cta1_url?.trim() || heroBanner?.link_url?.trim() || "/shop";
+  const heroCtaLabel = siteConfig.bohemian_hero_cta1_label?.trim() || "Explore Collection";
+  const heroCtaUrl = siteConfig.bohemian_hero_cta1_url?.trim() || heroBanner?.link_url?.trim() || "/shop";
 
   const archiveCards = buildArchiveCardsFromCms(cmsCategories);
+
+  // Extract featured product dynamic data
+  const featuredProduct = featuredProductRes.data as any;
+  const featuredVariants = Array.isArray(featuredProduct?.product_variants) ? featuredProduct.product_variants : [];
+  const featuredDefaultVariant = featuredVariants.find((v: any) => v.is_default) || featuredVariants[0];
+  const featuredImages = Array.isArray(featuredDefaultVariant?.variant_images) ? featuredDefaultVariant.variant_images : [];
+  const featuredImage = featuredImages.find((img: any) => img.is_primary)?.image_url
+    || featuredImages[0]?.image_url
+    || "https://lh3.googleusercontent.com/aida-public/AB6AXuCdYMMrk_iP8YI9r1TcSRJChlJxrF5_rPlKZEDvnGgqJkL-Jll4RGcXwnKg8e0ykkeSKBg9a3Ie1LRnwnVoZ1-ecU3WcyO3gh5aBxN7Mn7e0DwIPSGuNkOij5DAvUNYncfMFCcqFr_rPV7MwRFHfJjocOv3n1XZ1qqgTlpuXA1SOiVZ866hFFLg62dcIOV8N0N4j_Nu5kKT8Wx0s8WINMpKrTpukDykyMcEhR7ugo6gTN6Hucq5sV83CZYbI-avqR7vUgCSupzP974";
+
+  const featuredName = featuredProduct?.name || "The Saharan Drift Throw";
+  const featuredDesc = featuredProduct?.description || featuredProduct?.short_description || "Each Saharan Drift throw is hand-woven by a collective of women in the Atlas Mountains, using wool naturally dyed with indigo and pomegranate skins. A process that takes 14 days of patient labor.";
+  const featuredPrice = typeof featuredDefaultVariant?.price === "number" ? `$${featuredDefaultVariant.price}.00` : "$245.00";
+
+  // Filter new arrivals to Bohemian theme products
+  const classicSlugs = ["chiffon", "crepe", "cotton", "silk", "georgette", "rayon"];
+  const bohemianNewArrivals = (newArrivalsRes.data || [])
+    .filter((row: any) => {
+      const cats = Array.isArray(row.categories) ? row.categories : [row.categories];
+      return cats.some((cat: any) => cat && !classicSlugs.includes(cat.slug));
+    })
+    .slice(0, 4);
+
+  const formattedNewArrivals = bohemianNewArrivals.length > 0
+    ? bohemianNewArrivals.map((row: any, index: number) => {
+        const variants = Array.isArray(row.product_variants) ? row.product_variants : [];
+        const defaultVariant = variants.find((v: any) => v.is_default) || variants[0];
+        const variantImages = Array.isArray(defaultVariant?.variant_images) ? defaultVariant.variant_images : [];
+        const primaryImage = variantImages.find((img: any) => img.is_primary)?.image_url
+          || variantImages[0]?.image_url
+          || "https://lh3.googleusercontent.com/placeholder.jpg";
+
+        const fallbackItem = newArrivals[index] || {};
+
+        return {
+          title: row.name,
+          price: typeof defaultVariant?.price === "number" ? `$${defaultVariant.price}.00` : fallbackItem.price || "$0.00",
+          tag: fallbackItem.tag || null,
+          image: primaryImage,
+          alt: row.short_description || row.name,
+          slug: row.slug,
+        };
+      })
+    : newArrivals.map((item) => ({ ...item, slug: item.title.toLowerCase().replace(/[^a-z0-9]+/g, "-") }));
 
   return (
     <div className={`${manrope.className} bg-[#fcf9f4] text-[#1c1c19] selection:bg-[#ffdad2] selection:text-[#3d0600]`}>
@@ -365,8 +448,8 @@ export default async function BohemianHomePage() {
             <div className="relative w-full md:w-1/2">
               <div className="absolute -left-10 -top-10 h-40 w-40 rounded-full bg-[#dbe4c0] opacity-20 blur-3xl" />
               <Image
-                src="https://lh3.googleusercontent.com/aida-public/AB6AXuCdYMMrk_iP8YI9r1TcSRJChlJxrF5_rPlKZEDvnGgqJkL-Jll4RGcXwnKg8e0ykkeSKBg9a3Ie1LRnwnVoZ1-ecU3WcyO3gh5aBxN7Mn7e0DwIPSGuNkOij5DAvUNYncfMFCcqFr_rPV7MwRFHfJjocOv3n1XZ1qqgTlpuXA1SOiVZ866hFFLg62dcIOV8N0N4j_Nu5kKT8Wx0s8WINMpKrTpukDykyMcEhR7ugo6gTN6Hucq5sV83CZYbI-avqR7vUgCSupzP974"
-                alt="Close-up of a hand-loomed wool rug with intricate geometric patterns in muted cream and ochre tones"
+                src={featuredImage}
+                alt={featuredName}
                 width={900}
                 height={900}
                 className="relative z-10 aspect-square w-full rounded-2xl object-cover shadow-2xl"
@@ -375,12 +458,12 @@ export default async function BohemianHomePage() {
 
             <div className="w-full md:w-1/2">
               <p className="mb-4 text-sm font-bold uppercase tracking-[0.2em] text-[#9f3f29]">Featured Craft</p>
-              <h2 className={`${newsreader.className} mb-6 text-5xl italic leading-tight text-[#1c1c19]`}>The Saharan Drift Throw</h2>
+              <h2 className={`${newsreader.className} mb-6 text-5xl italic leading-tight text-[#1c1c19]`}>{featuredName}</h2>
               <p className="mb-8 text-lg leading-relaxed text-[#56423d]">
-                Each Saharan Drift throw is hand-woven by a collective of women in the Atlas Mountains, using wool naturally dyed with indigo and pomegranate skins. A process that takes 14 days of patient labor.
+                {featuredDesc}
               </p>
               <div className="mb-10 flex flex-wrap items-center gap-6">
-                <span className={`${newsreader.className} text-3xl text-[#1c1c19]`}>$245.00</span>
+                <span className={`${newsreader.className} text-3xl text-[#1c1c19]`}>{featuredPrice}</span>
                 <span className="h-8 w-px bg-[#ddc0ba]" />
                 <div className="flex items-center gap-1 text-[#5a6245]">
                   {Array.from({ length: 5 }).map((_, index) => (
@@ -389,10 +472,12 @@ export default async function BohemianHomePage() {
                   <span className="ml-2 text-xs text-[#56423d]">(48 reviews)</span>
                 </div>
               </div>
-              <button className="flex items-center gap-4 rounded-lg bg-[#9f3f29] px-12 py-5 text-white transition-all active:scale-95 hover:opacity-90">
-                Pre-order for July Batch
-                <ShoppingBag className="h-5 w-5" />
-              </button>
+              <Link href={`/shop/${featuredProduct?.slug || "saharan-drift-throw"}`}>
+                <button className="flex items-center gap-4 rounded-lg bg-[#9f3f29] px-12 py-5 text-white transition-all active:scale-95 hover:opacity-90">
+                  Pre-order for July Batch
+                  <ShoppingBag className="h-5 w-5" />
+                </button>
+              </Link>
             </div>
           </div>
         </section>
@@ -407,25 +492,27 @@ export default async function BohemianHomePage() {
             </div>
 
             <div className="grid grid-cols-1 gap-8 md:grid-cols-3 lg:grid-cols-4">
-              {newArrivals.map((item) => (
-                <article key={item.title} className="group cursor-pointer">
-                  <div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-xl bg-[#f0ede8]">
-                    <Image
-                      src={item.image}
-                      alt={item.alt}
-                      fill
-                      sizes="(max-width: 768px) 100vw, 25vw"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                    {item.tag ? (
-                      <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-tight text-[#1c1c19]">
-                        {item.tag}
-                      </span>
-                    ) : null}
-                  </div>
-                  <h4 className={`${newsreader.className} mb-1 text-xl transition-colors group-hover:text-[#9f3f29]`}>{item.title}</h4>
-                  <p className="text-sm font-medium text-[#56423d]">{item.price}</p>
-                </article>
+              {formattedNewArrivals.map((item) => (
+                <Link key={item.title} href={`/shop/${item.slug}`} className="group block cursor-pointer">
+                  <article>
+                    <div className="relative mb-4 aspect-[3/4] overflow-hidden rounded-xl bg-[#f0ede8]">
+                      <Image
+                        src={item.image}
+                        alt={item.alt}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                      {item.tag ? (
+                        <span className="absolute left-4 top-4 rounded-full bg-white px-3 py-1 text-xs font-bold uppercase tracking-tight text-[#1c1c19]">
+                          {item.tag}
+                        </span>
+                      ) : null}
+                    </div>
+                    <h4 className={`${newsreader.className} mb-1 text-xl transition-colors group-hover:text-[#9f3f29]`}>{item.title}</h4>
+                    <p className="text-sm font-medium text-[#56423d]">{item.price}</p>
+                  </article>
+                </Link>
               ))}
             </div>
           </div>

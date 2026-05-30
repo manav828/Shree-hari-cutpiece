@@ -12,6 +12,7 @@ export type CmsCategory = {
     image: string;
     sort_order: number;
     is_active: boolean;
+    filter_layout?: string;
 };
 
 export type CmsBannerPlacement = "announcement_bar" | "homepage_hero" | "shop_top" | "popup";
@@ -60,7 +61,7 @@ const loadActiveCategoriesCached = unstable_cache(
     async (): Promise<CmsCategory[]> => {
         const { data, error } = await supabaseAdmin
             .from("categories")
-            .select("id, name, slug, description, image, sort_order, is_active")
+            .select("id, name, slug, description, image, sort_order, is_active, filter_layout")
             .is("deleted_at", null)
             .eq("is_active", true)
             .order("sort_order", { ascending: true });
@@ -77,6 +78,7 @@ const loadActiveCategoriesCached = unstable_cache(
             image: row.image ?? "",
             sort_order: row.sort_order ?? 0,
             is_active: row.is_active ?? true,
+            filter_layout: row.filter_layout ?? "sidebar",
         }));
     },
     ["cms_categories_active"],

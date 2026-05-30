@@ -178,7 +178,7 @@ export async function fetchOrders(
 
 export async function fetchOrderById(id: string): Promise<OrderWithDetails | null> {
     return withRetry(async () => {
-        const [orderRes, itemsRes, addressesRes, historyRes] = await Promise.all([
+        const [orderRes, itemsRes, addressesRes, historyRes] = (await Promise.all([
             supabase.from("orders").select("*").eq("id", id).single(),
             supabase.from("order_items").select("*").eq("order_id", id),
             supabase.from("order_addresses").select("*").eq("order_id", id),
@@ -187,7 +187,7 @@ export async function fetchOrderById(id: string): Promise<OrderWithDetails | nul
                 .select("*")
                 .eq("order_id", id)
                 .order("created_at", { ascending: true }),
-        ]);
+        ])) as any[];
 
         if (orderRes.error || !orderRes.data) return null;
 
@@ -251,7 +251,7 @@ export async function getShippingFee(): Promise<number> {
         .select("value")
         .eq("key", "shipping_fee")
         .single();
-    return parseFloat(data?.value ?? "50");
+    return parseFloat((data as any)?.value ?? "50");
 }
 
 

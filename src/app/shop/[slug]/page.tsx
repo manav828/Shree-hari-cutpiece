@@ -13,18 +13,20 @@ export async function generateStaticParams() {
   const { data } = await supabase.from("products").select("slug").eq("is_active", true);
   if (!data) return [];
 
-  return data.map((product) => ({
+  return (data as any[]).map((product) => ({
     slug: product.slug,
   }));
 }
 
 export async function generateMetadata({ params }: ProductPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const { data: product } = await supabase
+  const { data: productRaw } = await supabase
     .from("products")
     .select("name, description, short_description, meta_title, meta_description, canonical_url, og_title, og_description, og_image_url, twitter_card_type")
     .eq("slug", slug)
     .single();
+
+  const product = productRaw as any;
 
   if (!product) {
     return {
@@ -64,7 +66,7 @@ export default async function ProductAppPage({ params }: ProductPageProps) {
   const { slug } = await params;
   const activeTheme = await getActiveTheme();
 
-  const { data: productForSchema } = await supabase
+  const { data: productForSchemaRaw } = await supabase
     .from("products")
     .select(`
       name, slug, description, short_description, canonical_url,
@@ -73,6 +75,8 @@ export default async function ProductAppPage({ params }: ProductPageProps) {
     `)
     .eq("slug", slug)
     .single();
+
+  const productForSchema = productForSchemaRaw as any;
 
   const variants = Array.isArray(productForSchema?.product_variants) ? productForSchema.product_variants : [];
   const defaultVariant = variants.find((variant: { is_default?: boolean }) => variant.is_default) || variants[0];

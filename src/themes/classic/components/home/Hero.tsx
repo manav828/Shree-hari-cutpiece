@@ -2,6 +2,7 @@ import Image from "next/image";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import { getSiteConfigMap } from "@/lib/cms";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 export default async function Hero() {
   const config = await getSiteConfigMap();
@@ -20,8 +21,11 @@ export default async function Hero() {
   const heroStat2Label = config.hero_stat2_label ?? "Happy Customers";
   const heroStat3Number = config.hero_stat3_number ?? "100%";
   const heroStat3Label = config.hero_stat3_label ?? "Quality Assured";
-  const desktopImage = config.hero_desktop_image || "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=1000&q=85";
-  const mobileImage = config.hero_mobile_image || desktopImage;
+  const fallbackDesktopImage = "https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&w=2400&q=90";
+  const rawDesktopImage = config.hero_desktop_image?.trim() || fallbackDesktopImage;
+  const rawMobileImage = config.hero_mobile_image?.trim() || rawDesktopImage;
+  const desktopImage = getHighQualityImageUrl(rawDesktopImage, "heroDesktop");
+  const mobileImage = getHighQualityImageUrl(rawMobileImage, "heroMobile");
 
   return (
     <section className="lg:h-[90vh] lg:min-h-[650px] lg:max-h-[900px] flex items-center pt-10 pb-8 mt-2 lg:pt-16 lg:pb-24 bg-background overflow-hidden relative">

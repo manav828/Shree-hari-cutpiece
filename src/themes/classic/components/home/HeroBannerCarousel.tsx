@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { CmsBanner } from "@/lib/cms";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 type Props = {
   banners: CmsBanner[];
@@ -69,7 +70,7 @@ export default function HeroBannerCarousel({ banners, layoutMode = "contained" }
                   }`}
               >
                 <Image
-                  src={banner.image_url}
+                  src={getHighQualityImageUrl(banner.image_url, "heroDesktop")}
                   alt={banner.title || "Hero banner"}
                   fill
                   sizes="100vw"

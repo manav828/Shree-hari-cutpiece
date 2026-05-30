@@ -4,7 +4,7 @@ import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import { ArrowRight, ChevronDown, Search } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import CartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
-import { getActiveCmsBannersByPlacement, getActiveCmsCategories, type CmsCategory } from "@/lib/cms";
+import { getActiveCmsBannersByPlacement, getActiveCmsCategories, getSiteConfigMap, type CmsCategory } from "@/lib/cms";
 import Navbar from "@/themes/bohemian/components/layout/Navbar";
 import Footer from "@/themes/bohemian/components/layout/Footer";
 import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/siteStyles";
@@ -13,7 +13,6 @@ import BohemianProductListing from "@/themes/bohemian/components/shop/BohemianPr
 import {
   formatCategoryName,
   getBohemianFallbackProducts,
-  getBohemianListingVariant,
   type BohemianListingCategoryOption,
   type BohemianListingProduct,
 } from "@/themes/bohemian/components/shop/bohemianListingData";
@@ -32,6 +31,7 @@ type CategoryCard = {
   image: string;
   alt: string;
   countLabel: string;
+  filter_layout?: string;
 };
 
 type ProductVariantImageRow = {
@@ -84,6 +84,7 @@ const primaryCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDL8VZ8oIMfm_4FcKCpgeyhkM6iZ4--UJOonP0t22Khmj8vtEVNACVdwQN_bVoP7AjWl4Lg7pV7Xm2-txauTE9wIhH50lCEIVPZvScNeYG0heC3NHO8--7rn12O8cATkvmlsfAxxt_jR2Rqi8GdQdUNRwR2931gKKz00BdR0mZ_qpkJbddCS_BBaQ6zaFu7RePUS9co1mLCoudOxoUGQbZhQr_cEXzbUMiP9Doe5DdZxGVNs6gqERlpxbB4qTKYO8pbWWqlqwxBOis",
     alt: "Layered natural linen textiles",
     countLabel: "42 pieces",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-ceramics",
@@ -94,6 +95,7 @@ const primaryCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCLLCC3vYv9B1aoLSfPhHU6_wr3GRPvLNo_tyBS5L8xIXKRyVGUVeWW4quhGqd9UgGCtkD63nZWX5fK7cZksw5fd8VAI2IQ00tdRXSAHGjj1RhVzZ1bMgqjHruPiYGPKt-EmBvhGT6XCavt69H0afNXXZajZjPvnrkiKSqGKREtaLaEa_LZWzVlB-wWeAIaGhudrZq-nTtnuvEkugbp2T8K79IvW-5xYmXKbQOb57A46wtyQcgRC2xqP-ioj_tRhZHZBhsSC-t5Zfw",
     alt: "Handmade pottery in warm tones",
     countLabel: "28 pieces",
+    filter_layout: "top",
   },
   {
     id: "fallback-living",
@@ -104,6 +106,7 @@ const primaryCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBjBr8G9Yit57JiHVHCxBvGFgOG67Hn2Em-b3mraJR-jwiQa3rYOBL92tFuZ29o-UKXyusW6QrfujdZz1dRTCEdRjYYOxO4dpDNdkRw6GzO_gfPfilgnU0WwzsDgfyhTZ1IKKzXK-qMAJLw695wvuGN12gjf8EHRw-saHtcqYGZ3dFunH9ysLrLNI0KpFLIJGSl0uBVPv3dAheR_YLZhouEEf-NSb3HnV3mEEqRqyTg_qi7IL64mVQslyyiWCbLtjuDxSFU3mR4CXY",
     alt: "Calm living room in earthy palette",
     countLabel: "15 pieces",
+    filter_layout: "top",
   },
   {
     id: "fallback-kitchen",
@@ -114,6 +117,7 @@ const primaryCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDLnB-vzpjJdhX39TNk_BZSxJrxVjhoUhJHk2XKE0XyLawhiYQcS8_i9S3Z-Xr-St9bICk30COJzsq-ATUyewElyNo_Mxo2S3ttQrWsRe0dk-n68-088InBe9Ppo-uJ0jpVyEN07PcGGlSpkhzoV0n1uk0OGZWqJkAOI92wbs9IAYx8agXNHTNpz7M5qZK_A6LPABnFhGD0QAKF8ByfBwCF2R8Bzrfbr8ayCM5jYjihaoPchxu4VA9rrgJRbbYtPhy9JMk4AZgOy28",
     alt: "Kitchen shelf with wooden utensils",
     countLabel: "34 pieces",
+    filter_layout: "sidebar",
   },
 ];
 
@@ -127,6 +131,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBNwv_YRuzDgBYftHCyIG8sj8TXxECng4ufKiK6qYUcRvOvJXcqQXXKI9DoMVa-rPdXwmmxTe0h4DfElMvJAhtm7Rc22skgwe28yq6NaADKzoD0B3GTA0PEkyrwyoIrvtsg4vQhqdxrGxIa5a6cc0t8vAj7S57xPwn7bOydmNyBj5CvP793BkY_IUrTz2_6pUkfqMQxiiSbF211qW0GF4SfktMK_7tgy62PTyn4hLnVUOI96g2NvRG23Irueqv6v8K1a-52M-k1Ii8",
     alt: "Textured woven rug",
     countLabel: "12 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-decor",
@@ -137,6 +142,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCUHosQ2mk2S5Xr_dTCorKhsbLM3rAIGGhE_Xh_p3oHu0isbmEhWWQ95nSG8npExRN7EKw_pQLYdrrPmKgWJENSlaKTWyrDFPmBsfphbJt5VDuYf98aezQ4fqcg7PcfdMCBGS4AjT-Ged74xyT51gqMx8y2xOBP-FWf4AdJxdx5M_JprG2JYAY_Hyr26-9F1lbfxCs44D1y8d-MJu-tsDKqh2cRkb6CLfzXh0LIFVVkmUwSGDjmyNTUvchJCdJ_5TyuvmNHZv8TQZk",
     alt: "Decor objects on neutral shelf",
     countLabel: "48 items",
+    filter_layout: "top",
   },
   {
     id: "fallback-furniture",
@@ -147,6 +153,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDenhfvTY2v8l0yTaL3DrhTv2EUR7cwm6_VFo68qC4nZoacoWTpxet3fROwWcTQOerR0C0-TnqkQa8Vg0mth1HQeF_b_qduB1FJzKuNGUmEi7J0LNb1NfE2517qbQ1ZbCQXUdmrj6pElD_cF3UWqLOV50lb7bPLwJ2-HLcLJxaBCz59lmn6IJuJSRLkRDA0lBUSTUkxccQWwqbM0jnsMzmzWDyWncRlDPZkNRxJU__PD7ojwwmKlMcFfyOUD3andsJmf-F0mXGAr7I",
     alt: "Minimal wood lounge chair",
     countLabel: "9 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-lighting",
@@ -157,6 +164,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAHQWXqYCTzh29hCgG-5S1b4ulV8ByYnTAl7SgsfISWyHtZCBTKLXYswnMxGHQTbSVQPAn5qTv6oL5D_opPhP-YTWDVLLmyhMJbaUS5L3uFi63B_iCb7c7bbbohlrj_AejB2uPXE6ql6ZeP7iYP6IBHMMYHQvzDdx8518EtTUVr9-bly-MNLnMrW12M6ymWsS7wpZgpcH9LAdX9QY5pF7iR81rzUTnYWUEHVDsWN_ljFKQ3G6rChla2OFNORVS_L2PGLuELyJleE-Y",
     alt: "Woven pendant light",
     countLabel: "16 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-wall-art",
@@ -167,6 +175,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuD2y8SFEHkdvduzBVAHF3-i5UyE7AUlZS6hSuHGeAWeiyPuAQxUq6O_DMkurcwuBzVSIH2nUvJo6vPgciMtbEWxMuW570sQcAxQyGjkkmqNtKazCg4_iHwJv0qIV0Rs_l_X8Vv0VQEn1KZKDczyYxvWRkrT6RlgxCo6rdZuHQ0DiBFrCBXz0FoAbe5Zm9UoaDacbbYWOerhZYkL3upCyaI9gym1fDrO0CHHGK_IxO-OqLBFVkZuVg9XJuBkeHzC4N5XNdF_uREARdc",
     alt: "Abstract wall art in earthy tones",
     countLabel: "21 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-bedding",
@@ -177,6 +186,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDL8VZ8oIMfm_4FcKCpgeyhkM6iZ4--UJOonP0t22Khmj8vtEVNACVdwQN_bVoP7AjWl4Lg7pV7Xm2-txauTE9wIhH50lCEIVPZvScNeYG0heC3NHO8--7rn12O8cATkvmlsfAxxt_jR2Rqi8GdQdUNRwR2931gKKz00BdR0mZ_qpkJbddCS_BBaQ6zaFu7RePUS9co1mLCoudOxoUGQbZhQr_cEXzbUMiP9Doe5DdZxGVNs6gqERlpxbB4qTKYO8pbWWqlqwxBOis",
     alt: "Layered bedding in warm neutral tones",
     countLabel: "18 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-dining",
@@ -187,6 +197,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCLLCC3vYv9B1aoLSfPhHU6_wr3GRPvLNo_tyBS5L8xIXKRyVGUVeWW4quhGqd9UgGCtkD63nZWX5fK7cZksw5fd8VAI2IQ00tdRXSAHGjj1RhVzZ1bMgqjHruPiYGPKt-EmBvhGT6XCavt69H0afNXXZajZjPvnrkiKSqGKREtaLaEa_LZWzVlB-wWeAIaGhudrZq-nTtnuvEkugbp2T8K79IvW-5xYmXKbQOb57A46wtyQcgRC2xqP-ioj_tRhZHZBhsSC-t5Zfw",
     alt: "Ceramic dining ware arranged on table",
     countLabel: "24 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-planters",
@@ -197,6 +208,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuCUHosQ2mk2S5Xr_dTCorKhsbLM3rAIGGhE_Xh_p3oHu0isbmEhWWQ95nSG8npExRN7EKw_pQLYdrrPmKgWJENSlaKTWyrDFPmBsfphbJt5VDuYf98aezQ4fqcg7PcfdMCBGS4AjT-Ged74xyT51gqMx8y2xOBP-FWf4AdJxdx5M_JprG2JYAY_Hyr26-9F1lbfxCs44D1y8d-MJu-tsDKqh2cRkb6CLfzXh0LIFVVkmUwSGDjmyNTUvchJCdJ_5TyuvmNHZv8TQZk",
     alt: "Natural planters and decor objects",
     countLabel: "14 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-storage",
@@ -207,6 +219,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBNwv_YRuzDgBYftHCyIG8sj8TXxECng4ufKiK6qYUcRvOvJXcqQXXKI9DoMVa-rPdXwmmxTe0h4DfElMvJAhtm7Rc22skgwe28yq6NaADKzoD0B3GTA0PEkyrwyoIrvtsg4vQhqdxrGxIa5a6cc0t8vAj7S57xPwn7bOydmNyBj5CvP793BkY_IUrTz2_6pUkfqMQxiiSbF211qW0GF4SfktMK_7tgy62PTyn4hLnVUOI96g2NvRG23Irueqv6v8K1a-52M-k1Ii8",
     alt: "Woven storage baskets",
     countLabel: "19 items",
+    filter_layout: "sidebar",
   },
   {
     id: "fallback-mirrors",
@@ -217,6 +230,7 @@ const moreCategoryFallbacks: CategoryCard[] = [
       "https://lh3.googleusercontent.com/aida-public/AB6AXuDenhfvTY2v8l0yTaL3DrhTv2EUR7cwm6_VFo68qC4nZoacoWTpxet3fROwWcTQOerR0C0-TnqkQa8Vg0mth1HQeF_b_qduB1FJzKuNGUmEi7J0LNb1NfE2517qbQ1ZbCQXUdmrj6pElD_cF3UWqLOV50lb7bPLwJ2-HLcLJxaBCz59lmn6IJuJSRLkRDA0lBUSTUkxccQWwqbM0jnsMzmzWDyWncRlDPZkNRxJU__PD7ojwwmKlMcFfyOUD3andsJmf-F0mXGAr7I",
     alt: "Neutral interior with handcrafted furniture",
     countLabel: "11 items",
+    filter_layout: "sidebar",
   },
 ];
 
@@ -229,26 +243,40 @@ function mapCmsCategoryToCard(cmsCategory: CmsCategory | undefined, fallback: Ca
     image: cmsCategory?.image?.trim() || fallback.image,
     alt: cmsCategory?.name?.trim() ? `${cmsCategory.name} collection` : fallback.alt,
     countLabel: fallback.countLabel,
+    filter_layout: cmsCategory?.filter_layout || fallback.filter_layout || "sidebar",
   };
 }
 
 function buildPrimaryCategories(categories: CmsCategory[]): CategoryCard[] {
-  return primaryCategoryFallbacks.map((fallback, index) => mapCmsCategoryToCard(categories[index], fallback));
+  return primaryCategoryFallbacks.map((fallback) => {
+    const dbCategory = categories.find((c) => c.slug === fallback.slug);
+    return mapCmsCategoryToCard(dbCategory, fallback);
+  });
 }
 
 function buildMoreCategories(categories: CmsCategory[]): CategoryCard[] {
-  const offset = primaryCategoryFallbacks.length;
-  const cmsDrivenCards = categories.slice(offset).map((category, index) => {
-    const fallback = moreCategoryFallbacks[index] || moreCategoryFallbacks[index % moreCategoryFallbacks.length];
+  const primarySlugs = new Set(primaryCategoryFallbacks.map((f) => f.slug));
+  
+  const remainingBohemianCategories = categories.filter(
+    (c) => !primarySlugs.has(c.slug)
+  );
 
+  const cmsDrivenCards = remainingBohemianCategories.map((category, index) => {
+    const fallback = moreCategoryFallbacks.find((f) => f.slug === category.slug) 
+      || moreCategoryFallbacks[index % moreCategoryFallbacks.length];
+    
     return mapCmsCategoryToCard(category, {
       ...fallback,
-      id: `${fallback.id}-${index}`,
+      id: category.id,
+      slug: category.slug,
+      name: category.name,
+      description: category.description || fallback.description,
+      image: category.image || fallback.image,
     });
   });
 
-  const usedSlugs = new Set(cmsDrivenCards.map((card) => card.slug));
-  const fallbackCards = moreCategoryFallbacks.filter((fallback) => !usedSlugs.has(fallback.slug));
+  const usedSlugs = new Set(cmsDrivenCards.map((c) => c.slug));
+  const fallbackCards = moreCategoryFallbacks.filter((f) => !usedSlugs.has(f.slug));
 
   return [...cmsDrivenCards, ...fallbackCards];
 }
@@ -320,10 +348,14 @@ function mapRowsToListingProducts(
 }
 
 export default async function BohemianShopPage({ searchParams }: ShopPageProps) {
-  const [cmsCategories, shopTopBanners] = await Promise.all([
+  const [allCategories, shopTopBanners, siteConfig] = await Promise.all([
     getActiveCmsCategories(),
     getActiveCmsBannersByPlacement("shop_top"),
+    getSiteConfigMap(),
   ]);
+
+  const classicSlugs = ["chiffon", "crepe", "cotton", "silk", "georgette", "rayon"];
+  const cmsCategories = allCategories.filter((c) => !classicSlugs.includes(c.slug));
 
   const requestedCategory = typeof searchParams?.category === "string"
     ? searchParams.category.trim().toLowerCase()
@@ -345,7 +377,7 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
     );
     const selectedCategoryName = selectedCategoryCard?.name?.trim() || formatCategoryName(initialCategory);
     const selectedCategorySlug = selectedCategoryCard?.slug?.trim().toLowerCase() || initialCategory;
-    const listingVariant = getBohemianListingVariant(selectedCategorySlug);
+    const listingVariant = selectedCategoryCard?.filter_layout === "top" ? "loom" : "archive";
     const listingCategoryOptions = buildListingCategoryOptions(searchCategoryOptions);
 
     const { data: productRows, error: productsError } = await supabase
@@ -548,7 +580,7 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
             <div className="relative">
               <div className="overflow-hidden rounded-xl">
                 <Image
-                  src="https://lh3.googleusercontent.com/aida-public/AB6AXuDGXqc769ujBDi2-RH5Lqn4T1FmaPU3aFvLNwjCSzBvf486Prxin84RJnddLGVeDY11c6cXy7miwEGgeVTfbFm7pJ1sPgWO1vj9WyYAlO4Hte31GToIvsBZt0cw98wNYpwvBYbvWHt76QRnml__dNmV1qYM3rITrFdDSp5XnJwKyzFM-UgsE-iDe-AwkN85Y-7J15FFYHt0a7fKsON_gwQZl3CCBfD4YUGZtvdXsUaK7WoWvmvEbC4sejK9-sYbY6l0NLAGcN2Ay58"
+                  src={siteConfig.maker_series_image?.trim() || "https://lh3.googleusercontent.com/aida-public/AB6AXuDGXqc769ujBDi2-RH5Lqn4T1FmaPU3aFvLNwjCSzBvf486Prxin84RJnddLGVeDY11c6cXy7miwEGgeVTfbFm7pJ1sPgWO1vj9WyYAlO4Hte31GToIvsBZt0cw98wNYpwvBYbvWHt76QRnml__dNmV1qYM3rITrFdDSp5XnJwKyzFM-UgsE-iDe-AwkN85Y-7J15FFYHt0a7fKsON_gwQZl3CCBfD4YUGZtvdXsUaK7WoWvmvEbC4sejK9-sYbY6l0NLAGcN2Ay58"}
                   alt="Artisan weaving textile on loom"
                   width={980}
                   height={1100}
@@ -561,17 +593,20 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
             </div>
 
             <div>
-              <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9f3f29]">The Maker Series</p>
-              <h2 className={`${newsreader.className} mb-6 text-5xl text-[#1c1c19] md:text-6xl`}>Artisan Weaves</h2>
+              <p className="mb-6 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#9f3f29]">
+                {siteConfig.maker_series_badge?.trim() || "The Maker Series"}
+              </p>
+              <h2 className={`${newsreader.className} mb-6 text-5xl text-[#1c1c19] md:text-6xl`}>
+                {siteConfig.maker_series_title?.trim() || "Artisan Weaves"}
+              </h2>
               <p className="mb-8 max-w-xl text-base leading-relaxed text-[#56423d] md:text-lg">
-                Every thread tells a story of heritage and patience. Our loom-woven collection is crafted by
-                community cooperatives using traditional techniques passed down through generations.
+                {siteConfig.maker_series_description?.trim() || "Every thread tells a story of heritage and patience. Our loom-woven collection is crafted by community cooperatives using traditional techniques passed down through generations."}
               </p>
               <Link
-                href="/about"
+                href={siteConfig.maker_series_btn_url?.trim() || "/about"}
                 className="inline-flex items-center gap-2 rounded-lg bg-[#9f3f29] px-7 py-4 text-sm font-bold text-white shadow-[0_14px_28px_rgba(159,63,41,0.2)] transition-opacity hover:opacity-90"
               >
-                Discover the Process
+                {siteConfig.maker_series_btn_label?.trim() || "Discover the Process"}
               </Link>
             </div>
           </div>

@@ -3,10 +3,11 @@ import Link from "next/link";
 import Container from "@/components/ui/Container";
 import categoriesData from "@/data/categories.json";
 import { getActiveCmsCategories } from "@/lib/cms";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 export default async function Categories() {
   const dbCategories = await getActiveCmsCategories();
-  const fallbackCategoryImage = "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=900&q=80";
+  const fallbackCategoryImage = "https://images.pexels.com/photos/7679720/pexels-photo-7679720.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=2000";
 
   const categories = dbCategories.length > 0
     ? dbCategories
@@ -50,7 +51,7 @@ export default async function Categories() {
               className="group relative h-[240px] sm:h-[280px] md:h-[460px] rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
             >
               <Image
-                src={bentoCategories[0].image?.trim() || fallbackCategoryImage}
+                src={getHighQualityImageUrl(bentoCategories[0].image?.trim() || fallbackCategoryImage, "sectionCard")}
                 alt={bentoCategories[0].name}
                 fill
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -76,7 +77,7 @@ export default async function Categories() {
                   className="group relative h-[170px] sm:h-[200px] md:h-auto rounded-2xl md:rounded-3xl overflow-hidden bg-background-secondary block"
                 >
                   <Image
-                    src={category.image?.trim() || fallbackCategoryImage}
+                    src={getHighQualityImageUrl(category.image?.trim() || fallbackCategoryImage, "sectionCard")}
                     alt={category.name}
                     fill
                     sizes="(max-width: 768px) 50vw, 50vw"
@@ -120,7 +121,7 @@ export default async function Categories() {
                 className="group relative aspect-[4/5] sm:aspect-auto sm:h-[46vh] md:h-[380px] overflow-hidden bg-background-secondary block"
               >
                 <Image
-                  src={category.image?.trim() || fallbackCategoryImage}
+                  src={getHighQualityImageUrl(category.image?.trim() || fallbackCategoryImage, "sectionCard")}
                   alt={category.name}
                   fill
                   sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, 33vw"

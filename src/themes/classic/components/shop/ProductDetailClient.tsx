@@ -108,8 +108,9 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
         return;
       }
 
-      setProduct(data);
-      const groups = Array.isArray(data.product_option_groups) ? data.product_option_groups : [];
+      const resData = data as any;
+      setProduct(resData);
+      const groups = Array.isArray(resData.product_option_groups) ? resData.product_option_groups : [];
       const defaults: Record<string, string | string[]> = {};
       groups.forEach((group: any) => {
         if (group?.is_active === false) return;
@@ -126,11 +127,11 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
       });
       setSelectedOptions(defaults);
       setOptionErrors({});
-      const defVariant = data.product_variants.find((v: any) => v.is_default) || data.product_variants[0];
+      const defVariant = resData.product_variants.find((v: any) => v.is_default) || resData.product_variants[0];
       setSelectedVariant(defVariant);
 
-      const relatedIds = Array.isArray(data.related_product_ids)
-        ? data.related_product_ids.filter((id: string) => id && id !== data.id)
+      const relatedIds = Array.isArray(resData.related_product_ids)
+        ? resData.related_product_ids.filter((id: string) => id && id !== resData.id)
         : [];
       let finalRelatedProducts: RelatedProductCard[] = [];
 
@@ -144,7 +145,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
         if (related) {
           const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
           const orderedRelated = related
-            .sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+            .sort((a: any, b: any) => Number(orderMap.get(a.id) ?? 0) - Number(orderMap.get(b.id) ?? 0))
             .slice(0, 8);
 
           finalRelatedProducts = mapRelatedProducts(orderedRelated);
@@ -156,11 +157,11 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
           .from("products")
           .select(`id, name, slug, sell_mode, fabric, is_featured, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )`)
           .eq("is_active", true)
-          .neq("id", data.id)
+          .neq("id", resData.id)
           .limit(16);
 
-        if (data.fabric) {
-          fallbackQuery = fallbackQuery.ilike("fabric", `%${data.fabric}%`);
+        if (resData.fabric) {
+          fallbackQuery = fallbackQuery.ilike("fabric", `%${resData.fabric}%`);
         }
 
         const { data: fallbackProducts } = await fallbackQuery;
@@ -772,7 +773,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                       step={quantityStep}
                       value={meters}
                       onChange={(e) => updateQuantity(Number(e.target.value) || quantityStep)}
-                      className="w-24 text-center py-3 border-x border-border focus:outline-none text-lg"
+                      className="w-24 text-center py-3 border-x border-border focus:outline-none text-lg [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       min={quantityStep}
                     />
                     <button onClick={() => updateQuantity(meters + quantityStep)} className="px-4 py-3 hover:bg-background-secondary transition-colors text-lg">+</button>

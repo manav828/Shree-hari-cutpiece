@@ -22,14 +22,6 @@ type SaveUpdate = {
     required?: boolean;
 };
 
-const tabs: { id: TabId; label: string }[] = [
-    { id: "hero", label: "Hero" },
-    { id: "description", label: "Description" },
-    { id: "store", label: "Store Info" },
-    { id: "categories", label: "Categories" },
-    { id: "banners", label: "Banners" },
-];
-
 const heroFields: SiteConfigField[] = [
     {
         key: "hero_banner_layout",
@@ -60,6 +52,15 @@ const heroFields: SiteConfigField[] = [
     { key: "hero_mobile_image", label: "Mobile Hero Image", type: "image", group: "hero", helpText: "Recommended portrait image for mobile hero." },
 ];
 
+const bohemianHeroFields: SiteConfigField[] = [
+    { key: "bohemian_hero_badge", label: "Hero Badge", type: "text", group: "hero", required: true },
+    { key: "bohemian_hero_headline", label: "Hero Headline", type: "text", group: "hero", required: true },
+    { key: "bohemian_hero_description", label: "Hero Description", type: "textarea", group: "hero", required: true },
+    { key: "bohemian_hero_cta1_label", label: "CTA Label", type: "text", group: "hero", required: true },
+    { key: "bohemian_hero_cta1_url", label: "CTA URL", type: "url", group: "hero", required: true },
+    { key: "bohemian_hero_desktop_image", label: "Desktop Hero Image", type: "image", group: "hero", helpText: "Recommended wide image for desktop hero." },
+];
+
 const descriptionFields: SiteConfigField[] = [
     { key: "desc_badge", label: "Section Badge", type: "text", group: "description", required: true },
     { key: "desc_headline", label: "Headline", type: "text", group: "description", required: true },
@@ -75,6 +76,19 @@ const descriptionFields: SiteConfigField[] = [
     { key: "desc_stat_label", label: "Floating Stat Label", type: "text", group: "description", required: true },
     { key: "desc_image1", label: "Description Image 1", type: "image", group: "description" },
     { key: "desc_image2", label: "Description Image 2", type: "image", group: "description" },
+];
+
+const bohemianArtisanFields: SiteConfigField[] = [
+    { key: "maker_series_badge", label: "Maker Series Badge", type: "text", group: "description", required: true },
+    { key: "maker_series_title", label: "Maker Series Title", type: "text", group: "description", required: true },
+    { key: "maker_series_description", label: "Maker Series Description", type: "textarea", group: "description", required: true },
+    { key: "maker_series_btn_label", label: "Button Label", type: "text", group: "description", required: true },
+    { key: "maker_series_btn_url", label: "Button URL", type: "url", group: "description", required: true },
+    { key: "maker_series_image", label: "Artisan Section Image", type: "image", group: "description" },
+    { key: "spaces_title", label: "Spaces Section Title", type: "text", group: "description", required: true },
+    { key: "spaces_description", label: "Spaces Section Description", type: "textarea", group: "description", required: true },
+    { key: "archive_title", label: "Curated Archive Title", type: "text", group: "description", required: true },
+    { key: "archive_subtitle", label: "Curated Archive Subtitle", type: "text", group: "description", required: true },
 ];
 
 const storeFields: SiteConfigField[] = [
@@ -95,19 +109,30 @@ function mapToSaveUpdates(fields: SiteConfigField[], values: Record<string, stri
             value: values[f.key] ?? "",
             type: (f.type === "select" ? "text" : f.type) as ConfigType,
             label: f.label,
-            group: f.group,
+            group: f.group as any,
             required: f.required,
         }));
 }
 
 export default function AdminCmsPage() {
     const [activeTab, setActiveTab] = useState<TabId>("hero");
+    const [activeTheme, setActiveTheme] = useState<string>("classic");
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [uploadingKey, setUploadingKey] = useState<string | null>(null);
     const [values, setValues] = useState<Record<string, string>>({});
     const [initialValues, setInitialValues] = useState<Record<string, string>>({});
     const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
+    const tabs = useMemo(() => {
+        return [
+            { id: "hero", label: "Hero" },
+            { id: "description", label: activeTheme === "bohemian" ? "Custom Sections" : "Description" },
+            { id: "store", label: "Store Info" },
+            { id: "categories", label: "Categories" },
+            { id: "banners", label: "Banners" },
+        ] as { id: TabId; label: string }[];
+    }, [activeTheme]);
 
     useEffect(() => {
         const load = async () => {
@@ -119,6 +144,7 @@ export default function AdminCmsPage() {
                 if (!res.ok) throw new Error(json.error || "Failed to load CMS config");
                 setValues(json.map || {});
                 setInitialValues(json.map || {});
+                setActiveTheme(json.activeTheme || "classic");
             } catch (err: unknown) {
                 const text = err instanceof Error ? err.message : "Failed to load CMS config";
                 setMessage({ type: "error", text });
@@ -131,12 +157,12 @@ export default function AdminCmsPage() {
     }, []);
 
     const fieldsForTab = useMemo(() => {
-        if (activeTab === "hero") return heroFields;
-        if (activeTab === "description") return descriptionFields;
+        if (activeTab === "hero") return activeTheme === "bohemian" ? bohemianHeroFields : heroFields;
+        if (activeTab === "description") return activeTheme === "bohemian" ? bohemianArtisanFields : descriptionFields;
         if (activeTab === "categories") return [];
         if (activeTab === "banners") return [];
         return storeFields;
-    }, [activeTab]);
+    }, [activeTab, activeTheme]);
 
     const isDirty = useMemo(() => {
         for (const f of fieldsForTab) {

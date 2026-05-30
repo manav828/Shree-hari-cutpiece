@@ -14,6 +14,7 @@ import {
 	PackageCheck,
 	Plus,
 	ShieldCheck,
+	Share2,
 	Sparkles,
 	Star,
 } from "lucide-react";
@@ -72,8 +73,6 @@ const SOCIAL_PROOF_IMAGES = [
 const LIFESTYLE_BANNER_IMAGE =
 	"https://lh3.googleusercontent.com/aida/ADBb0ui8nOrpG-V9m3I3jbTfJgEmLvjFr4FEh1YoSy3xbocip_LNebo7W6YJ7CmPJZh2Jy_8vJKn5-djR5kuNbr2-dlMgZoDTyCRI_36ImK6ZiqbrhWArIbthgSgShP2RaP2Tb8oaNeWS2QKQWWyv9Mkqs13JmWXhdqUIxN3bPvTgKxTIDy5H9uNQwjmBh97xj8bm1HPtuDOhaL6KE89S9wIBsiQIXrcXQCZJW8tehJanziJYuNDMwsGAVAADbOryAYQPH_SVQIo-Ew66A";
 
-const ARTISAN_SECTION_IMAGE =
-	"https://lh3.googleusercontent.com/aida-public/AB6AXuCrRoBODPT1WPovjEC3-z05DbR7rAjGoBXWTN9oRddrm4H9qBuRSg9mQ-i7PtVnKE8MnR0nMgo2p0666EqiS07Y9lR6JNdGxxovsDizZk6tn4vRE1nxRAtuZEyS5k7bN9C0jzK7K5Gdj--xaNlcVHMER-gLGNTxCIoNruv7KMRDVJ4Emyy24IS6M01bSWQOt9GakKMz4oUAlNpo_UzXzJg2sQwCkgCLKE4WQEEmc25XHz-VTZvqDAKOlmgUegANZOiUvUbriD3qcFg";
 
 type RelatedProductCard = {
 	id: string;
@@ -92,6 +91,16 @@ interface ProductDetailClientProps {
 
 function normalizeSpecKey(value: string): string {
 	return value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+function getInstagramEmbedUrl(url: string): string {
+	if (!url) return "";
+	try {
+		const cleanUrl = url.split("?")[0].replace(/\/+$/, "");
+		return `${cleanUrl}/embed/`;
+	} catch (e) {
+		return url;
+	}
 }
 
 function mapRelatedProducts(products: any[]): RelatedProductCard[] {
@@ -282,6 +291,21 @@ function buildDummyProduct(slug: string) {
 			},
 		],
 		product_option_groups: [],
+		custom_tabs: [
+			{
+				id: "story",
+				label: "Artisan Story",
+				type: "custom",
+				headline: "A Loom with a Legacy",
+				description: "Each fabric lot is curated from artisan clusters with deliberate attention to drape, comfort, and longevity. We work directly with makers to preserve process authenticity and consistent quality.",
+				image_url: "https://lh3.googleusercontent.com/aida-public/AB6AXuCrRoBODPT1WPovjEC3-z05DbR7rAjGoBXWTN9oRddrm4H9qBuRSg9mQ-i7PtVnKE8MnR0nMgo2p0666EqiS07Y9lR6JNdGxxovsDizZk6tn4vRE1nxRAtuZEyS5k7bN9C0jzK7K5Gdj--xaNlcVHMER-gLGNTxCIoNruv7KMRDVJ4Emyy24IS6M01bSWQOt9GakKMz4oUAlNpo_UzXzJg2sQwCkgCLKE4WQEEmc25XHz-VTZvqDAKOlmgUegANZOiUvUbriD3qwCkgCLKE4WQEEmc25XHz-VTZvqDAKOlmgUegANZOiUvUbriD3qcFg",
+				quote: "This fabric feels like a warm hug from the earth itself.",
+				link_label: "Meet the weavers",
+				link_url: "",
+			},
+			{ id: "materials", label: "Materials", type: "materials" },
+			{ id: "dimensions", label: "Dimensions", type: "dimensions" }
+		],
 	};
 }
 
@@ -293,12 +317,45 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
 	const [loading, setLoading] = useState(true);
 	const [meters, setMeters] = useState(1);
-	const [activeTab, setActiveTab] = useState<"story" | "materials" | "dimensions" | "reviews">("story");
+	const [activeTab, setActiveTab] = useState<string>("");
 	const [activeMedia, setActiveMedia] = useState(0);
 	const [selectedVariant, setSelectedVariant] = useState<any>(null);
 	const [selectedOptions, setSelectedOptions] = useState<Record<string, string | string[] | number>>({});
 	const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
+	const [expandedAccordionItems, setExpandedAccordionItems] = useState<Record<string, boolean>>({});
 	const viewedProductVariantRef = useRef<string | null>(null);
+
+	const [shareText, setShareText] = useState("Share Product");
+
+	const handleShareProduct = async () => {
+		const shareData = {
+			title: product?.name || "E-commerce product",
+			text: `Check out ${product?.name} at Shree Hari Cutpiece!`,
+			url: typeof window !== "undefined" ? window.location.href : "",
+		};
+
+		if (typeof navigator !== "undefined" && navigator.share && navigator.canShare && navigator.canShare(shareData)) {
+			try {
+				await navigator.share(shareData);
+			} catch (err: any) {
+				if (err.name !== "AbortError") {
+					copyToClipboard();
+				}
+			}
+		} else {
+			copyToClipboard();
+		}
+	};
+
+	const copyToClipboard = () => {
+		if (typeof navigator !== "undefined") {
+			navigator.clipboard.writeText(window.location.href);
+			setShareText("Link Copied!");
+			setTimeout(() => {
+				setShareText("Share Product");
+			}, 2000);
+		}
+	};
 
 	useEffect(() => {
 		async function fetchProduct() {
@@ -306,6 +363,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 				.from("products")
 				.select(`
 					id, name, slug, description, short_description, long_description, description_html, description_css, use_custom_description, related_product_ids,
+					artisan_headline, artisan_description, artisan_image, artisan_quote, custom_tabs,
 					highlights, faqs, fabric, width, care_instructions, fabric_details,
 					sell_mode,
 					categories ( id, name, slug ),
@@ -322,12 +380,40 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 				setOptionErrors({});
 				setSelectedVariant(dummyProduct.product_variants[0]);
 				setRelatedProducts(DUMMY_RELATED_PRODUCTS);
+				const dummyTabs = (dummyProduct.custom_tabs && dummyProduct.custom_tabs.length > 0)
+					? dummyProduct.custom_tabs.filter((tab: any) => tab && tab.type !== "reviews")
+					: [];
+				if (dummyTabs.length > 0) {
+					setActiveTab(dummyTabs[0].id);
+				} else {
+					setActiveTab("description");
+				}
 				setLoading(false);
 				return;
 			}
 
-			setProduct(data);
-			const groups = Array.isArray(data.product_option_groups) ? data.product_option_groups : [];
+			const resData = data as any;
+			setProduct(resData);
+			const tabsList = (Array.isArray(resData.custom_tabs) ? resData.custom_tabs : [])
+				.filter((tab: any) => tab && tab.type !== "reviews");
+			if (tabsList.length > 0) {
+				setActiveTab(tabsList[0].id);
+			} else {
+				// Set default active tab based on available fallback data
+				const longDesc = resData.long_description || resData.description || "";
+				const highlightItemsList = Array.isArray(resData.highlights) ? resData.highlights : [];
+				const hasSpecInfo = resData.fabric || resData.width || resData.care_instructions || (Array.isArray(resData.fabric_details) && resData.fabric_details.length > 0);
+				const faqItemsList = Array.isArray(resData.faqs) ? resData.faqs : [];
+				
+				if (longDesc.trim() || highlightItemsList.length > 0) {
+					setActiveTab("description");
+				} else if (hasSpecInfo) {
+					setActiveTab("materials");
+				} else if (faqItemsList.length > 0) {
+					setActiveTab("faq");
+				}
+			}
+			const groups = Array.isArray(resData.product_option_groups) ? resData.product_option_groups : [];
 			const defaults: Record<string, string | string[]> = {};
 			groups.forEach((group: any) => {
 				if (group?.is_active === false) return;
@@ -344,11 +430,11 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 			});
 			setSelectedOptions(defaults);
 			setOptionErrors({});
-			const defVariant = data.product_variants.find((v: any) => v.is_default) || data.product_variants[0];
+			const defVariant = resData.product_variants.find((v: any) => v.is_default) || resData.product_variants[0];
 			setSelectedVariant(defVariant);
 
-			const relatedIds = Array.isArray(data.related_product_ids)
-				? data.related_product_ids.filter((id: string) => id && id !== data.id)
+			const relatedIds = Array.isArray(resData.related_product_ids)
+				? resData.related_product_ids.filter((id: string) => id && id !== resData.id)
 				: [];
 			let finalRelatedProducts: RelatedProductCard[] = [];
 
@@ -357,28 +443,29 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 					.from("products")
 					.select("id, name, slug, sell_mode, fabric, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
 					.in("id", relatedIds)
+					.eq("is_active", true)
 					.limit(8);
 
 				if (related) {
 					const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
 					const orderedRelated = related
-						.sort((a: any, b: any) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0))
+						.sort((a: any, b: any) => Number(orderMap.get(a.id) ?? 0) - Number(orderMap.get(b.id) ?? 0))
 						.slice(0, 8);
 
 					finalRelatedProducts = mapRelatedProducts(orderedRelated);
 				}
 			}
 
-			if (finalRelatedProducts.length < 8) {
+			if (relatedIds.length === 0) {
 				let fallbackQuery = supabase
 					.from("products")
 					.select("id, name, slug, sell_mode, fabric, is_featured, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
 					.eq("is_active", true)
-					.neq("id", data.id)
+					.neq("id", resData.id)
 					.limit(16);
 
-				if (data.fabric) {
-					fallbackQuery = fallbackQuery.ilike("fabric", `%${data.fabric}%`);
+				if (resData.fabric) {
+					fallbackQuery = fallbackQuery.ilike("fabric", `%${resData.fabric}%`);
 				}
 
 				const { data: fallbackProducts } = await fallbackQuery;
@@ -612,20 +699,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 			price: selectedVariant?.price || 0,
 			image: img,
 			meters,
-			selling_mode: product.sell_mode === "meter" ? "meter" : "piece",
+			selling_mode: (product.sell_mode === "meter" ? "meter" : "piece") as "meter" | "piece",
 			selected_options: optionSnapshots,
 			analytics_source: source,
 		};
 	};
 
 	const handleAddToCart = () => {
-		const payload = createCartPayload("bohemian_pdp_add_to_cart");
+		const payload = createCartPayload("bohemian_pdp_add_to_cart") as any;
 		if (!payload) return;
 		addToCart(payload);
 	};
 
 	const handleBuyNow = () => {
-		const payload = createCartPayload("bohemian_pdp_buy_now");
+		const payload = createCartPayload("bohemian_pdp_buy_now") as any;
 		if (!payload) return;
 		addToCart(payload);
 		setIsCartOpen(false);
@@ -641,7 +728,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 			price: related.price,
 			image: related.image,
 			meters: 1,
-			selling_mode: related.unit === "meter" ? "meter" : "piece",
+			selling_mode: (related.unit === "meter" ? "meter" : "piece") as "meter" | "piece",
 			analytics_source: "bohemian_pdp_related_quick_add",
 		});
 	};
@@ -649,14 +736,13 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	const averageRating = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length;
 	const categoryName = Array.isArray(product.categories) ? product.categories[0]?.name : product.categories?.name;
 	const shortDescription = product.short_description || product.description || "";
-	const longDescription = product.long_description || product.description || "";
 	const descriptionHtml = product.description_html || "";
 	const descriptionCss = product.description_css || "";
 	const useCustomDescription = Boolean(product.use_custom_description);
 	const hasCustomDescription = descriptionHtml.trim().length > 0;
 	const showCustomDescription = useCustomDescription && hasCustomDescription;
-	const highlightItems = Array.isArray(product.highlights) ? product.highlights : [];
 	const faqItems = Array.isArray(product.faqs) ? product.faqs : [];
+	const highlightItems = Array.isArray(product.highlights) ? product.highlights : [];
 	const fabricRows = Array.isArray(product.fabric_details) ? product.fabric_details : [];
 
 	const extraFabricRows = fabricRows
@@ -730,6 +816,50 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	const stylistAssistUrl = getWhatsAppUrl(
 		`Hi, I need help selecting the right quantity and styling for ${product.name}${selectedVariant?.color_name ? ` (${selectedVariant.color_name})` : ""}.`,
 	);
+	// Resolve active tabs list
+	const configuredTabs = (product && Array.isArray(product.custom_tabs) ? product.custom_tabs : [])
+		.filter((tab: any) => tab && tab.type !== "reviews");
+
+	// If no custom tabs are configured in the database, build default tabs list
+	const defaultTabs = [];
+	if (configuredTabs.length === 0 && product) {
+		const longDesc = product.long_description || product.description || "";
+		if (longDesc.trim() || highlightItems.length > 0) {
+			defaultTabs.push({
+				id: "description",
+				label: "Description",
+				type: "custom",
+				layout: "split",
+				headline: "Fabric Details & Artisan Story",
+				description: longDesc,
+			});
+		}
+
+		// Spec fields fallback
+		const hasSpecInfo = product.fabric || product.width || product.care_instructions || (Array.isArray(product.fabric_details) && product.fabric_details.length > 0);
+		if (hasSpecInfo) {
+			defaultTabs.push({
+				id: "materials",
+				label: "Specifications",
+				type: "materials",
+				specs: textileSpecs,
+				faqs: [],
+			});
+		}
+
+		// FAQs fallback (if faqs exist at product level)
+		if (faqItems.length > 0) {
+			defaultTabs.push({
+				id: "faq",
+				label: "FAQs",
+				type: "materials", // materials type contains faqs list
+				specs: [],
+				faqs: faqItems,
+			});
+		}
+	}
+
+	const tabsToRender = configuredTabs.length > 0 ? configuredTabs : defaultTabs;
 
 	return (
 		<>
@@ -813,7 +943,9 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 									<Sparkles className="h-3.5 w-3.5" />
 									Artisan Crafted
 								</span>
-								<span className="text-[11px] uppercase tracking-[0.12em] text-[#7a6f68]">SKU: {selectedVariant?.sku || "N/A"}</span>
+								{selectedVariant?.sku && selectedVariant.sku !== "N/A" ? (
+									<span className="text-[11px] uppercase tracking-[0.12em] text-[#7a6f68]">SKU: {selectedVariant.sku}</span>
+								) : null}
 							</div>
 
 							<h1 className={`${bohemianHeadingFont.className} text-5xl leading-[0.95] text-[#1c1c19] md:text-6xl`}>{product.name}</h1>
@@ -999,7 +1131,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 											step={quantityStep}
 											value={meters}
 											onChange={(event) => updateQuantity(Number(event.target.value) || quantityStep)}
-											className="h-9 w-20 bg-transparent text-center text-sm font-semibold text-[#1c1c19] outline-none"
+											className="h-9 w-20 bg-transparent text-center text-sm font-semibold text-[#1c1c19] border-0 border-none outline-none focus:outline-none focus:ring-0 focus-visible:ring-0 focus-visible:ring-offset-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
 											min={quantityStep}
 										/>
 										<button
@@ -1044,22 +1176,33 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 								</button>
 							</div>
 
-							<a
-								href={stylistAssistUrl}
-								target="_blank"
-								rel="noopener noreferrer"
-								className="mt-3 inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#6f645d] transition-colors hover:text-[#9f3f29]"
-								onClick={() =>
-									trackWhatsAppClick({
-										location: "bohemian_pdp_stylist_cta",
-										productId: product.id,
-										productSlug: product.slug,
-									})
-								}
-							>
-								Ask Stylist on WhatsApp
-								<ChevronRight className="h-4 w-4" />
-							</a>
+							<div className="mt-4 flex flex-wrap items-center justify-between gap-4 border-b border-[#ddc0ba]/20 pb-4">
+								<a
+									href={stylistAssistUrl}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#6f645d] transition-colors hover:text-[#9f3f29]"
+									onClick={() =>
+										trackWhatsAppClick({
+											location: "bohemian_pdp_stylist_cta",
+											productId: product.id,
+											productSlug: product.slug,
+										})
+									}
+								>
+									Ask Stylist on WhatsApp
+									<ChevronRight className="h-4 w-4" />
+								</a>
+
+								<button
+									type="button"
+									onClick={handleShareProduct}
+									className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#6f645d] transition-colors hover:text-[#9f3f29] cursor-pointer"
+								>
+									<Share2 className="h-3.5 w-3.5 text-[#6f645d]" />
+									{shareText}
+								</button>
+							</div>
 
 							<div className="mt-8 grid grid-cols-3 gap-3 border-t border-[#ddc0ba]/40 pt-7">
 								<div className="flex flex-col items-center text-center">
@@ -1079,194 +1222,427 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 					</section>
 				</section>
 
+				{product?.long_description && (
+					<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24 border-b border-[#ddc0ba]/30 pb-16`}>
+						<div className="mx-auto max-w-3xl text-center space-y-6">
+							<h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19]`}>Product Story</h2>
+							<p className="text-lg leading-relaxed text-[#56423d] whitespace-pre-wrap">{product.long_description}</p>
+						</div>
+					</section>
+				)}
+
 				<section className={`${BOHEMIAN_SITE_CONTAINER} mt-16`}>
-					<div className="hide-scrollbar flex overflow-x-auto border-b border-[#ddc0ba]/40">
-						{[
-							{ id: "story", label: "Artisan Story" },
-							{ id: "materials", label: "Materials" },
-							{ id: "dimensions", label: "Dimensions" },
-							{ id: "reviews", label: `Reviews (${reviewsData.length})` },
-						].map((tab) => (
-							<button
-								key={tab.id}
-								type="button"
-								onClick={() => setActiveTab(tab.id as "story" | "materials" | "dimensions" | "reviews")}
-								className={`whitespace-nowrap border-b-2 px-6 py-4 text-sm font-semibold transition-colors ${
-									activeTab === tab.id
-										? "border-[#9f3f29] text-[#9f3f29]"
-										: "border-transparent text-[#7a6f68] hover:text-[#9f3f29]"
-								}`}
-							>
-								{tab.label}
-							</button>
-						))}
-					</div>
+					{product && tabsToRender.length > 0 && (
+						<>
+							<div className="hide-scrollbar flex overflow-x-auto border-b border-[#ddc0ba]/40">
+								{tabsToRender.map((tab: any) => {
+										return (
+											<button
+												key={tab.id}
+												type="button"
+												onClick={() => setActiveTab(tab.id)}
+												className={`whitespace-nowrap border-b-2 px-6 py-4 text-sm font-semibold transition-colors ${
+													activeTab === tab.id
+														? "border-[#9f3f29] text-[#9f3f29]"
+														: "border-transparent text-[#7a6f68] hover:text-[#9f3f29]"
+												}`}
+											>
+												{tab.label}
+											</button>
+										);
+									})}
+							</div>
 
-					<div className="py-10 md:py-12">
-						{activeTab === "story" ? (
-							<div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16">
-								<div className="space-y-6 text-[#56423d]">
-									<h3 className={`${bohemianHeadingFont.className} text-4xl italic text-[#1c1c19]`}>A Loom with a Legacy</h3>
+							<div className="py-10 md:py-12">
+								{tabsToRender.map((tab: any) => {
+									if (activeTab !== tab.id) return null;
 
-									{showCustomDescription && descriptionCss ? (
-										<style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
-									) : null}
+									if (tab.type === "custom") {
+										const layout = tab.layout || "split";
 
-									{showCustomDescription ? (
-										<div className="product-desc leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
-									) : (
-										<>
-											<p className="text-lg leading-relaxed">{longDescription}</p>
-											<p className="text-lg leading-relaxed">
-												Each fabric lot is curated from artisan clusters with deliberate attention to drape, comfort, and longevity.
-												We work directly with makers to preserve process authenticity and consistent quality.
-											</p>
-										</>
-									)}
+										if (layout === "hero") {
+											const headlineToRender = tab.headline || (tab.id === "story" && product.artisan_headline) || (tab.id === "description" && "Description") || "";
+											const descriptionToRender = tab.description || product.description || "";
+											const imageUrlToRender = tab.image_url || (tab.id === "story" && product.artisan_image) || "";
+											const quoteToRender = tab.quote || (tab.id === "story" && product.artisan_quote) || "";
 
-									{highlightItems.length > 0 ? (
-										<ul className="space-y-2 text-sm">
-											{highlightItems.map((item: string, idx: number) => (
-												<li key={`highlight-${idx}`} className="flex items-start gap-2">
-													<span className="mt-1.5 h-1.5 w-1.5 rounded-full bg-[#9f3f29]" />
-													<span>{item}</span>
-												</li>
-											))}
-										</ul>
-									) : null}
+											return (
+												<div key={tab.id} className="max-w-5xl mx-auto space-y-8 text-center text-[#56423d] animate-fade-in">
+													<div className="max-w-3xl mx-auto space-y-6">
+														{headlineToRender && (
+															<h3 className={`${bohemianHeadingFont.className} text-4xl italic text-[#1c1c19]`}>
+																{headlineToRender}
+															</h3>
+														)}
+														{tab.id === "story" && showCustomDescription && descriptionCss ? (
+															<style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
+														) : null}
 
-									<a
-										href={stylistAssistUrl}
-										target="_blank"
-										rel="noopener noreferrer"
-										className="inline-flex items-center gap-2 text-sm font-semibold text-[#9f3f29] transition-opacity hover:opacity-75"
-										onClick={() =>
-											trackWhatsAppClick({
-												location: "bohemian_pdp_artisan_story_cta",
-												productId: product.id,
-												productSlug: product.slug,
-											})
+														{tab.id === "story" && showCustomDescription ? (
+															<div className="product-desc leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+														) : (
+															descriptionToRender && <p className="text-lg leading-relaxed whitespace-pre-wrap">{descriptionToRender}</p>
+														)}
+
+														{tab.link_label && (
+															<div className="pt-2">
+																<a
+																	href={tab.link_url || stylistAssistUrl}
+																	target="_blank"
+																	rel="noopener noreferrer"
+																	className="inline-flex items-center gap-2 text-sm font-semibold text-[#9f3f29] transition-opacity hover:opacity-75"
+																	onClick={() =>
+ 																		trackWhatsAppClick({
+ 																			location: `bohemian_pdp_tab_${tab.id}_cta`,
+ 																			productId: product.id,
+ 																			productSlug: product.slug,
+ 																		})
+ 																	}
+																>
+																	{tab.link_label}
+																	<ArrowRight className="h-4 w-4" />
+																</a>
+															</div>
+														)}
+													</div>
+													{imageUrlToRender && (
+														<div className="relative">
+															<div className="relative aspect-[21/9] w-full overflow-hidden rounded-xl bg-[#f0ede8]">
+																<Image
+																	src={imageUrlToRender}
+																	alt={headlineToRender || tab.label}
+																	fill
+																	sizes="100vw"
+																	className="object-cover"
+																/>
+															</div>
+															{quoteToRender && (
+																<div className="mt-6 mx-auto max-w-xl rounded-lg bg-[#dbe4c0] p-4 text-center">
+																	<p className={`${bohemianHeadingFont.className} text-lg italic leading-tight text-[#5a6245]`}>
+																		&quot;{quoteToRender}&quot;
+																	</p>
+																</div>
+															)}
+														</div>
+													)}
+												</div>
+											);
 										}
-									>
-										Meet the weavers
-										<ArrowRight className="h-4 w-4" />
-									</a>
-								</div>
 
-								<div className="relative">
-									<div className="relative aspect-video overflow-hidden rounded-xl bg-[#f0ede8]">
-										<Image
-											src={ARTISAN_SECTION_IMAGE}
-											alt="Artisan workshop"
-											fill
-											sizes="(max-width: 1024px) 100vw, 45vw"
-											className="object-cover"
-										/>
-									</div>
-									<div className="mt-4 rounded-lg bg-[#dbe4c0] p-4 md:absolute md:-bottom-6 md:-right-6 md:mt-0 md:max-w-[220px]">
-										<p className={`${bohemianHeadingFont.className} text-lg italic leading-tight text-[#5a6245]`}>
-											&quot;This fabric feels like a warm hug from the earth itself.&quot;
-										</p>
-									</div>
-								</div>
-							</div>
-						) : null}
+										if (layout === "accordion") {
+											const headlineToRender = tab.headline || (tab.id === "story" && product.artisan_headline) || (tab.id === "description" && "Description") || "";
+											const descriptionToRender = tab.description || product.description || "";
 
-						{activeTab === "materials" ? (
-							<div className="space-y-8">
-								<div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-									{textileSpecs.map((spec) => (
-										<div key={spec.label} className="rounded-lg bg-[#f6f3ee] p-4">
-											<p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">{spec.label}</p>
-											<p className="mt-2 text-sm leading-snug text-[#1c1c19]">{spec.value}</p>
-										</div>
-									))}
-								</div>
+											return (
+												<div key={tab.id} className="max-w-3xl mx-auto space-y-6 text-[#56423d] animate-fade-in">
+													{headlineToRender && (
+														<h3 className={`${bohemianHeadingFont.className} text-3xl italic text-[#1c1c19] text-center mb-6`}>
+															{headlineToRender}
+														</h3>
+													)}
+													{tab.id === "story" && showCustomDescription && descriptionCss ? (
+														<style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
+													) : null}
 
-								{faqItems.length > 0 ? (
-									<div className="rounded-lg bg-[#f6f3ee] p-5">
-										<p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">FAQs</p>
-										<div className="mt-4 space-y-4">
-											{faqItems.map((faq: any, idx: number) => (
-												<div key={`faq-${idx}`}>
-													<p className="font-semibold text-[#1c1c19]">{faq.question || faq.q}</p>
-													<p className="mt-1 text-sm text-[#56423d]">{faq.answer || faq.a}</p>
+													{tab.id === "story" && showCustomDescription ? (
+														<div className="product-desc leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+													) : (
+														descriptionToRender && <p className="text-center text-base leading-relaxed max-w-2xl mx-auto mb-8 whitespace-pre-wrap">{descriptionToRender}</p>
+													)}
+
+													<div className="divide-y divide-[#e8e4dc] border-t border-b border-[#e8e4dc]">
+														{(tab.items || []).map((item: any, idx: number) => {
+															const isExpanded = !!expandedAccordionItems[`${tab.id}-${item.id || idx}`];
+															return (
+																<div key={item.id || idx} className="py-4">
+																	<button
+																		type="button"
+																		onClick={() => setExpandedAccordionItems(prev => ({
+																			...prev,
+																			[`${tab.id}-${item.id || idx}`]: !isExpanded
+																		}))}
+																		className="flex w-full items-center justify-between text-left focus:outline-none"
+																	>
+																		<span className="font-semibold text-lg text-[#1c1c19]">{item.title}</span>
+																		<span className="ml-6 flex-shrink-0 text-[#9f3f29]">
+																			{isExpanded ? (
+																				<Minus className="h-5 w-5" />
+																			) : (
+																				<Plus className="h-5 w-5" />
+																			)}
+																		</span>
+																	</button>
+																	{isExpanded && (
+																		<div className="mt-3 text-base leading-relaxed text-[#56423d] whitespace-pre-wrap animate-fade-in">
+																			{item.content}
+																		</div>
+																	)}
+																</div>
+															);
+														})}
+													</div>
 												</div>
-											))}
-										</div>
-									</div>
-								) : null}
-							</div>
-						) : null}
+											);
+										}
 
-						{activeTab === "dimensions" ? (
-							<div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-								<div className="rounded-lg bg-[#f6f3ee] p-5">
-									<h4 className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>Product Details</h4>
-									<div className="mt-4 space-y-3">
-										{detailRows.map((row, idx) => (
-											<div key={`${row.label}-${idx}`} className="grid grid-cols-2 gap-3 text-sm">
-												<span className="text-[#7a6f68]">{row.label}</span>
-												<span className="text-[#1c1c19]">{row.value}</span>
-											</div>
-										))}
-									</div>
-								</div>
+										if (layout === "grid") {
+											const headlineToRender = tab.headline || (tab.id === "story" && product.artisan_headline) || (tab.id === "description" && "Description") || "";
+											const descriptionToRender = tab.description || product.description || "";
 
-								<div className="rounded-lg bg-[#f0ede8] p-5">
-									<h4 className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>Quantity Guide</h4>
-									<div className="mt-4 space-y-3 text-sm text-[#56423d]">
-										{meterGuideRows.map((row) => (
-											<div key={row.use} className="flex items-center justify-between gap-4">
-												<span>{row.use}</span>
-												<span className="text-[#7a6f68]">{row.min} - {row.max} m</span>
-											</div>
-										))}
-									</div>
-								</div>
-							</div>
-						) : null}
+											return (
+												<div key={tab.id} className="max-w-6xl mx-auto space-y-8 text-[#56423d] animate-fade-in">
+													{headlineToRender && (
+														<h3 className={`${bohemianHeadingFont.className} text-3xl italic text-[#1c1c19] text-center`}>
+															{headlineToRender}
+														</h3>
+													)}
+													{tab.id === "story" && showCustomDescription && descriptionCss ? (
+														<style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
+													) : null}
 
-						{activeTab === "reviews" ? (
-							<div className="space-y-7">
-								<div className="flex flex-wrap items-end justify-between gap-4">
-									<div>
-										<p className={`${bohemianHeadingFont.className} text-5xl leading-none text-[#1c1c19]`}>{averageRating.toFixed(1)}</p>
-										<p className="mt-1 text-sm text-[#7a6f68]">Average from {reviewsData.length} verified reviews</p>
-									</div>
-									<div className="flex items-center gap-1 text-[#785900]">
-										{[1, 2, 3, 4, 5].map((star) => (
-											<Star key={`rating-summary-${star}`} className="h-4 w-4 fill-current" />
-										))}
-									</div>
-								</div>
+													{tab.id === "story" && showCustomDescription ? (
+														<div className="product-desc leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+													) : (
+														descriptionToRender && <p className="text-center text-base leading-relaxed max-w-2xl mx-auto mb-8 whitespace-pre-wrap">{descriptionToRender}</p>
+													)}
 
-								<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-									{reviewsData.map((review) => (
-										<article key={review.id} className="rounded-xl bg-[#f6f3ee] p-5">
-											<div className="mb-3 flex items-center gap-1 text-[#785900]">
-												{[1, 2, 3, 4, 5].map((star) => (
-													<Star
-														key={`${review.id}-${star}`}
-														className={`h-3.5 w-3.5 ${star <= review.rating ? "fill-current" : "text-[#bcae9a]"}`}
-													/>
-												))}
-											</div>
-											<p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#1c1c19]">{review.title}</p>
-											<p className="mt-3 text-sm leading-relaxed text-[#56423d]">{review.comment}</p>
-											<div className="mt-5 flex items-center gap-3 border-t border-[#ddc0ba]/40 pt-4">
-												<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e5e2dd] text-[10px] font-bold text-[#5f5954]">
-													{extractReviewInitials(review.name)}
+													<div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+														{(tab.items || []).map((item: any, idx: number) => (
+															<div key={item.id || idx} className="flex flex-col items-center text-center p-6 bg-[#f6f3ee] rounded-xl space-y-4">
+																{item.image_url ? (
+																	<div className="relative w-20 h-20 rounded-full overflow-hidden bg-[#e8e4dc]">
+																		<Image
+																			src={item.image_url}
+																			alt={item.title}
+																			fill
+																			className="object-cover"
+																		/>
+																	</div>
+																) : (
+																	<div className="w-20 h-20 rounded-full bg-[#e8e4dc] flex items-center justify-center text-[#7a6f68]">
+																		<Sparkles className="h-8 w-8" />
+																	</div>
+																)}
+																<h4 className="font-semibold text-lg text-[#1c1c19]">{item.title}</h4>
+																<p className="text-sm leading-relaxed text-[#56423d]">{item.content}</p>
+															</div>
+														))}
+													</div>
 												</div>
-												<p className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5f5954]">{review.name}</p>
+											);
+										}
+
+										const headlineToRender = tab.headline || (tab.id === "story" && product.artisan_headline) || (tab.id === "description" && "Description") || "";
+										const descriptionToRender = tab.description || product.description || "";
+										const imageUrlToRender = tab.image_url || (tab.id === "story" && product.artisan_image) || "";
+										const quoteToRender = tab.quote || (tab.id === "story" && product.artisan_quote) || "";
+										const hasImage = !!imageUrlToRender;
+
+										return (
+											<div key={tab.id} className={hasImage ? "grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-16 animate-fade-in" : "max-w-4xl space-y-6 text-[#56423d] animate-fade-in"}>
+												<div className="space-y-6 text-[#56423d]">
+													{headlineToRender && (
+														<h3 className={`${bohemianHeadingFont.className} text-4xl italic text-[#1c1c19]`}>
+															{headlineToRender}
+														</h3>
+													)}
+
+													{tab.id === "story" && showCustomDescription && descriptionCss ? (
+														<style dangerouslySetInnerHTML={{ __html: descriptionCss }} />
+													) : null}
+
+													{tab.id === "story" && showCustomDescription ? (
+														<div className="product-desc leading-relaxed" dangerouslySetInnerHTML={{ __html: descriptionHtml }} />
+													) : (
+														descriptionToRender && <p className="text-lg leading-relaxed whitespace-pre-wrap">{descriptionToRender}</p>
+													)}
+
+													{tab.link_label && (
+														<a
+															href={tab.link_url || stylistAssistUrl}
+															target="_blank"
+															rel="noopener noreferrer"
+															className="inline-flex items-center gap-2 text-sm font-semibold text-[#9f3f29] transition-opacity hover:opacity-75"
+															onClick={() =>
+																trackWhatsAppClick({
+																	location: `bohemian_pdp_tab_${tab.id}_cta`,
+																	productId: product.id,
+																	productSlug: product.slug,
+																})
+															}
+														>
+															{tab.link_label}
+															<ArrowRight className="h-4 w-4" />
+														</a>
+													)}
+												</div>
+
+												{hasImage && (
+													<div className="relative">
+														<div className="relative aspect-video overflow-hidden rounded-xl bg-[#f0ede8]">
+															<Image
+																src={imageUrlToRender}
+																alt={headlineToRender || tab.label}
+																fill
+																sizes="(max-width: 1024px) 100vw, 45vw"
+																className="object-cover"
+															/>
+														</div>
+														{quoteToRender && (
+															<div className="mt-4 rounded-lg bg-[#dbe4c0] p-4 md:absolute md:-bottom-6 md:-right-6 md:mt-0 md:max-w-[220px]">
+																<p className={`${bohemianHeadingFont.className} text-lg italic leading-tight text-[#5a6245]`}>
+																	&quot;{quoteToRender}&quot;
+																</p>
+															</div>
+														)}
+													</div>
+												)}
 											</div>
-										</article>
-									))}
-								</div>
+										);
+									}
+
+									if (tab.type === "materials") {
+										const specsToRender = Array.isArray(tab.specs) && tab.specs.length > 0 ? tab.specs : textileSpecs;
+										const faqsToRender = Array.isArray(tab.faqs) && tab.faqs.length > 0 ? tab.faqs : faqItems;
+										
+										const visibleSpecs = specsToRender.filter((s: any) => s && s.label && s.value && s.value !== "Not specified");
+
+										return (
+											<div key={tab.id} className="space-y-8 animate-fade-in">
+												{visibleSpecs.length > 0 && (
+													<div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+														{visibleSpecs.map((spec: any, idx: number) => (
+															<div key={`${spec.label}-${idx}`} className="rounded-lg bg-[#f6f3ee] p-4">
+																<p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">{spec.label}</p>
+																<p className="mt-2 text-sm leading-snug text-[#1c1c19]">{spec.value}</p>
+															</div>
+														))}
+													</div>
+												)}
+
+												{/* FAQs removed from tab layout */}
+											</div>
+										);
+									}
+
+									if (tab.type === "dimensions") {
+										const detailsToRender = Array.isArray(tab.details) && tab.details.length > 0 ? tab.details : detailRows;
+										const guideToRender = Array.isArray(tab.guide) && tab.guide.length > 0 ? tab.guide : meterGuideRows;
+
+										const visibleDetails = detailsToRender.filter((d: any) => d && d.label && d.value && d.value !== "N/A" && d.value !== "Not specified");
+
+										return (
+											<div key={tab.id} className="grid grid-cols-1 gap-8 lg:grid-cols-2 animate-fade-in">
+												{visibleDetails.length > 0 && (
+													<div className="rounded-lg bg-[#f6f3ee] p-5">
+														<h4 className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>Product Details</h4>
+														<div className="mt-4 space-y-3">
+															{visibleDetails.map((row: any, idx: number) => (
+																<div key={`${row.label}-${idx}`} className="grid grid-cols-2 gap-3 text-sm">
+																	<span className="text-[#7a6f68]">{row.label}</span>
+																	<span className="text-[#1c1c19]">{row.value}</span>
+																</div>
+															))}
+														</div>
+													</div>
+												)}
+
+												{guideToRender.length > 0 && (
+													<div className="rounded-lg bg-[#f0ede8] p-5">
+														<h4 className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>Quantity Guide</h4>
+														<div className="mt-4 space-y-3 text-sm text-[#56423d]">
+															{guideToRender.map((row: any, idx: number) => (
+																<div key={`${row.use}-${idx}`} className="flex items-center justify-between gap-4">
+																	<span>{row.use}</span>
+																	<span className="text-[#7a6f68]">{row.min} - {row.max} m</span>
+																</div>
+															))}
+														</div>
+													</div>
+												)}
+											</div>
+										);
+									}
+
+									if (tab.type === "reviews") {
+										return (
+											<div key={tab.id} className="space-y-7 animate-fade-in">
+												<div className="flex flex-wrap items-end justify-between gap-4">
+													<div>
+														<p className={`${bohemianHeadingFont.className} text-5xl leading-none text-[#1c1c19]`}>{averageRating.toFixed(1)}</p>
+														<p className="mt-1 text-sm text-[#7a6f68]">Average from {reviewsData.length} verified reviews</p>
+													</div>
+													<div className="flex items-center gap-1 text-[#785900]">
+														{[1, 2, 3, 4, 5].map((star) => (
+															<Star key={`rating-summary-${star}`} className="h-4 w-4 fill-current" />
+														))}
+													</div>
+												</div>
+
+												<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+													{reviewsData.map((review) => (
+														<article key={review.id} className="rounded-xl bg-[#f6f3ee] p-5">
+															<div className="mb-3 flex items-center gap-1 text-[#785900]">
+																{[1, 2, 3, 4, 5].map((star) => (
+																	<Star
+																		key={`${review.id}-${star}`}
+																		className={`h-3.5 w-3.5 ${star <= review.rating ? "fill-current" : "text-[#bcae9a]"}`}
+																	/>
+																))}
+															</div>
+															<p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#1c1c19]">{review.title}</p>
+															<p className="mt-3 text-sm leading-relaxed text-[#56423d]">{review.comment}</p>
+															<div className="mt-5 flex items-center gap-3 border-t border-[#ddc0ba]/40 pt-4">
+																<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e5e2dd] text-[10px] font-bold text-[#5f5954]">
+																	{extractReviewInitials(review.name)}
+																</div>
+																<p className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5f5954]">{review.name}</p>
+															</div>
+														</article>
+													))}
+												</div>
+											</div>
+										);
+									}
+
+									return null;
+								})}
 							</div>
-						) : null}
-					</div>
+						</>
+					)}
 				</section>
+
+				{/* Standalone Video Highlights Section */}
+				{product?.highlights && typeof product.highlights === "object" && !Array.isArray(product.highlights) && (product.highlights.video_url || product.highlights.reel_url) ? (
+					<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24`}>
+						<div className="mb-12 text-center">
+							<h2 className={`${bohemianHeadingFont.className} text-5xl text-[#1c1c19]`}>See It in Action</h2>
+							<p className="mt-3 text-sm text-[#6f645d]">Curated styling highlights and videos from our community.</p>
+						</div>
+						<div className="mx-auto max-w-4xl overflow-hidden rounded-2xl bg-[#f6f3ee] p-4 sm:p-8 shadow-sm border border-[#ddc0ba]/30">
+							{product.highlights.video_url ? (
+								<div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
+									<video 
+										src={product.highlights.video_url} 
+										controls 
+										className="h-full w-full object-contain"
+									/>
+								</div>
+							) : product.highlights.reel_url ? (
+								<div className="relative flex justify-center w-full min-h-[500px]">
+									<iframe
+										src={getInstagramEmbedUrl(product.highlights.reel_url)}
+										className="w-full max-w-[400px] border-0 rounded-xl"
+										scrolling="no"
+										allowTransparency
+										allow="encrypted-media"
+										style={{ minHeight: "500px" }}
+									/>
+								</div>
+							) : null}
+						</div>
+					</section>
+				) : null}
 
 				<section className="mt-24 overflow-hidden">
 					<div className="relative h-[260px] sm:h-[320px] lg:h-[420px]">
@@ -1327,6 +1703,24 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 						))}
 					</div>
 				</section>
+
+				{/* Standalone FAQs Section */}
+				{faqItems && faqItems.length > 0 && (
+					<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24`}>
+						<div className="mb-12 text-center">
+							<h2 className={`${bohemianHeadingFont.className} text-5xl text-[#1c1c19]`}>Frequently Asked Questions</h2>
+							<p className="mt-3 text-sm text-[#6f645d]">Everything you need to know about the product and care.</p>
+						</div>
+						<div className="mx-auto max-w-4xl divide-y divide-[#e8e4dc] border-t border-b border-[#e8e4dc]">
+							{faqItems.map((faq: any, idx: number) => (
+								<div key={`faq-item-${idx}`} className="py-6 animate-fade-in">
+									<h4 className="font-semibold text-lg text-[#1c1c19]">{faq.question || faq.q}</h4>
+									<p className="mt-2 text-base leading-relaxed text-[#56423d]">{faq.answer || faq.a}</p>
+								</div>
+							))}
+						</div>
+					</section>
+				)}
 
 				<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24`}>
 					<div className="mb-9 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

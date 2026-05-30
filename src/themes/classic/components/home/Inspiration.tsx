@@ -1,30 +1,31 @@
 import Image from "next/image";
 import Container from "@/components/ui/Container";
 import { getWhatsAppUrl } from "@/lib/brand";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 const inspirationItems = [
   {
     id: 1,
     title: "Designer Kurti",
-    image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80",
+    image: "https://images.pexels.com/photos/6069557/pexels-photo-6069557.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1800",
     alt: "Designer kurti silhouette in premium cutpiece fabric",
   },
   {
     id: 2,
     title: "Elegant Lehenga",
-    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1610030469983-98e550d6193c?auto=format&fit=crop&w=1800&q=88",
     alt: "Elegant lehenga drape in festive premium textile",
   },
   {
     id: 3,
     title: "Traditional Choli",
-    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?auto=format&fit=crop&w=1800&q=88",
     alt: "Traditional choli styling with textured fabric detail",
   },
   {
     id: 4,
     title: "Festive Dress",
-    image: "https://images.unsplash.com/photo-1596944924616-7b38e7cfac36?w=600&q=80",
+    image: "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1800",
     alt: "Festive dress concept in flowing premium fabric",
   },
 ];
@@ -57,7 +58,7 @@ export default function Inspiration() {
               className="group relative aspect-[3/4] sm:aspect-[4/5] overflow-hidden bg-[#F5F5F5] cursor-pointer"
             >
               <Image
-                src={item.image}
+                src={getHighQualityImageUrl(item.image, "sectionCard")}
                 alt={item.alt}
                 fill
                 sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"

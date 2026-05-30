@@ -2,6 +2,7 @@ import Image from "next/image";
 import Container from "@/components/ui/Container";
 import Button from "@/components/ui/Button";
 import { getSiteConfigMap } from "@/lib/cms";
+import { getHighQualityImageUrl } from "@/lib/imageQuality";
 
 export default async function DescriptionSection() {
   const config = await getSiteConfigMap();
@@ -18,8 +19,14 @@ export default async function DescriptionSection() {
   const point3Text = config.desc_point3_text ?? "Create outfits that are uniquely yours";
   const descStatNumber = config.desc_stat_number ?? "10+";
   const descStatLabel = config.desc_stat_label ?? "Years of Excellence";
-  const descImage1 = config.desc_image1 || "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=600&q=80";
-  const descImage2 = config.desc_image2 || "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400&q=80";
+  const descImage1 = getHighQualityImageUrl(
+    config.desc_image1 || "https://images.unsplash.com/photo-1558171813-4c088753af8f?auto=format&fit=crop&w=1800&q=88",
+    "sectionCard",
+  );
+  const descImage2 = getHighQualityImageUrl(
+    config.desc_image2 || "https://images.pexels.com/photos/4041392/pexels-photo-4041392.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=1600",
+    "sectionCard",
+  );
 
   return (
     <section className="section-padding bg-background">
