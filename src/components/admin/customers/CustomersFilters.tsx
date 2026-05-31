@@ -120,22 +120,14 @@ export default function CustomersFilters({
                 >
                     Export CSV
                 </button>
-            </div>
 
-            <div className="rounded-lg border border-blue-100 bg-blue-50/50 p-3">
-                <div className="flex items-center justify-between gap-3">
-                    <div>
-                        <p className="text-xs font-semibold text-blue-700">Advanced Filters</p>
-                        <p className="text-xs text-slate-600 mt-0.5">Select extra filters from popup and apply.</p>
-                    </div>
-                    <button
-                        type="button"
-                        onClick={openModal}
-                        className="px-3 py-1.5 rounded-md border border-blue-200 bg-white text-xs font-semibold text-blue-700 hover:bg-blue-50"
-                    >
-                        Add More Filters{selectedCount > 0 ? ` (${selectedCount})` : ""}
-                    </button>
-                </div>
+                <button
+                    type="button"
+                    onClick={openModal}
+                    className="px-3 py-2 rounded-md border border-gray-300 text-sm bg-white hover:bg-gray-50"
+                >
+                    Advanced Filters{selectedCount > 0 ? ` (${selectedCount})` : ""}
+                </button>
             </div>
 
             {(visibleExtra.registeredDate || visibleExtra.lastOrderDate || visibleExtra.ltv) && (

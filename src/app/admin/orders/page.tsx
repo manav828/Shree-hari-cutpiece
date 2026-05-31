@@ -13,6 +13,7 @@ import {
     Clock,
     Truck,
     IndianRupee,
+    Settings,
 } from "lucide-react";
 import { fetchOrders, getOrderStats } from "@/lib/orders";
 import type {
@@ -25,6 +26,7 @@ import type {
 import OrderStatusBadge from "@/components/admin/orders/OrderStatusBadge";
 import PaymentStatusBadge from "@/components/admin/orders/PaymentStatusBadge";
 import CollapsibleProducts from "@/components/admin/orders/CollapsibleProducts";
+import CustomStatusManager from "@/components/admin/orders/CustomStatusManager";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -107,6 +109,7 @@ export default function AdminOrdersPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [loading, setLoading] = useState(true);
     const [statsLoading, setStatsLoading] = useState(true);
+    const [showStatusManager, setShowStatusManager] = useState(false);
 
     const [filters, setFilters] = useState<OrderFilters>({
         search: "",
@@ -178,7 +181,21 @@ export default function AdminOrdersPage() {
                         {total > 0 ? `${total} orders total` : "Manage customer orders"}
                     </p>
                 </div>
+                <button
+                    onClick={() => setShowStatusManager(!showStatusManager)}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                >
+                    <Settings className={`w-4 h-4 transition-transform duration-500 ${showStatusManager ? "rotate-90 text-indigo-600" : "text-gray-500"}`} />
+                    {showStatusManager ? "Hide Status Settings" : "Status Settings"}
+                </button>
             </div>
+
+            {/* Collapsible Status Manager */}
+            {showStatusManager && (
+                <div className="animate-fade-in duration-200">
+                    <CustomStatusManager />
+                </div>
+            )}
 
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

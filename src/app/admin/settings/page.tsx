@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import { Loader2, Check, Monitor, LayoutTemplate, Palette } from "lucide-react";
-import CustomStatusManager from "@/components/admin/orders/CustomStatusManager";
 
 type ThemeOption = "classic" | "luxury" | "bohemian";
 
@@ -199,10 +198,6 @@ export default function AdminSettings() {
                         )}
                     </div>
                     {/* END THEME SELECTOR */}
-
-                    {/* CUSTOM ORDER STATUSES */}
-                    <CustomStatusManager />
-                    {/* END CUSTOM ORDER STATUSES */}
                 </div>
 
                 <div className="lg:col-span-1 space-y-6">

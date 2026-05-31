@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
-
-export const runtime = "nodejs";
+import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
+import type { Coupon } from "@/types/coupons";
 
 type CheckoutItem = {
   id: string;
@@ -81,12 +81,64 @@ function buildDeliveryAddress(formData: CheckoutFormData): string {
   return segments.join(", ");
 }
 
-async function createRazorpayOrder(amountPaise: number, receipt: string, notes: Record<string, string>): Promise<RazorpayOrderResponse> {
-  const keyId = process.env.RAZORPAY_KEY_ID;
-  const keySecret = process.env.RAZORPAY_KEY_SECRET;
+async function getPaymentConfig(): Promise<{
+  codEnabled: boolean;
+  razorpayEnabled: boolean;
+  razorpayKeyId: string;
+  razorpayKeySecret: string;
+}> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("key, value")
+      .in("key", [
+        "payment_cod_enabled",
+        "payment_razorpay_enabled",
+        "payment_razorpay_key_id",
+        "payment_razorpay_key_secret"
+      ]);
 
+    if (error) throw error;
+
+    const settingsMap: Record<string, string> = (data ?? []).reduce<Record<string, string>>((acc, row) => {
+      let val = row.value;
+      if (typeof val === "string") {
+        try {
+          val = JSON.parse(val);
+        } catch {
+          // Fallback
+        }
+      }
+      acc[row.key] = String(val ?? "");
+      return acc;
+    }, {});
+
+    return {
+      codEnabled: settingsMap["payment_cod_enabled"] === "true",
+      razorpayEnabled: settingsMap["payment_razorpay_enabled"] === "true",
+      razorpayKeyId: settingsMap["payment_razorpay_key_id"] || "",
+      razorpayKeySecret: settingsMap["payment_razorpay_key_secret"] || ""
+    };
+  } catch (err) {
+    console.error("Error loading payment configuration:", err);
+    return {
+      codEnabled: true,
+      razorpayEnabled: Boolean(process.env.RAZORPAY_KEY_ID),
+      razorpayKeyId: process.env.RAZORPAY_KEY_ID || "",
+      razorpayKeySecret: process.env.RAZORPAY_KEY_SECRET || ""
+    };
+  }
+}
+
+async function createRazorpayOrder(
+  amountPaise: number, 
+  receipt: string, 
+  notes: Record<string, string>, 
+  keyId: string, 
+  keySecret: string
+): Promise<RazorpayOrderResponse> {
   if (!keyId || !keySecret) {
-    throw new Error("Razorpay keys are missing on server. Set RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET.");
+    throw new Error("Razorpay credentials are not configured.");
   }
 
   const authHeader = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
@@ -117,7 +169,7 @@ async function createRazorpayOrder(amountPaise: number, receipt: string, notes: 
   };
 }
 
-export async function POST(req: NextRequest) {
+export default async function handleCreateOrder(req: NextRequest) {
   try {
     const token = getAuthToken(req);
     if (!token) {
@@ -132,6 +184,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const formData = (body?.formData || {}) as CheckoutFormData;
     const items = (body?.items || []) as CheckoutItem[];
+    const couponCode = normalizeCouponCode(String(body?.couponCode || ""));
 
     if (!Array.isArray(items) || items.length === 0) {
       return NextResponse.json({ error: "Your cart is empty." }, { status: 400 });
@@ -152,25 +205,93 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Please complete all required shipping fields." }, { status: 400 });
     }
 
+    const config = await getPaymentConfig();
+    if (!config.razorpayEnabled) {
+      return NextResponse.json({ error: "Razorpay payment is disabled." }, { status: 400 });
+    }
+
     const subtotal = items.reduce((sum, item) => sum + toSafeNumber(item.price) * toSafeNumber(item.meters), 0);
     if (subtotal <= 0) {
       return NextResponse.json({ error: "Invalid cart total." }, { status: 400 });
     }
 
+    // Coupon verification & application
+    let coupon: Coupon | null = null;
+    let discountAmount = 0;
+
+    if (couponCode) {
+      const { data: couponData, error: couponError } = await supabaseAdmin
+        .from("coupons")
+        .select("*")
+        .ilike("code", couponCode)
+        .limit(1)
+        .maybeSingle();
+
+      if (couponError) throw couponError;
+      if (couponData) {
+        coupon = couponData as Coupon;
+
+        const { count: completedOrderCount } = await supabaseAdmin
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .eq("user_id", userData.user.id)
+          .in("status", ["delivered", "completed"]);
+
+        const [assignmentRes, redemptionRes] = await Promise.all([
+          supabaseAdmin
+            .from("coupon_user_assignments")
+            .select("id", { count: "exact", head: true })
+            .eq("coupon_id", coupon.id)
+            .eq("user_id", userData.user.id),
+          supabaseAdmin
+            .from("coupon_redemptions")
+            .select("user_id")
+            .eq("coupon_id", coupon.id),
+        ]);
+
+        const redemptionRows = (redemptionRes.data ?? []) as { user_id: string | null }[];
+        const userRedemptions = redemptionRows.filter((row) => row.user_id === userData.user.id).length;
+
+        const eligibility = evaluateCouponEligibility({
+          coupon,
+          subtotal,
+          userId: userData.user.id,
+          userCompletedOrders: completedOrderCount ?? 0,
+          isAssignedUser: (assignmentRes.count ?? 0) > 0,
+          userRedemptions,
+          globalRedemptions: redemptionRows.length,
+        });
+
+        if (!eligibility.isEligible) {
+          return NextResponse.json({ error: eligibility.reason || "Coupon is not valid for this order." }, { status: 400 });
+        }
+
+        discountAmount = calculateCouponDiscount(coupon, subtotal);
+      }
+    }
+
+    const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
     const shippingAmount = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-    const gstAmount = Math.round(subtotal * GST_RATE);
-    const totalAmount = subtotal + shippingAmount + gstAmount;
+    const gstAmount = Math.round(discountedSubtotal * GST_RATE);
+    const totalAmount = discountedSubtotal + shippingAmount + gstAmount;
     const totalAmountPaise = Math.round(totalAmount * 100);
 
     const orderNumber = generateOrderNumber();
-    const razorpayOrder = await createRazorpayOrder(totalAmountPaise, orderNumber, {
-      source: "shree_hari_storefront",
-      user_id: userData.user.id,
-      city: formData.city,
-    });
+    const razorpayOrder = await createRazorpayOrder(
+      totalAmountPaise, 
+      orderNumber, 
+      {
+        source: "shree_hari_storefront",
+        user_id: userData.user.id,
+        city: formData.city,
+      },
+      config.razorpayKeyId,
+      config.razorpayKeySecret
+    );
 
     const orderNotes = [
       formData.notes || "",
+      coupon ? `Coupon ${coupon.code} applied (discount ₹${discountAmount.toFixed(2)})` : "",
       `Tax (GST 18%): INR ${gstAmount}`,
       "Payment initiated via Razorpay",
     ]
@@ -186,9 +307,11 @@ export async function POST(req: NextRequest) {
         payment_status: "pending",
         payment_method: "razorpay",
         subtotal,
-        discount_amount: 0,
+        discount_amount: discountAmount,
         shipping_amount: shippingAmount,
         total_amount: totalAmount,
+        coupon_id: coupon?.id ?? null,
+        coupon_code: coupon?.code ?? null,
         notes: orderNotes,
         delivery_address: buildDeliveryAddress(formData),
         contact_phone: normalizePhone(formData.phone),
@@ -199,6 +322,34 @@ export async function POST(req: NextRequest) {
 
     if (orderError || !orderData) {
       throw new Error(orderError?.message || "Failed to create local order.");
+    }
+
+    // Atomic Coupon Reservation if order created successfully
+    if (coupon && discountAmount > 0) {
+      const { data: redemptionResult, error: redemptionRpcError } = await supabaseAdmin
+        .rpc("redeem_coupon_atomic", {
+          p_coupon_id: coupon.id,
+          p_user_id: userData.user.id,
+          p_order_id: orderData.id,
+          p_discount_amount: discountAmount,
+        });
+
+      if (redemptionRpcError) {
+        await supabaseAdmin.from("orders").delete().eq("id", orderData.id);
+        throw new Error("Failed to reserve coupon redemption");
+      }
+
+      const row = Array.isArray(redemptionResult)
+        ? redemptionResult[0] as { success?: boolean; error_message?: string }
+        : null;
+
+      if (!row?.success) {
+        await supabaseAdmin.from("orders").delete().eq("id", orderData.id);
+        return NextResponse.json(
+          { error: row?.error_message || "Coupon usage limit has been reached." },
+          { status: 409 },
+        );
+      }
     }
 
     const { error: addressError } = await supabaseAdmin.from("order_addresses").insert({
@@ -254,7 +405,7 @@ export async function POST(req: NextRequest) {
       razorpayOrderId: razorpayOrder.id,
       amount: razorpayOrder.amount,
       currency: razorpayOrder.currency,
-      keyId: process.env.RAZORPAY_KEY_ID,
+      keyId: config.razorpayKeyId,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : "Unable to start payment.";

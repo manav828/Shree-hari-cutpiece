@@ -74,6 +74,7 @@ export interface BlogPost {
     show_share_buttons: boolean;
     show_related_products: boolean;
     related_products_title: string | null;
+    seo_keywords: string | null;
     created_by: string | null;
     updated_by: string | null;
     created_at?: string;

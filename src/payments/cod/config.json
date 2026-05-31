@@ -1,0 +1,7 @@
+{
+  "id": "cod",
+  "name": "Cash on Delivery",
+  "description": "Allow customers to pay with cash on shipment arrival.",
+  "isEnabledKey": "payment_cod_enabled",
+  "fields": []
+}

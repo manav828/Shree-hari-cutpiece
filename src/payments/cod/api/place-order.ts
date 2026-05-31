@@ -20,12 +20,15 @@ type CheckoutItem = {
 };
 
 type CheckoutFormData = {
-    name: string;
-    phone: string;
-    address: string;
+    fullName: string;
+    addressLine1: string;
+    area: string;
+    landmark?: string;
     city: string;
     state: string;
     pincode: string;
+    phone: string;
+    email?: string;
     notes?: string;
 };
 
@@ -41,7 +44,27 @@ function generateOrderNumber() {
     return `SH-${dateStr}-${randomSuffix}`;
 }
 
-export async function POST(req: NextRequest) {
+function normalizePhone(phone: string): string {
+    const cleaned = phone.replace(/\s+/g, "").trim();
+    if (cleaned.startsWith("+")) {
+        return cleaned;
+    }
+    return `+91${cleaned}`;
+}
+
+function buildDeliveryAddress(formData: CheckoutFormData): string {
+    const segments = [
+        formData.addressLine1,
+        formData.area,
+        formData.landmark || "",
+        formData.city,
+        formData.state,
+        formData.pincode,
+    ].filter(Boolean);
+    return segments.join(", ");
+}
+
+export default async function handlePlaceOrder(req: NextRequest) {
     try {
         const token = getAuthToken(req);
         if (!token) {
@@ -64,8 +87,33 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Your cart is empty." }, { status: 400 });
         }
 
-        if (!formData.name || !formData.phone || !formData.address || !formData.city || !formData.state || !formData.pincode) {
+        if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.area || !formData.city || !formData.state || !formData.pincode) {
             return NextResponse.json({ error: "Please fill all required address fields." }, { status: 400 });
+        }
+
+        // Security check: Verify that Cash on Delivery is actually enabled in settings
+        const { data: codSetting, error: codSettingError } = await supabaseAdmin
+            .from("site_settings")
+            .select("value")
+            .eq("key", "payment_cod_enabled")
+            .maybeSingle();
+
+        if (codSettingError) {
+            throw new Error("Unable to verify payment gateway configuration.");
+        }
+
+        let isCodEnabled = true; // Default fallback
+        if (codSetting) {
+            try {
+                const parsedVal = typeof codSetting.value === "string" ? JSON.parse(codSetting.value) : codSetting.value;
+                isCodEnabled = parsedVal === "true" || parsedVal === true;
+            } catch {
+                isCodEnabled = codSetting.value === "true";
+            }
+        }
+
+        if (!isCodEnabled) {
+            return NextResponse.json({ error: "Cash on Delivery is currently unavailable." }, { status: 400 });
         }
 
         const subtotal = items.reduce((sum, item) => sum + Number(item.price || 0) * Number(item.meters || 0), 0);
@@ -86,48 +134,46 @@ export async function POST(req: NextRequest) {
                 .maybeSingle();
 
             if (couponError) throw couponError;
-            if (!couponData) {
-                return NextResponse.json({ error: "Invalid coupon code." }, { status: 400 });
-            }
+            if (couponData) {
+                coupon = couponData as Coupon;
 
-            coupon = couponData as Coupon;
-
-            const { count: completedOrderCount } = await supabaseAdmin
-                .from("orders")
-                .select("id", { count: "exact", head: true })
-                .eq("user_id", user.id)
-                .in("status", ["delivered", "completed"]);
-
-            const [assignmentRes, redemptionRes] = await Promise.all([
-                supabaseAdmin
-                    .from("coupon_user_assignments")
+                const { count: completedOrderCount } = await supabaseAdmin
+                    .from("orders")
                     .select("id", { count: "exact", head: true })
-                    .eq("coupon_id", coupon.id)
-                    .eq("user_id", user.id),
-                supabaseAdmin
-                    .from("coupon_redemptions")
-                    .select("user_id")
-                    .eq("coupon_id", coupon.id),
-            ]);
+                    .eq("user_id", user.id)
+                    .in("status", ["delivered", "completed"]);
 
-            const redemptionRows = (redemptionRes.data ?? []) as { user_id: string | null }[];
-            const userRedemptions = redemptionRows.filter((row) => row.user_id === user.id).length;
+                const [assignmentRes, redemptionRes] = await Promise.all([
+                    supabaseAdmin
+                        .from("coupon_user_assignments")
+                        .select("id", { count: "exact", head: true })
+                        .eq("coupon_id", coupon.id)
+                        .eq("user_id", user.id),
+                    supabaseAdmin
+                        .from("coupon_redemptions")
+                        .select("user_id")
+                        .eq("coupon_id", coupon.id),
+                ]);
 
-            const eligibility = evaluateCouponEligibility({
-                coupon,
-                subtotal,
-                userId: user.id,
-                userCompletedOrders: completedOrderCount ?? 0,
-                isAssignedUser: (assignmentRes.count ?? 0) > 0,
-                userRedemptions,
-                globalRedemptions: redemptionRows.length,
-            });
+                const redemptionRows = (redemptionRes.data ?? []) as { user_id: string | null }[];
+                const userRedemptions = redemptionRows.filter((row) => row.user_id === user.id).length;
 
-            if (!eligibility.isEligible) {
-                return NextResponse.json({ error: eligibility.reason || "Coupon is not valid for this order." }, { status: 400 });
+                const eligibility = evaluateCouponEligibility({
+                    coupon,
+                    subtotal,
+                    userId: user.id,
+                    userCompletedOrders: completedOrderCount ?? 0,
+                    isAssignedUser: (assignmentRes.count ?? 0) > 0,
+                    userRedemptions,
+                    globalRedemptions: redemptionRows.length,
+                });
+
+                if (!eligibility.isEligible) {
+                    return NextResponse.json({ error: eligibility.reason || "Coupon is not valid for this order." }, { status: 400 });
+                }
+
+                discountAmount = calculateCouponDiscount(coupon, subtotal);
             }
-
-            discountAmount = calculateCouponDiscount(coupon, subtotal);
         }
 
         const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
@@ -154,8 +200,8 @@ export async function POST(req: NextRequest) {
                 coupon_id: coupon?.id ?? null,
                 coupon_code: coupon?.code ?? null,
                 notes: orderNotes,
-                delivery_address: `${formData.address}, ${formData.city}, ${formData.state} - ${formData.pincode}`,
-                contact_phone: formData.phone,
+                delivery_address: buildDeliveryAddress(formData),
+                contact_phone: normalizePhone(formData.phone),
             })
             .select("id, order_number")
             .single();
@@ -196,9 +242,10 @@ export async function POST(req: NextRequest) {
             .insert({
                 order_id: orderData.id,
                 type: "shipping",
-                full_name: formData.name,
-                phone: formData.phone,
-                address_line1: formData.address,
+                full_name: formData.fullName,
+                phone: normalizePhone(formData.phone),
+                address_line1: formData.addressLine1,
+                address_line2: [formData.area, formData.landmark || ""].filter(Boolean).join(", ") || null,
                 city: formData.city,
                 state: formData.state,
                 pincode: formData.pincode,
@@ -236,7 +283,7 @@ export async function POST(req: NextRequest) {
                 order_id: orderData.id,
                 from_status: null,
                 to_status: "pending",
-                note: "Order placed by customer via website",
+                note: "Order placed by customer via Cash on Delivery",
             });
 
         if (statusHistoryError) {

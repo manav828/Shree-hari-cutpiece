@@ -157,6 +157,7 @@ export function normalizeBlogPayload(input: Record<string, unknown>): Partial<Bl
         seo_og_image_media_id: cleanNullableString(input.seo_og_image_media_id),
         seo_twitter_card_type: cleanNullableString(input.seo_twitter_card_type) as BlogPost["seo_twitter_card_type"],
         seo_robots_directive: cleanNullableString(input.seo_robots_directive) as BlogPost["seo_robots_directive"],
+        seo_keywords: cleanNullableString(input.seo_keywords),
         language: BLOG_LANGUAGES.includes(language) ? language : "en",
     };
 }

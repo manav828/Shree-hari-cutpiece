@@ -12,12 +12,14 @@ import {
   Lock,
   ShieldCheck,
   Smartphone,
+  Wallet,
 } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { bohemianBodyFont, bohemianHeadingFont } from "@/themes/bohemian/components/layout/premiumFonts";
 import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/siteStyles";
+import { paymentClientHandlers } from "@/payments/client";
 
 type CheckoutCartItem = {
   id: string;
@@ -48,103 +50,9 @@ type CheckoutFormData = {
   notes: string;
 };
 
-type PaymentOptionId = "upi" | "card" | "netbanking";
-
-type StartPaymentResponse = {
-  success?: boolean;
-  internalOrderId?: string;
-  orderNumber?: string;
-  razorpayOrderId?: string;
-  amount?: number;
-  currency?: string;
-  keyId?: string;
-  error?: string;
-};
-
-type VerifyPaymentResponse = {
-  success?: boolean;
-  error?: string;
-};
-
-type RazorpayHandlerResponse = {
-  razorpay_order_id: string;
-  razorpay_payment_id: string;
-  razorpay_signature: string;
-};
-
-type RazorpayFailureResponse = {
-  error?: {
-    description?: string;
-  };
-};
-
-type RazorpayOptions = {
-  key: string;
-  amount: number;
-  currency: string;
-  name: string;
-  description: string;
-  order_id: string;
-  prefill?: {
-    name?: string;
-    email?: string;
-    contact?: string;
-  };
-  notes?: Record<string, string>;
-  theme?: {
-    color: string;
-  };
-  method?: {
-    upi?: boolean;
-    card?: boolean;
-    netbanking?: boolean;
-  };
-  modal?: {
-    ondismiss?: () => void;
-  };
-  handler: (response: RazorpayHandlerResponse) => void | Promise<void>;
-};
-
-type RazorpayInstance = {
-  open: () => void;
-  on: (event: "payment.failed", callback: (response: RazorpayFailureResponse) => void) => void;
-};
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: RazorpayOptions) => RazorpayInstance;
-  }
-}
-
 const SHIPPING_THRESHOLD = 999;
 const SHIPPING_CHARGE = 99;
 const GST_RATE = 0.18;
-
-const paymentOptions: Array<{
-  id: PaymentOptionId;
-  label: string;
-  subtitle: string;
-  icon: typeof Smartphone;
-}> = [
-  {
-    id: "upi",
-    label: "UPI",
-    subtitle: "Google Pay, PhonePe, Paytm",
-    icon: Smartphone,
-  },
-  {
-    id: "card",
-    label: "Credit / Debit Card",
-    subtitle: "Visa, Mastercard, RuPay, Amex",
-    icon: CreditCard,
-  },
-  {
-    id: "netbanking",
-    label: "Net Banking",
-    subtitle: "All major Indian banks",
-    icon: Landmark,
-  },
-];
 
 const indianStates = [
   "Andhra Pradesh",
@@ -157,35 +65,6 @@ const indianStates = [
   "Uttar Pradesh",
   "West Bengal",
 ];
-
-function loadRazorpayScript(): Promise<boolean> {
-  if (typeof window === "undefined") {
-    return Promise.resolve(false);
-  }
-
-  if (window.Razorpay) {
-    return Promise.resolve(true);
-  }
-
-  return new Promise((resolve) => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.razorpay.com/v1/checkout.js";
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-function getMethodConfig(method: PaymentOptionId): RazorpayOptions["method"] {
-  if (method === "upi") {
-    return { upi: true };
-  }
-  if (method === "card") {
-    return { card: true };
-  }
-  return { netbanking: true };
-}
 
 function formatItemMeta(item: CheckoutCartItem): string {
   const selected = (item.selected_options || [])
@@ -225,7 +104,12 @@ export default function CheckoutPage() {
     email: "",
     notes: "",
   });
-  const [selectedPayment, setSelectedPayment] = useState<PaymentOptionId>("upi");
+  
+  const [availableMethods, setAvailableMethods] = useState<Array<{ id: string; name: string; description: string; keyId?: string }>>([]);
+  const [loadingMethods, setLoadingMethods] = useState(true);
+  const [selectedGateway, setSelectedGateway] = useState("");
+  const [selectedPaymentSubOption, setSelectedPaymentSubOption] = useState("upi");
+  
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
@@ -246,10 +130,86 @@ export default function CheckoutPage() {
     setIsCartOpen(false);
   }, [setIsCartOpen]);
 
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      try {
+        const res = await fetch("/api/checkout/payment-methods");
+        if (!res.ok) throw new Error("Failed to load payment options");
+        const json = await res.json();
+        const methods = json.methods || [];
+        setAvailableMethods(methods);
+        if (methods.length > 0) {
+          const hasRazorpay = methods.find((m: any) => m.id === "razorpay");
+          if (hasRazorpay) {
+            setSelectedGateway("razorpay");
+            setSelectedPaymentSubOption("upi");
+          } else {
+            setSelectedGateway(methods[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching checkout payment methods:", err);
+      } finally {
+        setLoadingMethods(false);
+      }
+    };
+    fetchPaymentMethods();
+  }, []);
+
   const subtotal = totalPrice;
   const shippingAmount = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
   const gstAmount = Math.round(subtotal * GST_RATE);
   const finalTotal = subtotal + shippingAmount + gstAmount;
+
+  const selectableOptions = useMemo(() => {
+    const list: Array<{
+      gatewayId: string;
+      subOptionId?: string;
+      label: string;
+      subtitle: string;
+      icon: any;
+    }> = [];
+
+    const hasRazorpay = availableMethods.find((m) => m.id === "razorpay");
+    const hasCod = availableMethods.find((m) => m.id === "cod");
+
+    if (hasRazorpay) {
+      list.push(
+        {
+          gatewayId: "razorpay",
+          subOptionId: "upi",
+          label: "UPI Payment",
+          subtitle: "Google Pay, PhonePe, Paytm (via Razorpay)",
+          icon: Smartphone,
+        },
+        {
+          gatewayId: "razorpay",
+          subOptionId: "card",
+          label: "Credit / Debit Card",
+          subtitle: "Visa, Mastercard, RuPay, Amex (via Razorpay)",
+          icon: CreditCard,
+        },
+        {
+          gatewayId: "razorpay",
+          subOptionId: "netbanking",
+          label: "Net Banking",
+          subtitle: "All major Indian banks (via Razorpay)",
+          icon: Landmark,
+        }
+      );
+    }
+
+    if (hasCod) {
+      list.push({
+        gatewayId: "cod",
+        label: "Cash on Delivery (COD)",
+        subtitle: "Pay with cash when order arrives at your door.",
+        icon: Wallet,
+      });
+    }
+
+    return list;
+  }, [availableMethods]);
 
   function handleFieldChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = event.target;
@@ -308,99 +268,44 @@ export default function CheckoutPage() {
       return;
     }
 
+    if (!selectedGateway) {
+      setErrorMsg("Please select a payment method.");
+      return;
+    }
+
+    const loader = paymentClientHandlers[selectedGateway];
+    if (!loader) {
+      setErrorMsg("Selected payment gateway is not configured correctly in the codebase.");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
-      const createRes = await fetch("/api/checkout/razorpay/create-order", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${accessToken}`,
+      const { handleCheckout } = await loader();
+      await handleCheckout({
+        formData,
+        items,
+        couponCode: "",
+        accessToken,
+        onSuccess: (orderNumber) => {
+          clearCart();
+          setOrderReference(orderNumber);
+          setIsSuccess(true);
+          setIsSubmitting(false);
         },
-        body: JSON.stringify({
-          formData,
-          items,
-        }),
+        onError: (msg) => {
+          setIsSubmitting(false);
+          setErrorMsg(msg);
+        },
+        onSubmitting: (loading) => {
+          setIsSubmitting(loading);
+        },
+        paymentSubOption: selectedPaymentSubOption,
       });
-
-      const createJson = (await createRes.json()) as StartPaymentResponse;
-      if (!createRes.ok || !createJson.success || !createJson.razorpayOrderId || !createJson.keyId || !createJson.internalOrderId) {
-        throw new Error(createJson.error || "Unable to initialize Razorpay payment.");
-      }
-
-      const razorpayLoaded = await loadRazorpayScript();
-      if (!razorpayLoaded || !window.Razorpay) {
-        throw new Error("Razorpay checkout failed to load. Please check your network and retry.");
-      }
-
-      const razorpayOptions: RazorpayOptions = {
-        key: createJson.keyId,
-        amount: createJson.amount || Math.round(finalTotal * 100),
-        currency: createJson.currency || "INR",
-        name: "The Artisanal Archive",
-        description: `Secure Checkout ${createJson.orderNumber ? `(${createJson.orderNumber})` : ""}`,
-        order_id: createJson.razorpayOrderId,
-        prefill: {
-          name: formData.fullName,
-          email: formData.email || user.email || "",
-          contact: formData.phone,
-        },
-        notes: {
-          internal_order_id: createJson.internalOrderId,
-          order_number: createJson.orderNumber || "",
-          selected_method: selectedPayment,
-        },
-        method: getMethodConfig(selectedPayment),
-        theme: {
-          color: "#9f3f29",
-        },
-        modal: {
-          ondismiss: () => {
-            setIsSubmitting(false);
-            setErrorMsg("Payment was cancelled. You can retry from checkout.");
-          },
-        },
-        handler: async (response: RazorpayHandlerResponse) => {
-          try {
-            const verifyRes = await fetch("/api/checkout/razorpay/verify-payment", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify({
-                internalOrderId: createJson.internalOrderId,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpaySignature: response.razorpay_signature,
-              }),
-            });
-
-            const verifyJson = (await verifyRes.json()) as VerifyPaymentResponse;
-            if (!verifyRes.ok || !verifyJson.success) {
-              throw new Error(verifyJson.error || "Payment verification failed.");
-            }
-
-            clearCart();
-            setOrderReference(createJson.orderNumber || "");
-            setIsSuccess(true);
-            setIsSubmitting(false);
-          } catch (verifyError: unknown) {
-            setIsSubmitting(false);
-            setErrorMsg(verifyError instanceof Error ? verifyError.message : "Payment verification failed.");
-          }
-        },
-      };
-
-      const razorpayInstance = new window.Razorpay(razorpayOptions);
-      razorpayInstance.on("payment.failed", (failureResponse: RazorpayFailureResponse) => {
-        setIsSubmitting(false);
-        setErrorMsg(failureResponse.error?.description || "Payment failed. Please retry.");
-      });
-      razorpayInstance.open();
     } catch (startPaymentError: unknown) {
       setIsSubmitting(false);
-      setErrorMsg(startPaymentError instanceof Error ? startPaymentError.message : "Unable to start payment.");
+      setErrorMsg(startPaymentError instanceof Error ? startPaymentError.message : "Unable to process payment.");
     }
   }
 
@@ -457,9 +362,13 @@ export default function CheckoutPage() {
         <main className="pt-32">
           <section className={`${BOHEMIAN_SITE_CONTAINER} pb-20`}>
             <div className="mx-auto max-w-2xl rounded-2xl bg-[#f4efe8] p-10 text-center md:p-14">
-              <h1 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-5xl`}>Payment Successful</h1>
+              <h1 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-5xl`}>
+                {selectedGateway === "cod" ? "Order Confirmed" : "Payment Successful"}
+              </h1>
               <p className="mt-3 text-sm text-[#6f645d]">
-                Your order is confirmed and payment has been verified through Razorpay.
+                {selectedGateway === "cod" 
+                  ? "Your order is confirmed. Please pay with cash upon delivery arrival."
+                  : "Your order is confirmed and payment has been verified through Razorpay."}
               </p>
               {orderReference ? (
                 <p className="mt-2 text-sm font-semibold text-[#9f3f29]">Order Ref: {orderReference}</p>
@@ -648,40 +557,58 @@ export default function CheckoutPage() {
               <section className="mt-8 rounded-xl bg-[#f6f3ee] p-6 md:p-8">
                 <div className="flex items-end justify-between gap-4">
                   <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Payment Method</h2>
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8a7c74]">Powered by Razorpay</p>
+                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8a7c74]">Secure Checkout</p>
                 </div>
 
                 <div className="mt-6 space-y-3">
-                  {paymentOptions.map((option) => {
-                    const selected = selectedPayment === option.id;
-                    const Icon = option.icon;
+                  {loadingMethods ? (
+                    <div className="flex items-center justify-center py-6 text-[#7a6f68] text-sm">
+                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                      Loading payment methods...
+                    </div>
+                  ) : selectableOptions.length === 0 ? (
+                    <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 text-center text-sm text-red-700">
+                      <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-500" />
+                      Checkout is currently disabled. Please contact the administrator.
+                    </div>
+                  ) : (
+                    selectableOptions.map((option, idx) => {
+                      const isSelected = selectedGateway === option.gatewayId && 
+                        (!option.subOptionId || selectedPaymentSubOption === option.subOptionId);
+                      const Icon = option.icon;
 
-                    return (
-                      <button
-                        key={option.id}
-                        type="button"
-                        onClick={() => setSelectedPayment(option.id)}
-                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors ${
-                          selected
-                            ? "border-[#9f3f29] bg-white"
-                            : "border-transparent bg-[#ece7e1] hover:border-[#d4c2b8]"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`h-4 w-4 rounded-full border ${selected ? "border-[#9f3f29]" : "border-[#9f8f86]"}`}
-                          >
-                            {selected ? <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-[#9f3f29]" /> : null}
-                          </span>
-                          <div>
-                            <p className="text-sm font-semibold text-[#1c1c19]">{option.label}</p>
-                            <p className="text-xs text-[#7a6f68]">{option.subtitle}</p>
+                      return (
+                        <button
+                          key={`${option.gatewayId}-${option.subOptionId || idx}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedGateway(option.gatewayId);
+                            if (option.subOptionId) {
+                              setSelectedPaymentSubOption(option.subOptionId);
+                            }
+                          }}
+                          className={`flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors ${
+                            isSelected
+                              ? "border-[#9f3f29] bg-white"
+                              : "border-transparent bg-[#ece7e1] hover:border-[#d4c2b8]"
+                          }`}
+                        >
+                          <div className="flex items-center gap-3">
+                            <span
+                              className={`h-4 w-4 rounded-full border ${isSelected ? "border-[#9f3f29]" : "border-[#9f8f86]"}`}
+                            >
+                              {isSelected ? <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-[#9f3f29]" /> : null}
+                            </span>
+                            <div>
+                              <p className="text-sm font-semibold text-[#1c1c19]">{option.label}</p>
+                              <p className="text-xs text-[#7a6f68]">{option.subtitle}</p>
+                            </div>
                           </div>
-                        </div>
-                        <Icon className="h-4 w-4 text-[#6f645d]" />
-                      </button>
-                    );
-                  })}
+                          <Icon className="h-4 w-4 text-[#6f645d]" />
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </section>
             </section>
@@ -728,14 +655,16 @@ export default function CheckoutPage() {
 
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
                   className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65"
                 >
                   {isSubmitting ? (
                     <span className="inline-flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Processing Payment...
+                      {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
                     </span>
+                  ) : selectedGateway === "cod" ? (
+                    "Place Order (Cash on Delivery)"
                   ) : (
                     "Place Order & Pay"
                   )}

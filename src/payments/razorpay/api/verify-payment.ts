@@ -2,8 +2,6 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 
-export const runtime = "nodejs";
-
 type VerifyPaymentBody = {
   internalOrderId: string;
   razorpayOrderId: string;
@@ -24,7 +22,32 @@ function isValidSignature(orderId: string, paymentId: string, signature: string,
   return digest === signature;
 }
 
-export async function POST(req: NextRequest) {
+async function getRazorpaySecret(): Promise<string> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("site_settings")
+      .select("value")
+      .eq("key", "payment_razorpay_key_secret")
+      .maybeSingle();
+
+    if (error) throw error;
+    
+    let val = data?.value;
+    if (typeof val === "string") {
+      try {
+        val = JSON.parse(val);
+      } catch {
+        // Fallback
+      }
+    }
+    return String(val ?? "") || process.env.RAZORPAY_KEY_SECRET || "";
+  } catch (err) {
+    console.error("Error loading payment secret:", err);
+    return process.env.RAZORPAY_KEY_SECRET || "";
+  }
+}
+
+export default async function handleVerifyPayment(req: NextRequest) {
   try {
     const token = getAuthToken(req);
     if (!token) {
@@ -46,7 +69,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing payment verification fields." }, { status: 400 });
     }
 
-    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+    const keySecret = await getRazorpaySecret();
     if (!keySecret) {
       return NextResponse.json({ error: "Razorpay secret is not configured." }, { status: 500 });
     }

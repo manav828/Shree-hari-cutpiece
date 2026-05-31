@@ -1,0 +1,24 @@
+{
+  "id": "razorpay",
+  "name": "Razorpay Payment Gateway",
+  "description": "Collect online payments via Credit/Debit Cards, UPI, Net Banking dynamically.",
+  "isEnabledKey": "payment_razorpay_enabled",
+  "fields": [
+    {
+      "key": "payment_razorpay_key_id",
+      "label": "Key ID",
+      "type": "text",
+      "placeholder": "rzp_test_...",
+      "required": true,
+      "helpText": "Your Razorpay Merchant Key ID."
+    },
+    {
+      "key": "payment_razorpay_key_secret",
+      "label": "Secret Key",
+      "type": "password",
+      "placeholder": "••••••••••••",
+      "required": true,
+      "helpText": "Your Razorpay Merchant Secret Key."
+    }
+  ]
+}

@@ -287,6 +287,7 @@ type BlogPostPayload = {
     seo_og_image_media_id: string;
     seo_twitter_card_type: "summary" | "summary_large_image";
     seo_robots_directive: "index,follow" | "noindex,follow" | "noindex,nofollow";
+    seo_keywords: string;
     status: "draft" | "scheduled" | "published" | "unpublished";
     scheduled_for: string;
 };
@@ -326,6 +327,7 @@ function createEmptyPost(): BlogPostPayload {
         seo_og_image_media_id: "",
         seo_twitter_card_type: "summary_large_image",
         seo_robots_directive: "index,follow",
+        seo_keywords: "",
         status: "draft",
         scheduled_for: "",
     };
@@ -698,6 +700,499 @@ function getSectionWarnings(sections: BuilderSection[]): string[] {
     return warnings;
 }
 
+function getPromptForTheme(theme: string): string {
+    const formattedTheme = theme.toUpperCase();
+    
+    let designSystemSection = "";
+    if (theme === "luxury") {
+        designSystemSection = `# LUXURY THEME DESIGN SYSTEM
+
+Color Palette:
+Background:
+#050505
+
+Text:
+#f5f5f5
+
+Gold Accent:
+#D4AF37
+
+Dark Charcoal:
+#121212
+
+Muted Silver:
+#a0a0a0
+
+Design Style:
+- Exclusive
+- Premium
+- High-end Retail
+- Sleek
+- Dark-mode luxury
+Use glowing gold accents, subtle gold/bronze backdrops for highlight boxes, and clean border lines.
+
+Typography:
+Headings:
+Playfair Display, Bodoni, or similar high-fashion serif
+
+Body:
+Montserrat, Inter, or clean sans-serif`;
+    } else if (theme === "bohemian") {
+        designSystemSection = `# BOHEMIAN THEME DESIGN SYSTEM
+
+Color Palette:
+Background:
+#fcf9f4
+
+Text:
+#2c1e1a
+
+Terracotta:
+#9f3f29
+
+Sage:
+#7a8b7b
+
+Warm Beige:
+#dfd5c6
+
+Design Style:
+- Organic
+- Cozy
+- Artisan
+- Hand-crafted
+- Elegant
+Use rounded corners, soft shadows, natural spacing, warm visual hierarchy.
+
+Typography:
+Headings:
+Lora, Merriweather, or similar serif
+
+Body:
+Readable sans-serif`;
+    } else {
+        // classic
+        designSystemSection = `# CLASSIC THEME DESIGN SYSTEM
+
+Color Palette:
+Background:
+#ffffff or #f9f6f0
+
+Text:
+#1a1a1a
+
+Soft Beige:
+#dfd5c6
+
+Warm Bronze:
+#a38c70
+
+Charcoal Accent:
+#333333
+
+Design Style:
+- Timeless
+- Elegant
+- Clean Grid
+- Refined Spacing
+- Traditional
+Use refined margins, minimalist subtle borders, high readability structures.
+
+Typography:
+Headings:
+Playfair Display, Georgia, or editorial serif
+
+Body:
+Inter, Roboto, or readable sans-serif`;
+    }
+
+    return `You are an Expert SEO Content Writer, AIO (AI Search Optimization) Specialist, UX Content Strategist, and Frontend Blog Designer.
+
+You will create a custom blog post specifically for a website using the active theme: ${formattedTheme}.
+
+# MASTER RULE
+
+IMPORTANT:
+
+DO NOT generate any blog content, HTML, CSS, JavaScript, or code until all planning phases have been completed and the admin has provided the actual image URLs.
+
+At the end of every phase, STOP and wait for approval/URLs before proceeding.
+
+Never skip phases.
+
+---
+
+# PHASE 1: DISCOVERY & CONTENT PLANNING
+
+Before doing anything else, ask the admin:
+
+1. Blog Topic / Title
+2. Primary SEO Keyword
+3. Secondary Keywords
+4. Target Audience
+5. Search Intent
+
+   * Informational
+   * Commercial
+   * Transactional
+   * Comparison
+6. Desired Tone
+
+   * Human Storytelling
+   * Buying Guide
+   * Educational
+   * Technical
+   * Expert Authority
+7. Target Country / Region
+8. Desired Article Length
+
+   * Short (1000–1500 words)
+   * Standard (1800–2500 words)
+   * Long-form (3000+ words)
+9. Competitor URLs (optional)
+10. Internal Pages that should be linked (optional)
+11. Product Images / Reference Images (if applicable)
+12. Brand Colors (if different from theme colors)
+
+Also ask:
+
+"Do you have any product images, lifestyle images, brand assets, or references you want me to use?"
+
+After collecting information:
+
+* Analyze the topic.
+* Identify search intent.
+* Determine optimal article structure.
+* Estimate required image count.
+
+Then STOP and wait for approval.
+
+---
+
+# PHASE 2: IMAGE PLANNING & DETAIL WORKFLOW
+
+After approval of Phase 1:
+
+Determine the required image count using:
+
+* Under 1000 words → 2–3 images
+* 1000–2000 words → 3–5 images
+* 2000–3000 words → 5–7 images
+* 3000+ words → 6–8 images
+
+Present:
+
+"We need X images for this blog."
+
+Create a detailed list describing exactly what each image should look like to match the blog topic, search intent, and the active storefront theme style (Classic, Luxury, or Bohemian).
+
+Structure the list as follows:
+- Image 1 [Type, e.g., Hero Banner]: Detailed description of what this image should look like (composition, subject, styling, and color tones).
+- Image 2 [Type, e.g., Lifestyle Image]: Detailed description of what this image should look like (composition, subject, styling, and color tones).
+...and so on for all X images.
+
+Ask the admin:
+"Do you approve this image plan? If yes, please upload these images to your media library and reply with their public URLs."
+
+STOP and wait for approval and URLs.
+
+---
+
+# PHASE 3: IMAGE URL COLLECTION
+
+Only after the admin approves the plan and provides the public URLs for the images (e.g., Image 1 URL, Image 2 URL, etc.):
+
+Collect the URLs. Never use placeholders or make up URLs. If some URLs are missing, ask the admin to provide them before proceeding.
+
+STOP and wait for all image URLs.
+
+---
+
+# PHASE 4: BLOG GENERATION
+
+Only after all image URLs have been supplied:
+
+Generate:
+
+* HTML
+* CSS
+* Optional JavaScript
+
+You must embed the supplied image URLs in their respective <figure> and <img> tags inside the HTML content exactly as provided.
+
+Return everything inside ONE code block.
+
+No explanations.
+
+No markdown outside the code block.
+
+---
+
+# ARTICLE REQUIREMENTS
+
+Target Length:
+
+Default:
+1800–2500 words
+
+Unless specified otherwise.
+
+The article must:
+
+* Be human-written
+* Pass AI content detection naturally
+* Be SEO optimized
+* Be AIO optimized
+* Be EEAT optimized
+
+Demonstrate:
+
+* Experience
+* Expertise
+* Authoritativeness
+* Trustworthiness
+
+---
+
+# SEO REQUIREMENTS
+
+Include:
+
+* 1 H1
+* Multiple H2 sections
+* Multiple H3 subsections
+* FAQ section
+* Conclusion section
+
+Primary keyword:
+
+* H1
+* First paragraph
+* At least one H2
+* Naturally throughout article
+
+Secondary keywords:
+
+* Naturally integrated
+
+Use:
+
+<strong>
+
+for important phrases.
+
+Include:
+
+* Lists
+* Bullet points
+* Numbered lists
+* Tables
+
+Where relevant.
+
+---
+
+# AIO (AI SEARCH OPTIMIZATION)
+
+Include:
+
+1. Quick Answer Section
+2. Key Takeaways
+3. Summary Table
+4. Pros & Cons
+5. Best Practices
+6. Buying Considerations
+7. Expert Recommendations
+8. FAQ Section
+
+Content must answer:
+
+* What is it?
+* Why does it matter?
+* How does it work?
+* Benefits
+* Drawbacks
+* Best use cases
+* Buying factors
+
+Use concise, AI-friendly paragraphs.
+
+---
+
+# INTERNAL LINKING
+
+Where relevant insert:
+
+{{INTERNAL_LINK}}
+
+for future internal links.
+
+---
+
+# FAQ SCHEMA
+
+Include JSON-LD FAQ Schema matching the FAQ section.
+
+---
+
+# RESPONSIVE DESIGN REQUIREMENTS
+
+Must be optimized for:
+
+* Mobile
+* Tablet
+* Desktop
+
+Use responsive layouts.
+
+Images must scale properly.
+
+Tables must be mobile-friendly.
+
+---
+
+# LAYOUT & GRID DESIGN RULES
+
+CRITICAL FOR VISUAL EXCELLENCE:
+DO NOT generate a simple "top-down vertical stack" (where headings, paragraphs, and images are just stacked sequentially in one narrow column). This looks amateurish and boring.
+
+Instead, you MUST design a premium editorial layout using CSS Grids and Flexbox. Incorporate:
+
+1. Alternating Two-Column Sections:
+   - For one section, place text on the left and the corresponding image on the right.
+   - For the next section, alternate: place the image on the left and the text on the right.
+   - Example structure to define in your <style> and use in your HTML:
+     \`\`\`css
+     .blog-custom-content .grid-two-col {
+       display: grid;
+       grid-template-columns: 1fr;
+       gap: 3rem;
+       align-items: center;
+       margin: 4rem 0;
+     }
+     @media (min-width: 768px) {
+       .blog-custom-content .grid-two-col {
+         grid-template-columns: 1fr 1fr;
+       }
+     }
+     \`\`\`
+
+2. Asymmetrical Highlights:
+   - Create wider full-width showcase sections for premium lifestyle images, flanked by elegant quotes or callout boxes.
+   - Place small offset detail highlights with text wraps or inline grids.
+
+3. Visual Whitespace & Container Padding:
+   - Ensure sections are separated with elegant margin spacing (e.g. \`margin: 5rem 0\` or \`5rem\`).
+   - Do not wrap the entire HTML in another heavy bordered card or nested container with borders. Let the content flow naturally and match the page's elegant background.
+   - Make sure elements align beautifully. Use \`max-width: 100%\` on images and figures, and keep the text readable width (optimal line length is 60–80 characters per line).
+
+---
+
+${designSystemSection}
+
+---
+
+# IMAGE REQUIREMENTS
+
+Hero Image:
+16:9
+
+Content Images:
+4:3
+
+Feature Graphics:
+1:1
+
+Use:
+
+<figure>
+<img>
+<figcaption>
+
+for every image.
+
+Each image must include:
+
+* SEO alt text
+* Lazy loading
+* Responsive sizing
+
+Optional:
+
+* Hover zoom effects
+
+---
+
+# CONTAINER RULE
+
+Wrap ALL content inside:
+
+<div class="blog-custom-content">
+...
+</div>
+
+---
+
+# CSS SCOPING RULE
+
+Every selector MUST begin with:
+
+.blog-custom-content
+
+Examples:
+
+.blog-custom-content h1 {}
+.blog-custom-content p {}
+.blog-custom-content .hero-section {}
+
+Never use:
+
+body {}
+h1 {}
+p {}
+img {}
+
+---
+
+# JAVASCRIPT
+
+Only lightweight JavaScript is allowed.
+
+Permitted features:
+
+* FAQ Accordion
+* Table of Contents Navigation
+* Image Lightbox
+
+No external libraries.
+
+---
+
+# FINAL OUTPUT FORMAT
+
+Return ONLY:
+
+<style>
+...
+</style>
+
+<div class="blog-custom-content">
+...
+</div>
+
+<script>
+...
+</script>
+
+No explanations.
+
+No markdown outside the code block.
+
+No placeholder URLs.
+
+Use only the final approved image URLs supplied by the admin.`;
+}
+
 export default function BlogEditor({ postId }: Props) {
     const [currentPostId, setCurrentPostId] = useState(postId ?? "");
     const [post, setPost] = useState<BlogPostPayload>(() => createEmptyPost());
@@ -726,7 +1221,7 @@ export default function BlogEditor({ postId }: Props) {
     const [showRawJson, setShowRawJson] = useState(false);
     const [previewMode, setPreviewMode] = useState<"desktop" | "mobile">("desktop");
     const [showMediaLibrary, setShowMediaLibrary] = useState(false);
-    const [mediaTarget, setMediaTarget] = useState<"cover" | "og">("cover");
+    const [mediaTarget, setMediaTarget] = useState<"cover" | "og" | "general">("cover");
     const [coverMediaPreview, setCoverMediaPreview] = useState("");
     const [ogMediaPreview, setOgMediaPreview] = useState("");
     const [codePreviewDoc, setCodePreviewDoc] = useState("");
@@ -734,6 +1229,16 @@ export default function BlogEditor({ postId }: Props) {
     const [legacyVisualMode, setLegacyVisualMode] = useState(false);
     const autosaveRef = useRef<NodeJS.Timeout | null>(null);
     const dirtyRef = useRef(false);
+
+    const [promptCopied, setPromptCopied] = useState(false);
+    const [activeTheme, setActiveTheme] = useState<string>("classic");
+
+    const copyPromptToClipboard = () => {
+        const text = getPromptForTheme(activeTheme);
+        navigator.clipboard.writeText(text);
+        setPromptCopied(true);
+        setTimeout(() => setPromptCopied(false), 2500);
+    };
 
     const markDirty = () => {
         dirtyRef.current = true;
@@ -811,10 +1316,11 @@ export default function BlogEditor({ postId }: Props) {
     useEffect(() => {
         const loadFilters = async () => {
             try {
-                const [categoryRes, tagRes, postsRes] = await Promise.all([
+                const [categoryRes, tagRes, postsRes, themeRes] = await Promise.all([
                     fetch("/api/admin/blogs/categories"),
                     fetch("/api/admin/blogs/tags"),
                     fetch("/api/admin/blogs?limit=200"),
+                    fetch("/api/admin/theme"),
                 ]);
 
                 const categoryJson = await categoryRes.json();
@@ -824,6 +1330,13 @@ export default function BlogEditor({ postId }: Props) {
                 if (categoryRes.ok) setCategories(categoryJson.categories ?? []);
                 if (tagRes.ok) setTags(tagJson.tags ?? []);
                 if (postsRes.ok) setRelatedPosts(postsJson.posts ?? []);
+
+                if (themeRes.ok) {
+                    const themeJson = await themeRes.json();
+                    if (themeJson.theme) {
+                        setActiveTheme(themeJson.theme);
+                    }
+                }
             } catch {
                 // Ignore filter load errors.
             }
@@ -893,9 +1406,18 @@ export default function BlogEditor({ postId }: Props) {
                     author_name: (loaded.author_name as string) ?? "",
                     editor_mode: "full_code",
                     builder_layout: JSON.stringify(loaded.builder_layout ?? { sections: [] }, null, 2),
-                    full_page_html: (loaded.full_page_html as string) ?? "",
-                    full_page_css: (loaded.full_page_css as string) ?? "",
-                    full_page_js: (loaded.full_page_js as string) ?? "",
+                    full_page_html: (() => {
+                        let combined = (loaded.full_page_html as string) ?? "";
+                        if (loaded.full_page_css) {
+                            combined = `<style>\n${loaded.full_page_css}\n</style>\n` + combined;
+                        }
+                        if (loaded.full_page_js) {
+                            combined = combined + `\n<script>\n${loaded.full_page_js}\n</script>`;
+                        }
+                        return combined;
+                    })(),
+                    full_page_css: "",
+                    full_page_js: "",
                     custom_js_acknowledged: Boolean(loaded.custom_js_acknowledged),
                     code_mode_locked: Boolean(loaded.code_mode_locked),
                     schema_markup_enabled: loaded.schema_markup_enabled !== false,
@@ -912,6 +1434,7 @@ export default function BlogEditor({ postId }: Props) {
                     seo_og_image_media_id: ogId,
                     seo_twitter_card_type: (loaded.seo_twitter_card_type as "summary" | "summary_large_image") ?? "summary_large_image",
                     seo_robots_directive: (loaded.seo_robots_directive as "index,follow" | "noindex,follow" | "noindex,nofollow") ?? "index,follow",
+                    seo_keywords: (loaded.seo_keywords as string) ?? "",
                     status: (loaded.status as BlogPostPayload["status"]) ?? "draft",
                     scheduled_for: toIstDateTimeInput((loaded.scheduled_for as string) ?? ""),
                 }));
@@ -956,7 +1479,7 @@ export default function BlogEditor({ postId }: Props) {
         };
     }, [currentPostId, loadSelectedProducts]);
 
-    const openMediaLibrary = (target: "cover" | "og") => {
+    const openMediaLibrary = (target: "cover" | "og" | "general") => {
         setMediaTarget(target);
         setShowMediaLibrary(true);
     };
@@ -965,11 +1488,15 @@ export default function BlogEditor({ postId }: Props) {
         if (mediaTarget === "cover") {
             setPost((prev) => ({ ...prev, cover_media_id: item.id }));
             setCoverMediaPreview(item.public_url);
-        } else {
+            markDirty();
+        } else if (mediaTarget === "og") {
             setPost((prev) => ({ ...prev, seo_og_image_media_id: item.id }));
             setOgMediaPreview(item.public_url);
+            markDirty();
+        } else {
+            // General target - copy URL to clipboard
+            navigator.clipboard.writeText(item.public_url);
         }
-        markDirty();
         setShowMediaLibrary(false);
     };
 
@@ -1013,9 +1540,33 @@ export default function BlogEditor({ postId }: Props) {
             author_name: post.author_name.trim() || null,
             editor_mode: post.editor_mode,
             builder_layout: builderLayout,
-            full_page_html: post.full_page_html.trim() || null,
-            full_page_css: post.full_page_css.trim() || null,
-            full_page_js: post.full_page_js.trim() || null,
+            ...(() => {
+                const styleRegex = /<style[^>]*>([\s\S]*?)<\/style>/gi;
+                const scriptRegex = /<script[^>]*>([\s\S]*?)<\/script>/gi;
+
+                let css = "";
+                let js = "";
+                let html = post.full_page_html;
+
+                let match;
+                styleRegex.lastIndex = 0;
+                while ((match = styleRegex.exec(html)) !== null) {
+                    css += match[1] + "\n";
+                }
+                html = html.replace(styleRegex, "");
+
+                scriptRegex.lastIndex = 0;
+                while ((match = scriptRegex.exec(html)) !== null) {
+                    js += match[1] + "\n";
+                }
+                html = html.replace(scriptRegex, "");
+
+                return {
+                    full_page_html: html.trim() || null,
+                    full_page_css: css.trim() || null,
+                    full_page_js: js.trim() || null,
+                };
+            })(),
             custom_js_acknowledged: post.custom_js_acknowledged,
             code_mode_locked: post.code_mode_locked,
             schema_markup_enabled: post.schema_markup_enabled,
@@ -1032,6 +1583,7 @@ export default function BlogEditor({ postId }: Props) {
             seo_og_image_media_id: post.seo_og_image_media_id.trim() || null,
             seo_twitter_card_type: post.seo_twitter_card_type,
             seo_robots_directive: post.seo_robots_directive,
+            seo_keywords: post.seo_keywords.trim() || null,
             status: post.status,
             scheduled_for: post.scheduled_for ? toIsoDateTimeFromIst(post.scheduled_for) : null,
             tag_ids: tagIds,
@@ -1821,37 +2373,54 @@ export default function BlogEditor({ postId }: Props) {
                                     <p className="mt-1">This post was created with the old section builder. Paste HTML/CSS/JS below to replace its content.</p>
                                 </div>
                             )}
-                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 text-xs text-gray-700">
-                                <p className="font-semibold">Code editor</p>
-                                <p className="mt-1">Paste HTML, CSS, and JS, then click Render Preview to see how it looks.</p>
+                            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-xs text-gray-700 space-y-2">
+                                <p className="font-semibold text-gray-900 flex items-center justify-between">
+                                    <span>Code Editor &amp; AI Integration Guidelines</span>
+                                </p>
+                                <p className="text-gray-600">
+                                    Paste your combined code containing HTML, CSS (inside &lt;style&gt; tags), and JS (inside &lt;script&gt; tags). All custom CSS selectors must be scoped to keep page elements like Navbars/Footers intact.
+                                </p>
+                                <div className="flex flex-wrap gap-2 pt-1 pb-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => openMediaLibrary("general")}
+                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-semibold rounded-md shadow-sm transition-all duration-150 cursor-pointer"
+                                    >
+                                        <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                        </svg>
+                                        Upload &amp; Copy Blog Image URLs
+                                    </button>
+                                </div>
+                                <details className="mt-2 group bg-white border border-gray-200 rounded-md p-3 cursor-pointer">
+                                    <summary className="font-semibold text-gray-800 hover:text-gray-950 select-none list-none flex items-center justify-between">
+                                        <span>Show Interactive AI Blog Prompt ({activeTheme.toUpperCase()} Theme)</span>
+                                        <span className="text-[10px] text-gray-400 font-normal">Click to expand</span>
+                                    </summary>
+                                    <div className="mt-3 pt-3 border-t border-gray-100 text-xs text-gray-600 space-y-3 select-text cursor-auto">
+                                        <div className="flex items-center justify-between gap-4">
+                                            <p className="font-medium text-gray-800">Copy this exact prompt and paste it into your AI assistant (e.g. ChatGPT, Claude, Gemini):</p>
+                                            <button
+                                                type="button"
+                                                onClick={copyPromptToClipboard}
+                                                className="flex-shrink-0 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold rounded-md shadow-sm transition-colors"
+                                            >
+                                                {promptCopied ? "Copied!" : "Copy AI Prompt"}
+                                            </button>
+                                        </div>
+                                        <pre className="p-2.5 bg-gray-50 rounded border border-gray-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-words max-h-60 overflow-auto">
+                                            {getPromptForTheme(activeTheme)}
+                                        </pre>
+                                    </div>
+                                </details>
                             </div>
                             <CodeEditor
-                                label="HTML"
+                                label="Unified HTML / CSS / JS Code"
                                 language="html"
                                 value={post.full_page_html}
-                                minHeight="min-h-[160px]"
+                                minHeight="min-h-[300px]"
                                 onChange={(value) => {
                                     setPost((prev) => ({ ...prev, full_page_html: value }));
-                                    markDirty();
-                                }}
-                            />
-                            <CodeEditor
-                                label="CSS"
-                                language="css"
-                                value={post.full_page_css}
-                                minHeight="min-h-[120px]"
-                                onChange={(value) => {
-                                    setPost((prev) => ({ ...prev, full_page_css: value }));
-                                    markDirty();
-                                }}
-                            />
-                            <CodeEditor
-                                label="JS"
-                                language="js"
-                                value={post.full_page_js}
-                                minHeight="min-h-[120px]"
-                                onChange={(value) => {
-                                    setPost((prev) => ({ ...prev, full_page_js: value }));
                                     markDirty();
                                 }}
                             />
@@ -1971,6 +2540,20 @@ export default function BlogEditor({ postId }: Props) {
                                         className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm min-h-[90px]"
                                     />
                                     <p className="text-[11px] text-gray-500 mt-1">Short summary used under the title in search results.</p>
+                                </div>
+                                <div className="md:col-span-2">
+                                    <label className="block text-xs text-gray-500 mb-1">SEO Keywords</label>
+                                    <input
+                                        type="text"
+                                        value={post.seo_keywords}
+                                        onChange={(e) => {
+                                            setPost((prev) => ({ ...prev, seo_keywords: e.target.value }));
+                                            markDirty();
+                                        }}
+                                        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                        placeholder="fabric care, cotton buying guide, silk styling tips"
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-1">Comma-separated keywords. Used in &lt;meta name=&quot;keywords&quot;&gt; for search engines.</p>
                                 </div>
                                 <div>
                                     <label className="block text-xs text-gray-500 mb-1">OG Title</label>
@@ -2310,7 +2893,13 @@ export default function BlogEditor({ postId }: Props) {
 
             <BlogMediaLibraryModal
                 open={showMediaLibrary}
-                title={mediaTarget === "cover" ? "Select Cover Media" : "Select OG Image"}
+                title={
+                    mediaTarget === "cover"
+                        ? "Select Cover Media"
+                        : mediaTarget === "og"
+                        ? "Select OG Image"
+                        : "Blog Media Library (Upload & Copy Links)"
+                }
                 onClose={() => setShowMediaLibrary(false)}
                 onSelect={handleMediaSelect}
             />

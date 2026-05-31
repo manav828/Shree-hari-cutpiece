@@ -1,9 +1,15 @@
 import Link from "next/link";
 import { Metadata } from "next";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import ClassicNavbar from "@/components/layout/Navbar";
+import ClassicFooter from "@/components/layout/Footer";
+import ClassicCartSidebar from "@/components/cart/CartSidebar";
 import Container from "@/components/ui/Container";
-import CartSidebar from "@/components/cart/CartSidebar";
+import { getActiveTheme } from "@/lib/theme";
+import BohemianNavbar from "@/themes/bohemian/components/layout/Navbar";
+import BohemianFooter from "@/themes/bohemian/components/layout/Footer";
+import BohemianCartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
+import LuxuryNavbar from "@/themes/luxury/components/layout/Navbar";
+import LuxuryFooter from "@/themes/luxury/components/layout/Footer";
 
 export const metadata: Metadata = {
     title: "Post Removed | Shree Hari Blog",
@@ -11,11 +17,15 @@ export const metadata: Metadata = {
     robots: "noindex,nofollow",
 };
 
-export default function BlogGonePage() {
+export default async function BlogGonePage() {
+    const activeTheme = await getActiveTheme();
+    const isBohemian = activeTheme === "bohemian";
+    const isLuxury = activeTheme === "luxury";
+
     return (
         <>
-            <Navbar />
-            <CartSidebar />
+            {isBohemian ? <BohemianNavbar /> : isLuxury ? <LuxuryNavbar /> : <ClassicNavbar />}
+            {isBohemian ? <BohemianCartSidebar /> : <ClassicCartSidebar />}
             <main className="pt-12 lg:pt-24 pb-20 bg-background min-h-screen">
                 <Container>
                     <div className="max-w-2xl mx-auto text-center">
@@ -32,7 +42,7 @@ export default function BlogGonePage() {
                     </div>
                 </Container>
             </main>
-            <Footer />
+            {isBohemian ? <BohemianFooter /> : isLuxury ? <LuxuryFooter /> : <ClassicFooter />}
         </>
     );
 }

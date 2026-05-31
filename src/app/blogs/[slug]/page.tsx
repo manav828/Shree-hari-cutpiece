@@ -1,19 +1,11 @@
 import { notFound, permanentRedirect } from "next/navigation";
-import Image from "next/image";
-import Link from "next/link";
 import { Metadata } from "next";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
-import Container from "@/components/ui/Container";
-import CartSidebar from "@/components/cart/CartSidebar";
-import BlogCard from "@/components/blog/BlogCard";
-import BlogRenderer from "@/components/blog/BlogRenderer";
-import ShareButtons from "@/components/blog/ShareButtons";
-import ProductCard from "@/components/shop/ProductCard";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getSiteUrl } from "@/lib/siteUrl";
 import { filterPublicContentPosts, isPublicContentPost } from "@/lib/blogPublicContent";
 import { buildArticleSchema, buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
+import { getActiveTheme } from "@/lib/theme";
+import themes from "@/themes/registry";
 
 export const dynamic = "force-dynamic";
 
@@ -31,6 +23,12 @@ type BlogMedia = {
 type BlogCategory = {
     name: string | null;
     slug: string | null;
+};
+
+type BlogTagInfo = {
+    id: string;
+    name: string;
+    slug: string;
 };
 
 type BlogDetailRow = {
@@ -62,6 +60,7 @@ type BlogDetailRow = {
     seo_og_image_media_id: string | null;
     seo_twitter_card_type: "summary" | "summary_large_image" | null;
     seo_robots_directive: "index,follow" | "noindex,follow" | "noindex,nofollow" | null;
+    seo_keywords: string | null;
     cover_media?: BlogMedia | null;
     og_media?: BlogMedia | null;
     category?: BlogCategory | null;
@@ -158,7 +157,7 @@ async function fetchPost(slug: string, language: BlogVariant["language"]): Promi
     const { data, error } = await supabaseAdmin
         .from("blog_posts")
         .select(
-            "id, variant_group_id, language, title, slug, excerpt, cover_media_id, author_name, published_at, editor_mode, builder_layout, full_page_html, full_page_css, full_page_js, schema_markup_enabled, show_header, show_cover, show_share_buttons, show_related_products, related_products_title, seo_meta_title, seo_meta_description, seo_canonical_url, seo_og_title, seo_og_description, seo_og_image_media_id, seo_twitter_card_type, seo_robots_directive, cover_media:cover_media_id (public_url, alt_text, width, height), og_media:seo_og_image_media_id (public_url, alt_text, width, height), category:category_id (name, slug)",
+            "id, variant_group_id, language, title, slug, excerpt, cover_media_id, author_name, published_at, editor_mode, builder_layout, full_page_html, full_page_css, full_page_js, schema_markup_enabled, show_header, show_cover, show_share_buttons, show_related_products, related_products_title, seo_meta_title, seo_meta_description, seo_canonical_url, seo_og_title, seo_og_description, seo_og_image_media_id, seo_twitter_card_type, seo_robots_directive, seo_keywords, cover_media:cover_media_id (public_url, alt_text, width, height), og_media:seo_og_image_media_id (public_url, alt_text, width, height), category:category_id (name, slug)",
         )
         .eq("slug", slug)
         .eq("status", "published")
@@ -167,6 +166,18 @@ async function fetchPost(slug: string, language: BlogVariant["language"]): Promi
 
     if (error) return null;
     return data as unknown as BlogDetailRow;
+}
+
+async function fetchPostTags(postId: string): Promise<BlogTagInfo[]> {
+    const { data, error } = await supabaseAdmin
+        .from("blog_post_tags")
+        .select("tag_id, blog_tags(id, name, slug)")
+        .eq("post_id", postId);
+
+    if (error || !data) return [];
+    return data
+        .map((row: any) => row.blog_tags)
+        .filter(Boolean) as BlogTagInfo[];
 }
 
 async function fetchVariants(variantGroupId: string): Promise<BlogVariant[]> {
@@ -301,6 +312,12 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
         }
     });
 
+    // Resolve combined keywords for SEO metadata
+    const tags = await fetchPostTags(post.id);
+    const tagKeywords = tags.map((t) => t.name);
+    const postKeywords = post.seo_keywords ? post.seo_keywords.split(",").map((k) => k.trim()) : [];
+    const combinedKeywords = Array.from(new Set([...postKeywords, ...tagKeywords])).filter(Boolean);
+
     return {
         metadataBase: new URL(baseUrl),
         title: post.seo_meta_title || post.title,
@@ -310,6 +327,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
             languages,
         },
         robots: post.seo_robots_directive || "index,follow",
+        keywords: combinedKeywords,
         openGraph: {
             title: ogTitle,
             description: ogDescription,
@@ -341,16 +359,20 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         notFound();
     }
 
-    const variants = await fetchVariants(post.variant_group_id);
-    const relatedPosts = filterPublicContentPosts(await fetchRelatedPosts(post.id, post.language));
-    const relatedProducts = await fetchRelatedProducts(post.id);
+    const [variants, relatedPosts, relatedProducts, tags, activeTheme] = await Promise.all([
+        fetchVariants(post.variant_group_id),
+        fetchRelatedPosts(post.id, post.language).then(filterPublicContentPosts),
+        fetchRelatedProducts(post.id),
+        fetchPostTags(post.id),
+        getActiveTheme(),
+    ]);
+
     const languageLabels: Record<BlogVariant["language"], string> = {
         en: "English",
         hi: "Hindi",
         other: "Other",
     };
 
-    const activeVariants = variants.filter((variant) => variant.language !== post.language);
     const contentText = post.editor_mode === "full_code"
         ? stripHtml(post.full_page_html || "")
         : extractTextFromLayout(post.builder_layout);
@@ -386,204 +408,43 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         );
     }
 
+    // Resolve visual component based on the active theme
+    const themeConfig = themes[activeTheme] || themes["classic"];
+    const ThemeBlogDetailPage = themeConfig.BlogDetailPage;
+
     return (
         <>
-            <Navbar />
-            <CartSidebar />
-            <main className="pt-6 lg:pt-12 pb-0 bg-background min-h-screen">
-                <Container>
-                    {/* Breadcrumb */}
-                    <nav className="mb-6">
-                        <ol className="flex items-center gap-2 text-sm text-text-secondary">
-                            <li>
-                                <Link href="/" className="hover:text-accent transition-colors">
-                                    Home
-                                </Link>
-                            </li>
-                            <li>/</li>
-                            <li>
-                                <Link href="/blogs" className="hover:text-accent transition-colors">
-                                    Blog
-                                </Link>
-                            </li>
-                            <li>/</li>
-                            <li className="text-foreground truncate max-w-[200px] sm:max-w-xs">{post.title}</li>
-                        </ol>
-                    </nav>
-
-                    <article className="max-w-5xl mx-auto">
-                        {schemaMarkup.map((schema, index) => (
-                            <script
-                                key={`blog-en-schema-${index}`}
-                                type="application/ld+json"
-                                dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
-                            />
-                        ))}
-                        {/* Header */}
-                        {post.show_header !== false && (
-                            <header className="text-center mb-8">
-                                {post.category?.name && (
-                                    <span className="inline-block px-4 py-1.5 bg-accent/10 text-accent text-xs font-semibold tracking-widest uppercase mb-6 rounded-full">
-                                        {post.category.name}
-                                    </span>
-                                )}
-                                <h1 className="font-serif text-4xl md:text-5xl lg:text-6xl text-foreground leading-tight mb-8">
-                                    {post.title}
-                                </h1>
-                                <div className="flex items-center justify-center gap-6 text-sm text-text-secondary">
-                                    <div className="flex items-center gap-2">
-                                        <span className="w-8 h-8 rounded-full bg-accent text-white flex items-center justify-center font-serif">
-                                            {(post.author_name || "S").charAt(0)}
-                                        </span>
-                                        <span>{post.author_name || "Editorial Team"}</span>
-                                    </div>
-                                    {post.published_at && (
-                                        <>
-                                            <span>•</span>
-                                            <span>{new Date(post.published_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}</span>
-                                        </>
-                                    )}
-                                    {readTime && (
-                                        <>
-                                            <span>•</span>
-                                            <span>{readTime}</span>
-                                        </>
-                                    )}
-                                </div>
-                                {activeVariants.length > 0 && (
-                                    <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-                                        {activeVariants.map((variant) => (
-                                            <Link
-                                                key={variant.language}
-                                                href={`${getBlogBasePath(variant.language)}/${variant.slug}`}
-                                                className="rounded-full border border-border px-3 py-1 text-xs text-text-secondary hover:text-foreground"
-                                            >
-                                                {languageLabels[variant.language] || variant.language}
-                                            </Link>
-                                        ))}
-                                    </div>
-                                )}
-                            </header>
-                        )}
-
-                        {/* Featured Image */}
-                        {post.show_cover !== false && (
-                            <div className="aspect-[16/9] sm:aspect-[2/1] relative overflow-hidden bg-background-secondary mb-16 rounded-lg">
-                                {post.cover_media?.public_url ? (
-                                    <Image
-                                        src={post.cover_media.public_url}
-                                        alt={post.cover_media.alt_text || post.title}
-                                        fill
-                                        sizes="(max-width: 1024px) 100vw, 960px"
-                                        className="object-cover"
-                                        priority
-                                    />
-                                ) : (
-                                    <div className="h-full w-full bg-gradient-to-br from-neutral-100 to-neutral-200" />
-                                )}
-                            </div>
-                        )}
-
-                        {/* Content */}
-                        <div className="prose prose-lg max-w-full prose-p:text-text-secondary prose-headings:font-serif prose-headings:text-foreground">
-                            {post.excerpt && (
-                                <p className="text-xl md:text-2xl text-foreground/80 font-serif italic mb-10 leading-relaxed border-l-4 border-accent pl-6">
-                                    {post.excerpt}
-                                </p>
-                            )}
-                            {post.show_share_buttons !== false && (
-                                <div className="mb-10">
-                                    <ShareButtons title={post.title} url={shareUrl} />
-                                </div>
-                            )}
-                            {post.editor_mode === "full_code" ? (
-                                <div className="space-y-6">
-                                    {post.full_page_css && <style dangerouslySetInnerHTML={{ __html: post.full_page_css }} />}
-                                    {post.full_page_html && <div dangerouslySetInnerHTML={{ __html: post.full_page_html }} />}
-                                    {post.full_page_js && <script dangerouslySetInnerHTML={{ __html: post.full_page_js }} />}
-                                </div>
-                            ) : (
-                                <BlogRenderer layout={post.builder_layout} />
-                            )}
-                            <div className="mt-14 rounded-2xl border border-border bg-background-secondary px-6 py-6">
-                                <p className="text-xs tracking-[0.28em] uppercase text-text-secondary">Continue Exploring</p>
-                                <h3 className="mt-2 font-serif text-2xl text-foreground">Keep Building Your Fabric Plan</h3>
-                                <div className="mt-5 flex flex-wrap gap-3">
-                                    <Link
-                                        href={getBlogBasePath(post.language)}
-                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
-                                    >
-                                        All Journal Articles
-                                    </Link>
-                                    <Link
-                                        href="/shop"
-                                        className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
-                                    >
-                                        Browse Fabric Collection
-                                    </Link>
-                                    {post.category?.name && (
-                                        <Link
-                                            href={`${getBlogBasePath(post.language)}?category=${encodeURIComponent(post.category.name)}`}
-                                            className="inline-flex items-center rounded-full border border-border bg-white px-4 py-2 text-sm text-foreground hover:border-accent hover:text-accent transition-colors"
-                                        >
-                                            More in {post.category.name}
-                                        </Link>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                    </article>
-                </Container>
-
-                {post.show_related_products !== false && relatedProducts.length > 0 && (
-                    <section className="mt-24 border-t border-border pt-12 bg-background-secondary">
-                        <Container>
-                            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-6 text-center">
-                                {post.related_products_title || "Shop This Story"}
-                            </h2>
-                            <div
-                                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-6"
-                                style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
-                            >
-                                {relatedProducts.map((product) => (
-                                    <div key={product.id} className="flex-shrink-0 w-[260px] sm:w-[300px] snap-start">
-                                        <ProductCard product={product} />
-                                    </div>
-                                ))}
-                            </div>
-                        </Container>
-                    </section>
-                )}
-
-                {/* More Articles Section */}
-                {relatedPosts.length > 0 && (
-                    <section className="mt-32 border-t border-border pt-20 bg-background-secondary">
-                        <Container>
-                            <h2 className="font-serif text-3xl md:text-4xl text-foreground mb-10 text-center">
-                                More from our Journal
-                            </h2>
-                            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-                                {relatedPosts.map((relatedPost) => (
-                                    <BlogCard
-                                        key={relatedPost.id}
-                                        post={{
-                                            id: relatedPost.id,
-                                            title: relatedPost.title,
-                                            slug: relatedPost.slug,
-                                            excerpt: relatedPost.excerpt,
-                                            imageUrl: relatedPost.cover_media?.public_url ?? null,
-                                            imageAlt: relatedPost.cover_media?.alt_text ?? relatedPost.title,
-                                            category: relatedPost.category?.name ?? null,
-                                            publishedAt: relatedPost.published_at,
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        </Container>
-                    </section>
-                )}
-            </main>
-            <Footer />
+            {schemaMarkup.map((schema, index) => (
+                <script
+                    key={`blog-en-schema-${index}`}
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+                />
+            ))}
+            <ThemeBlogDetailPage
+                post={{
+                    ...post,
+                    cover_media: post.cover_media ?? null,
+                    og_media: post.og_media ?? null,
+                    category: post.category ?? null,
+                }}
+                relatedPosts={relatedPosts.map((rp) => ({
+                    id: rp.id,
+                    title: rp.title,
+                    slug: rp.slug,
+                    excerpt: rp.excerpt,
+                    published_at: rp.published_at,
+                    cover_media: rp.cover_media ?? undefined,
+                    category: rp.category ?? undefined,
+                }))}
+                relatedProducts={relatedProducts}
+                tags={tags}
+                readTime={readTime}
+                shareUrl={shareUrl}
+                variants={variants}
+                languageLabels={languageLabels}
+                blogBasePath={getBlogBasePath(post.language)}
+            />
         </>
     );
 }

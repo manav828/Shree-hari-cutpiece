@@ -16,7 +16,10 @@ import {
     Settings,
     LogOut,
     Menu,
-    X
+    X,
+    ChevronLeft,
+    ChevronRight,
+    CreditCard
 } from "lucide-react";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
@@ -25,6 +28,20 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+
+    useEffect(() => {
+        const stored = localStorage.getItem("shreehari_admin_sidebar_collapsed");
+        if (stored === "true") {
+            setIsCollapsed(true);
+        }
+    }, []);
+
+    const toggleSidebar = () => {
+        const nextState = !isCollapsed;
+        setIsCollapsed(nextState);
+        localStorage.setItem("shreehari_admin_sidebar_collapsed", String(nextState));
+    };
 
     useEffect(() => {
         if (pathname === "/admin/login") { setIsChecking(false); return; }
@@ -51,6 +68,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { name: "Documentation", href: "/admin/documentation", icon: BookOpen },
         { name: "Blog", href: "/admin/blog", icon: FileText },
         { name: "Reports", href: "/admin/reports", icon: BarChart },
+        { name: "Payments", href: "/admin/payments", icon: CreditCard },
         { name: "Settings", href: "/admin/settings", icon: Settings },
     ];
 
@@ -67,59 +85,86 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         );
     }
 
-    const SidebarContent = () => (
-        <>
-            {/* Logo */}
-            <div className="px-5 pt-6 pb-8 border-b border-slate-700/70">
-                <Link href="/admin" className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-300 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-900/20">
-                        <span className="text-slate-900 text-sm font-bold">SH</span>
-                    </div>
-                    <div>
-                        <p className="text-[15px] font-semibold text-white leading-tight">Shree Hari</p>
-                        <p className="text-[10px] text-slate-300 uppercase tracking-[0.15em] font-medium">Admin Panel</p>
-                    </div>
-                </Link>
-            </div>
-
-            {/* Navigation */}
-            <nav className="flex-1 px-3 space-y-1 overflow-y-auto">
-                <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-slate-300 uppercase tracking-[0.12em]">Menu</p>
-                {navItems.map((item) => {
-                    const isActive = pathname === item.href || (pathname.startsWith(`${item.href}/`) && item.href !== "/admin");
-                    return (
-                        <Link
-                            key={item.href}
-                            href={item.href}
-                            className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-150 ${isActive
-                                ? "bg-gradient-to-r from-cyan-300 to-blue-400 text-slate-900 shadow-md shadow-blue-900/20"
-                                : "text-slate-200 hover:text-white hover:bg-slate-700/70"
-                                }`}
-                        >
-                            <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${isActive ? "text-slate-900" : "text-slate-300"}`} strokeWidth={isActive ? 2.2 : 1.8} />
-                            {item.name}
+    const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => {
+        const collapsed = isMobile ? false : isCollapsed;
+        return (
+            <>
+                {/* Logo */}
+                <div className={`px-4 pt-6 pb-8 border-b border-slate-700/70 flex transition-all duration-300 ${collapsed ? "flex-col items-center gap-4" : "items-center justify-between"}`}>
+                    {!collapsed && (
+                        <Link href="/admin" className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-300 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-900/20">
+                                <span className="text-slate-900 text-sm font-bold">SH</span>
+                            </div>
+                            <div>
+                                <p className="text-[15px] font-semibold text-white leading-tight">Shree Hari</p>
+                                <p className="text-[10px] text-slate-300 uppercase tracking-[0.15em] font-medium">Admin Panel</p>
+                            </div>
                         </Link>
-                    );
-                })}
-            </nav>
+                    )}
+                    {collapsed && (
+                        <Link href="/admin" className="mx-auto transition-transform duration-300 hover:scale-105">
+                            <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-300 to-blue-500 flex items-center justify-center shadow-lg shadow-blue-900/20">
+                                <span className="text-slate-900 text-sm font-bold">SH</span>
+                            </div>
+                        </Link>
+                    )}
+                    {!isMobile && (
+                        <button
+                            onClick={toggleSidebar}
+                            className={`p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-700/55 cursor-pointer transition-colors ${collapsed ? "mt-1" : ""}`}
+                            title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+                        >
+                            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+                        </button>
+                    )}
+                </div>
 
-            {/* Logout */}
-            <div className="p-3 mt-auto">
-                <button
-                    onClick={handleSignOut}
-                    className="flex items-center gap-2.5 w-full px-3 py-2.5 text-[13px] font-medium text-slate-200 rounded-lg hover:bg-red-500/20 hover:text-red-200 transition-all duration-150"
-                >
-                    <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} />
-                    Logout
-                </button>
-            </div>
-        </>
-    );
+                {/* Navigation */}
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4">
+                    {!collapsed && <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-slate-300 uppercase tracking-[0.12em] select-none">Menu</p>}
+                    {navItems.map((item) => {
+                        const isActive = pathname === item.href || (pathname.startsWith(`${item.href}/`) && item.href !== "/admin");
+                        return (
+                            <Link
+                                key={item.href}
+                                href={item.href}
+                                className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+                                    collapsed ? "justify-center px-0" : ""
+                                } ${isActive
+                                    ? "bg-gradient-to-r from-cyan-300 to-blue-400 text-slate-900 shadow-md shadow-blue-900/20 font-semibold"
+                                    : "text-slate-200 hover:text-white hover:bg-slate-700/70"
+                                    }`}
+                                title={collapsed ? item.name : undefined}
+                            >
+                                <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${isActive ? "text-slate-900" : "text-slate-300"}`} strokeWidth={isActive ? 2.2 : 1.8} />
+                                {!collapsed && <span>{item.name}</span>}
+                            </Link>
+                        );
+                    })}
+                </nav>
+
+                {/* Logout */}
+                <div className="p-3 mt-auto border-t border-slate-700/40">
+                    <button
+                        onClick={handleSignOut}
+                        className={`flex items-center gap-2.5 w-full px-3 py-2.5 text-[13px] font-medium text-slate-200 rounded-lg hover:bg-red-500/20 hover:text-red-200 transition-all duration-150 ${
+                            collapsed ? "justify-center px-0" : ""
+                        }`}
+                        title={collapsed ? "Logout" : undefined}
+                    >
+                        <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} />
+                        {!collapsed && <span>Logout</span>}
+                    </button>
+                </div>
+            </>
+        );
+    };
 
     return (
         <div data-admin className="h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-cyan-50 flex overflow-hidden font-sans">
             {/* Desktop Sidebar — STICKY via fixed height + flex */}
-            <aside className="hidden md:flex md:w-[252px] flex-col bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900 border-r border-slate-700/80 h-screen sticky top-0 flex-shrink-0 shadow-xl">
+            <aside className={`hidden md:flex flex-col bg-gradient-to-b from-slate-800 via-slate-800 to-slate-900 border-r border-slate-700/80 h-screen sticky top-0 flex-shrink-0 shadow-xl transition-all duration-300 ${isCollapsed ? "w-[72px]" : "w-[252px]"}`}>
                 <SidebarContent />
             </aside>
 
@@ -131,7 +176,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         <button onClick={() => setMobileMenuOpen(false)} className="absolute top-4 right-3 p-1.5 text-slate-300 hover:text-white">
                             <X className="h-5 w-5" />
                         </button>
-                        <SidebarContent />
+                        <SidebarContent isMobile={true} />
                     </div>
                 </div>
             )}
