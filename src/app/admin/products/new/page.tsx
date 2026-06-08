@@ -6,10 +6,12 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 const sb = supabase as any;
 import { removeMissingProductsColumnFromPayload } from "@/lib/productsSchemaFallback";
+import { processImageForUpload } from "@/lib/imageOptimization";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
     Star, Sparkles, CircleHelp, ChevronUp, ChevronDown
 } from "lucide-react";
+import { inputClassName } from "@/components/admin/ui/Input";
 
 /* ─── Types ─── */
 interface VariantImage {
@@ -20,6 +22,7 @@ interface Variant {
     id?: string; color_name: string; color_hex: string; material_label: string;
     price: number; original_price: number; stock: number; sku: string;
     is_default: boolean; sort_order: number; images: VariantImage[];
+    place: string;
 }
 type OptionInputType = "radio" | "multi" | "dropdown" | "input";
 type OptionInputDataType = "text" | "number";
@@ -74,7 +77,7 @@ function Section({ title, step, children }: { title: string; step: number; child
 function Label({ children, tip }: { children: React.ReactNode; tip?: string }) {
     return (<div className="mb-1.5"><label className="text-sm font-semibold text-gray-700">{children}</label>{tip && <p className="text-xs text-gray-400 mt-0.5">{tip}</p>}</div>);
 }
-const inputCls = "w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 outline-none transition-all";
+const inputCls = inputClassName;
 
 /* ─── Main ─── */
 export default function AddProductPage() {
@@ -101,7 +104,7 @@ export default function AddProductPage() {
 
     const [variants, setVariants] = useState<Variant[]>([{
         color_name: "", color_hex: "#000000", material_label: "", price: 0,
-        original_price: 0, stock: 0, sku: "", is_default: true, sort_order: 0, images: [],
+        original_price: 0, stock: 0, sku: "", is_default: true, sort_order: 0, images: [], place: "",
     }]);
 
     const [optionGroups, setOptionGroups] = useState<OptionGroup[]>([]);
@@ -219,7 +222,7 @@ export default function AddProductPage() {
     const updV = (i: number, k: keyof Variant, v: string | number | boolean) => {
         setVariants((p) => { const u = [...p]; (u[i] as unknown as Record<string, unknown>)[k] = v; if (k === "is_default" && v === true) u.forEach((x, j) => { if (j !== i) x.is_default = false; }); return u; });
     };
-    const addVariant = () => setVariants((p) => [...p, { color_name: "", color_hex: "#000000", material_label: "", price: 0, original_price: 0, stock: 0, sku: "", is_default: false, sort_order: p.length, images: [] }]);
+    const addVariant = () => setVariants((p) => [...p, { color_name: "", color_hex: "#000000", material_label: "", price: 0, original_price: 0, stock: 0, sku: "", is_default: false, sort_order: p.length, images: [], place: "" }]);
     const rmVariant = (i: number) => { if (variants.length <= 1) return; setVariants((p) => { const u = p.filter((_, j) => j !== i); if (!u.some((x) => x.is_default) && u.length) u[0].is_default = true; return u; }); };
     const addImgs = (vi: number, files: FileList | null) => {
         if (!files) return;
@@ -396,7 +399,9 @@ export default function AddProductPage() {
         if (variants.some((v) => !v.color_name.trim())) return alert("All variants need a color name");
         setSaving(true);
         try {
-            const { custom_tabs, ...formWithoutTabs } = form;
+            const formWithoutTabs = { ...form };
+            // @ts-ignore
+            delete formWithoutTabs.custom_tabs;
             const productInsertPayload: Record<string, unknown> = {
                 ...formWithoutTabs,
                 short_description: form.description || null,
@@ -454,10 +459,11 @@ export default function AddProductPage() {
                     // Upload main tab image if a new file is attached
                     if (tabFiles[tab.id]) {
                         const file = tabFiles[tab.id];
-                        const ext = file.name.split(".").pop();
+                        const { large } = await processImageForUpload(file);
+                        const ext = large.name.split(".").pop();
                         const name = `${product.id}/tabs/${tab.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
                         console.log(`Uploading dynamic tab file for ${tab.id}...`);
-                        const { error: uErr } = await sb.storage.from("product-images").upload(name, file);
+                        const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                         if (uErr) {
                             console.error(`Tab ${tab.id} image upload failed:`, uErr);
                         } else {
@@ -473,10 +479,11 @@ export default function AddProductPage() {
                             const previewKey = `${tab.id}_${item.id || j}`;
                             if (tabFiles[previewKey]) {
                                 const file = tabFiles[previewKey];
-                                const ext = file.name.split(".").pop();
+                                const { large } = await processImageForUpload(file);
+                                const ext = large.name.split(".").pop();
                                 const name = `${product.id}/tabs/${tab.id}/items/${item.id || `item-${j}`}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
                                 console.log(`Uploading dynamic tab sub-item file for ${previewKey}...`);
-                                const { error: uErr } = await sb.storage.from("product-images").upload(name, file);
+                                const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                                 if (uErr) {
                                     console.error(`Sub-item ${previewKey} image upload failed:`, uErr);
                                 } else {
@@ -514,17 +521,29 @@ export default function AddProductPage() {
 
             for (const v of variants) {
                 const { data: iv, error: vErr } = await sb.from("product_variants")
-                    .insert({ product_id: product.id, color_name: v.color_name, color_hex: v.color_hex, material_label: v.material_label || null, price: v.price, original_price: v.original_price || null, stock: v.stock, sku: v.sku || null, is_default: v.is_default, sort_order: v.sort_order })
+                    .insert({ product_id: product.id, color_name: v.color_name, color_hex: v.color_hex, material_label: v.material_label || null, price: v.price, original_price: v.original_price || null, stock: v.stock, sku: v.sku || null, is_default: v.is_default, sort_order: v.sort_order, place: v.place || null })
                     .select("id").single();
                 if (vErr || !iv) throw vErr;
 
                 for (const img of v.images) {
                     let url = img.image_url;
                     if (img.file) {
-                        const ext = img.file.name.split(".").pop();
+                        const { large, thumbnail } = await processImageForUpload(img.file);
+                        const ext = large.name.split(".").pop();
                         const name = `${product.id}/${iv.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-                        const { error: uErr } = await sb.storage.from("product-images").upload(name, img.file);
+                        const lastDot = name.lastIndexOf(".");
+                        const thumbName = lastDot !== -1 
+                            ? name.substring(0, lastDot) + "_thumb" + name.substring(lastDot)
+                            : name + "_thumb";
+
+                        const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                         if (uErr) { console.error(uErr); continue; }
+
+                        // Upload thumbnail in background
+                        sb.storage.from("product-images").upload(thumbName, thumbnail).catch((e: any) => {
+                            console.error("Failed to upload thumbnail:", e);
+                        });
+
                         url = sb.storage.from("product-images").getPublicUrl(name).data.publicUrl;
                     }
                     if (url) await sb.from("variant_images").insert({ variant_id: iv.id, image_url: url, is_primary: img.is_primary, sort_order: img.sort_order, media_type: img.media_type });
@@ -644,6 +663,7 @@ export default function AddProductPage() {
                                         <div><label className="text-xs font-medium text-gray-500 mb-1 block">Stock</label><input type="number" value={v.stock || ""} onChange={(e) => updV(vi, "stock", +e.target.value)} className={inputCls} placeholder="50" /></div>
                                         <div><label className="text-xs font-medium text-gray-500 mb-1 block">SKU</label><input type="text" value={v.sku} onChange={(e) => updV(vi, "sku", e.target.value)} className={`${inputCls} font-mono`} placeholder="PFC-RR" /></div>
                                         <div><label className="text-xs font-medium text-gray-500 mb-1 block">Material Label</label><input type="text" value={v.material_label} onChange={(e) => updV(vi, "material_label", e.target.value)} className={inputCls} placeholder="Premium" /></div>
+                                        <div><label className="text-xs font-medium text-gray-500 mb-1 block">Place</label><input type="text" value={v.place || ""} onChange={(e) => updV(vi, "place", e.target.value)} className={inputCls} placeholder="e.g. Shelf A-1" /></div>
                                         <div className="flex items-end"><label className="flex items-center gap-2 py-2.5 cursor-pointer"><input type="radio" name="default_variant" checked={v.is_default} onChange={() => updV(vi, "is_default", true)} className="w-4 h-4" /><span className="text-sm font-medium text-gray-500">Default</span></label></div>
                                     </div>
                                     <div>

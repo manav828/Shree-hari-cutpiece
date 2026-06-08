@@ -6,16 +6,18 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { removeMissingProductsColumnFromPayload } from "@/lib/productsSchemaFallback";
+import { processImageForUpload } from "@/lib/imageOptimization";
 import {
     ArrowLeft, Save, Trash2, Plus, Upload, X, Loader2, Eye, EyeOff,
     Star, Sparkles, CircleHelp, ExternalLink, Check, FileText, Palette,
     ShoppingBag, List, Search, BookOpen, ChevronUp, ChevronDown
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { inputClassName } from "@/components/admin/ui/Input";
 
 /* ─── Types ─── */
 interface VariantImage { id?: string; image_url: string; is_primary: boolean; sort_order: number; media_type: "image" | "video"; file?: File; preview?: string; }
-interface Variant { id?: string; color_name: string; color_hex: string; material_label: string; price: number; original_price: number; stock: number; sku: string; is_default: boolean; sort_order: number; images: VariantImage[]; }
+interface Variant { id?: string; color_name: string; color_hex: string; material_label: string; price: number; original_price: number; stock: number; sku: string; is_default: boolean; sort_order: number; images: VariantImage[]; place: string; }
 interface FabricRow { key: string; value: string; }
 type OptionInputType = "radio" | "multi" | "dropdown" | "input";
 type OptionInputDataType = "text" | "number";
@@ -71,7 +73,7 @@ function Toast({ message, onClose }: { message: string; onClose: () => void }) {
     );
 }
 
-const inputCls = "w-full px-3.5 py-2.5 text-sm bg-white border border-gray-200 rounded-lg placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 outline-none transition-all";
+const inputCls = inputClassName;
 function Label({ children, tip }: { children: React.ReactNode; tip?: string }) {
     return (<div className="mb-1.5"><label className="text-sm font-semibold text-gray-700">{children}</label>{tip && <p className="text-xs text-gray-400 mt-0.5">{tip}</p>}</div>);
 }
@@ -165,10 +167,6 @@ export default function EditProductPage() {
         };
 
         const gsm = extractFormSpec(["gsm", "weight"]);
-        const feel = extractFormSpec(["feel", "touch", "texture", "hand"]);
-        const transparency = extractFormSpec(["transparency", "opacity", "sheer"]);
-        const stretch = extractFormSpec(["stretch", "elasticity"]);
-        const drape = extractFormSpec(["drape", "fall"]);
 
         return [
             { label: "Material", value: formFabric || "100% Cotton" },
@@ -191,7 +189,6 @@ export default function EditProductPage() {
     };
 
     const getPrefilledDetails = () => {
-        const formFabric = form.fabric || "";
         const formWidth = form.width || "";
         
         const extractFormSpec = (keywords: string[]) => {
@@ -272,10 +269,11 @@ export default function EditProductPage() {
                     // Upload main tab image if a new file is attached
                     if (tabFiles[tab.id]) {
                         const file = tabFiles[tab.id];
-                        const ext = file.name.split(".").pop();
+                        const { large } = await processImageForUpload(file);
+                        const ext = large.name.split(".").pop();
                         const name = `${productId}/tabs/${tab.id}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
                         console.log(`Uploading dynamic tab file for ${tab.id}...`);
-                        const { error: uErr } = await sb.storage.from("product-images").upload(name, file);
+                        const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                         if (uErr) {
                             console.error(`Tab ${tab.id} image upload failed:`, uErr);
                         } else {
@@ -291,10 +289,11 @@ export default function EditProductPage() {
                             const previewKey = `${tab.id}_${item.id || j}`;
                             if (tabFiles[previewKey]) {
                                 const file = tabFiles[previewKey];
-                                const ext = file.name.split(".").pop();
+                                const { large } = await processImageForUpload(file);
+                                const ext = large.name.split(".").pop();
                                 const name = `${productId}/tabs/${tab.id}/items/${item.id || `item-${j}`}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
                                 console.log(`Uploading dynamic tab sub-item file for ${previewKey}...`);
-                                const { error: uErr } = await sb.storage.from("product-images").upload(name, file);
+                                const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                                 if (uErr) {
                                     console.error(`Sub-item ${previewKey} image upload failed:`, uErr);
                                 } else {
@@ -413,6 +412,7 @@ export default function EditProductPage() {
                         original_price: finalOriginalPrice,
                         stock: parseFloat(v.stock as any) || 0,
                         sku: v.sku || null, is_default: v.is_default, sort_order: v.sort_order,
+                        place: v.place || null,
                     }).eq("id", vid).select(); // ADDED SELECT
 
                     console.log(`✅ Variant [${i}] Update Response:`, { data: vData, error: vErr });
@@ -426,6 +426,7 @@ export default function EditProductPage() {
                         material_label: v.material_label || null, price: safePrice,
                         original_price: finalOriginalPrice,
                         stock: parseFloat(v.stock as any) || 0, sku: v.sku || null, is_default: v.is_default, sort_order: v.sort_order,
+                        place: v.place || null,
                     }).select("id").single();
 
                     console.log(`✅ Variant [${i}] Insert Response:`, { data: iv, error: isvErr });
@@ -445,10 +446,22 @@ export default function EditProductPage() {
                 }
                 for (const img of v.images) {
                     if (img.file) {
-                        const ext = img.file.name.split(".").pop();
+                        const { large, thumbnail } = await processImageForUpload(img.file);
+                        const ext = large.name.split(".").pop();
                         const name = `${productId}/${vid}/${Date.now()}-${Math.random().toString(36).substr(2, 9)}.${ext}`;
-                        const { error: uErr } = await sb.storage.from("product-images").upload(name, img.file);
+                        const lastDot = name.lastIndexOf(".");
+                        const thumbName = lastDot !== -1 
+                            ? name.substring(0, lastDot) + "_thumb" + name.substring(lastDot)
+                            : name + "_thumb";
+
+                        const { error: uErr } = await sb.storage.from("product-images").upload(name, large);
                         if (uErr) continue;
+
+                        // Upload thumbnail in background
+                        sb.storage.from("product-images").upload(thumbName, thumbnail).catch((e: any) => {
+                            console.error("Failed to upload thumbnail:", e);
+                        });
+
                         const url = sb.storage.from("product-images").getPublicUrl(name).data.publicUrl;
                         await sb.from("variant_images").insert({ variant_id: vid, image_url: url, is_primary: img.is_primary, sort_order: img.sort_order, media_type: img.media_type });
                     }
@@ -511,11 +524,11 @@ export default function EditProductPage() {
             setHighlights(Array.isArray(p.highlights) ? p.highlights : []);
             setFaqs(Array.isArray(p.faqs) ? p.faqs : []);
             interface RawImg { id: string; image_url: string; is_primary: boolean; sort_order: number; media_type: "image" | "video"; }
-            interface RawVar { id: string; color_name: string; color_hex: string; material_label: string | null; price: number; original_price: number | null; stock: number; sku: string | null; is_default: boolean; sort_order: number; variant_images: RawImg[]; }
+            interface RawVar { id: string; color_name: string; color_hex: string; material_label: string | null; price: number; original_price: number | null; stock: number; sku: string | null; is_default: boolean; sort_order: number; variant_images: RawImg[]; place: string | null; }
             setVariants((p.product_variants as RawVar[]).map((v) => ({
                 id: v.id, color_name: v.color_name, color_hex: v.color_hex || "#000000", material_label: v.material_label || "",
                 price: +v.price, original_price: +(v.original_price || 0), stock: v.stock, sku: v.sku || "",
-                is_default: v.is_default, sort_order: v.sort_order,
+                is_default: v.is_default, sort_order: v.sort_order, place: v.place || "",
                 images: (v.variant_images || []).map((i) => ({ id: i.id, image_url: i.image_url, is_primary: i.is_primary, sort_order: i.sort_order, media_type: i.media_type })),
             })).sort((a, b) => a.sort_order - b.sort_order));
 
@@ -573,7 +586,7 @@ export default function EditProductPage() {
         });
     };
 
-    const addVariant = () => setVariants((p) => [...p, { color_name: "", color_hex: "#000000", material_label: "", price: 0, original_price: 0, stock: 0, sku: "", is_default: p.length === 0, sort_order: p.length, images: [] }]);
+    const addVariant = () => setVariants((p) => [...p, { color_name: "", color_hex: "#000000", material_label: "", price: 0, original_price: 0, stock: 0, sku: "", is_default: p.length === 0, sort_order: p.length, images: [], place: "" }]);
     const rmVariant = (i: number) => { if (variants.length <= 1) return; setVariants((p) => { const u = p.filter((_, j) => j !== i); if (!u.some(x => x.is_default) && u.length) u[0].is_default = true; return u; }); };
 
     /* Fabric details key-value */
@@ -1072,6 +1085,7 @@ export default function EditProductPage() {
                                             <div><label className="text-xs font-medium text-gray-500 mb-1 block">Stock</label><input type="number" value={v.stock || ""} onChange={(e) => updV(vi, "stock", +e.target.value)} className={inputCls} placeholder="50" /></div>
                                             <div><label className="text-xs font-medium text-gray-500 mb-1 block">SKU</label><input type="text" value={v.sku} onChange={(e) => updV(vi, "sku", e.target.value)} className={`${inputCls} font-mono`} /></div>
                                             <div><label className="text-xs font-medium text-gray-500 mb-1 block">Material Label</label><input type="text" value={v.material_label} onChange={(e) => updV(vi, "material_label", e.target.value)} className={inputCls} /></div>
+                                            <div><label className="text-xs font-medium text-gray-500 mb-1 block">Place</label><input type="text" value={v.place || ""} onChange={(e) => updV(vi, "place", e.target.value)} className={inputCls} placeholder="e.g. Shelf A-1" /></div>
                                             <div className="flex items-end"><label className="flex items-center gap-2 py-2.5 cursor-pointer"><input type="radio" name="default_variant" checked={v.is_default} onChange={() => updV(vi, "is_default", true)} className="w-4 h-4" /><span className="text-sm font-medium text-gray-500">Default</span></label></div>
                                         </div>
                                         <div>

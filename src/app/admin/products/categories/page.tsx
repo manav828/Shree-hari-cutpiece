@@ -1,9 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase as supabaseClient } from "@/lib/supabase";
+const supabase = supabaseClient as any;
 import Link from "next/link";
 import { ArrowLeft, Plus, Edit, Trash2, Loader2, Save, X, HelpCircle, Upload, Image as ImageIcon } from "lucide-react";
+import { Input } from "@/components/admin/ui/Input";
+import { Select } from "@/components/admin/ui/Select";
+import { Textarea } from "@/components/admin/ui/Textarea";
 
 interface Category {
     id: string;
@@ -190,48 +194,41 @@ export default function AdminCategories() {
                         {isAdding && (
                             <div className="px-5 py-6 bg-green-50/20 border-b border-gray-150 space-y-4">
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-gray-700">Category Name</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Category Name"
-                                            value={newName}
-                                            onChange={(e) => { setNewName(e.target.value); setNewSlug(generateSlug(e.target.value)); }}
-                                            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                            autoFocus
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-gray-700">Slug</label>
-                                        <input
-                                            type="text"
-                                            placeholder="Slug (auto-generated)"
-                                            value={newSlug}
-                                            onChange={(e) => setNewSlug(e.target.value)}
-                                            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none text-gray-500 bg-white"
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1 md:col-span-2">
-                                        <label className="text-xs font-semibold text-gray-700">Description</label>
-                                        <textarea
-                                            placeholder="Brief description of this category..."
-                                            value={newDescription}
-                                            onChange={(e) => setNewDescription(e.target.value)}
-                                            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                            rows={2}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col gap-1">
-                                        <label className="text-xs font-semibold text-gray-700">Storefront Filter Layout</label>
-                                        <select
-                                            value={newFilterLayout}
-                                            onChange={(e) => setNewFilterLayout(e.target.value)}
-                                            className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                        >
-                                            <option value="sidebar">Filter on Sidebar (Textile Design)</option>
-                                            <option value="top">Filter on Top Select (Ceramics Design)</option>
-                                        </select>
-                                    </div>
+                                    <Input
+                                        label="Category Name"
+                                        type="text"
+                                        placeholder="Category Name"
+                                        value={newName}
+                                        onChange={(e) => { setNewName(e.target.value); setNewSlug(generateSlug(e.target.value)); }}
+                                        className="bg-white"
+                                        autoFocus
+                                    />
+                                    <Input
+                                        label="Slug"
+                                        type="text"
+                                        placeholder="Slug (auto-generated)"
+                                        value={newSlug}
+                                        onChange={(e) => setNewSlug(e.target.value)}
+                                        className="text-gray-500 bg-white"
+                                    />
+                                    <Textarea
+                                        label="Description"
+                                        placeholder="Brief description of this category..."
+                                        value={newDescription}
+                                        onChange={(e) => setNewDescription(e.target.value)}
+                                        className="bg-white"
+                                        rows={2}
+                                        wrapperClassName="md:col-span-2"
+                                    />
+                                    <Select
+                                        label="Storefront Filter Layout"
+                                        value={newFilterLayout}
+                                        onChange={(e) => setNewFilterLayout(e.target.value)}
+                                        className="bg-white"
+                                    >
+                                        <option value="sidebar">Filter on Sidebar (Textile Design)</option>
+                                        <option value="top">Filter on Top Select (Ceramics Design)</option>
+                                    </Select>
                                     <div className="flex flex-col gap-1">
                                         <label className="text-xs font-semibold text-gray-700">Category Image</label>
                                         <div className="flex items-center gap-3">
@@ -279,45 +276,38 @@ export default function AdminCategories() {
                                 {editingId === cat.id ? (
                                     <div className="w-full py-2 space-y-4">
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs font-semibold text-gray-700">Category Name</label>
-                                                <input
-                                                    type="text"
-                                                    value={editName}
-                                                    onChange={(e) => { setEditName(e.target.value); setEditSlug(generateSlug(e.target.value)); }}
-                                                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                                    autoFocus
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs font-semibold text-gray-700">Slug</label>
-                                                <input
-                                                    type="text"
-                                                    value={editSlug}
-                                                    onChange={(e) => setEditSlug(e.target.value)}
-                                                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none text-gray-500 bg-white"
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1 md:col-span-2">
-                                                <label className="text-xs font-semibold text-gray-700">Description</label>
-                                                <textarea
-                                                    value={editDescription}
-                                                    onChange={(e) => setEditDescription(e.target.value)}
-                                                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                                    rows={2}
-                                                />
-                                            </div>
-                                            <div className="flex flex-col gap-1">
-                                                <label className="text-xs font-semibold text-gray-700">Storefront Filter Layout</label>
-                                                <select
-                                                    value={editFilterLayout}
-                                                    onChange={(e) => setEditFilterLayout(e.target.value)}
-                                                    className="px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-accent/30 outline-none bg-white"
-                                                >
-                                                    <option value="sidebar">Filter on Sidebar (Textile Design)</option>
-                                                    <option value="top">Filter on Top Select (Ceramics Design)</option>
-                                                </select>
-                                            </div>
+                                            <Input
+                                                label="Category Name"
+                                                type="text"
+                                                value={editName}
+                                                onChange={(e) => { setEditName(e.target.value); setEditSlug(generateSlug(e.target.value)); }}
+                                                className="bg-white"
+                                                autoFocus
+                                            />
+                                            <Input
+                                                label="Slug"
+                                                type="text"
+                                                value={editSlug}
+                                                onChange={(e) => setEditSlug(e.target.value)}
+                                                className="text-gray-500 bg-white"
+                                            />
+                                            <Textarea
+                                                label="Description"
+                                                value={editDescription}
+                                                onChange={(e) => setEditDescription(e.target.value)}
+                                                className="bg-white"
+                                                rows={2}
+                                                wrapperClassName="md:col-span-2"
+                                            />
+                                            <Select
+                                                label="Storefront Filter Layout"
+                                                value={editFilterLayout}
+                                                onChange={(e) => setEditFilterLayout(e.target.value)}
+                                                className="bg-white"
+                                            >
+                                                <option value="sidebar">Filter on Sidebar (Textile Design)</option>
+                                                <option value="top">Filter on Top Select (Ceramics Design)</option>
+                                            </Select>
                                             <div className="flex flex-col gap-1">
                                                 <label className="text-xs font-semibold text-gray-700">Category Image</label>
                                                 <div className="flex items-center gap-3">

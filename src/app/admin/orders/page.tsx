@@ -425,7 +425,7 @@ export default function AdminOrdersPage() {
 
                 {/* Pagination */}
                 {!loading && orders.length > 0 && (
-                    <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between">
+                    <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3">
                         <p className="text-[12px] text-gray-500">
                             Showing{" "}
                             <span className="font-medium text-gray-700">
@@ -437,6 +437,19 @@ export default function AdminOrdersPage() {
                             </span>{" "}
                             of <span className="font-medium text-gray-700">{total}</span> orders
                         </p>
+                        <div className="flex items-center justify-center">
+                            <select
+                                value={filters.per_page ?? 25}
+                                onChange={(e) => setFilters((prev) => ({ ...prev, per_page: Number(e.target.value), page: 1 }))}
+                                className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-600 outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={250}>250</option>
+                            </select>
+                        </div>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => goPage(Math.max(1, (filters.page ?? 1) - 1))}

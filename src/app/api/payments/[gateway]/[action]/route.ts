@@ -34,11 +34,11 @@ export async function POST(
 
     // Dynamic import and execution
     try {
-      const module = await import(`@/payments/${gateway}/api/${action}`);
-      if (typeof module.default !== "function") {
+      const handlerModule = await import(`@/payments/${gateway}/api/${action}`);
+      if (typeof handlerModule.default !== "function") {
         throw new Error(`Handler in ${gateway}/${action} does not export a default function.`);
       }
-      return await module.default(req);
+      return await handlerModule.default(req);
     } catch (importErr) {
       console.error(`Failed to dynamically import handler for ${gateway}/${action}:`, importErr);
       return NextResponse.json({ error: "Failed to initialize payment handler." }, { status: 500 });

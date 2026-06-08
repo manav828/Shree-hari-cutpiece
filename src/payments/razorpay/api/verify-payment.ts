@@ -1,6 +1,7 @@
 import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { triggerOrderNotification } from "@/lib/notifications";
 
 type VerifyPaymentBody = {
   internalOrderId: string;
@@ -119,6 +120,11 @@ export default async function handleVerifyPayment(req: NextRequest) {
       from_status: orderData.status,
       to_status: orderData.status,
       note: `Razorpay payment verified. Payment ID: ${razorpayPaymentId}`,
+    });
+
+    // Fire order confirmation notifications in background
+    triggerOrderNotification(orderData.id, "confirmation").catch(err => {
+      console.error("[verify-payment] Background notification dispatch error:", err);
     });
 
     return NextResponse.json({ success: true, orderId: orderData.id });

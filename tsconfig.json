@@ -18,7 +18,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*"]
+      "@/themes/classic/*": ["./src/themes/classic/changes/*", "./src/themes/classic/core/*"],
+      "@/themes/bohemian/*": ["./src/themes/bohemian/changes/*", "./src/themes/bohemian/core/*"],
+      "@/themes/luxury/*": ["./src/themes/luxury/changes/*", "./src/themes/luxury/core/*"],
+      "@/*": [
+        "./src/themes/bohemian/changes/*",
+        "./src/themes/classic/changes/*",
+        "./src/themes/luxury/changes/*",
+        "./src/*"
+      ]
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Playfair_Display, Inter } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import Providers from "@/components/Providers";
 import "./globals.css";
 
@@ -29,6 +30,7 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${playfair.variable} ${inter.variable}`}>
       <body className="font-sans">
+        <NextTopLoader color="#9f3f29" height={3} showSpinner={false} />
         <Providers>
           {children}
         </Providers>

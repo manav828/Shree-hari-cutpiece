@@ -244,6 +244,12 @@ export default function AdminCustomers() {
                     loading={loading}
                     page={page}
                     totalPages={totalPages}
+                    total={total}
+                    limit={limit}
+                    onLimitChange={(val) => {
+                        setLimit(val);
+                        setPage(1);
+                    }}
                     onPrevPage={() => setPage((prev) => Math.max(prev - 1, 1))}
                     onNextPage={() => setPage((prev) => Math.min(prev + 1, totalPages))}
                 />

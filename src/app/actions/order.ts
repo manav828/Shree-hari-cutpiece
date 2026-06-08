@@ -2,6 +2,7 @@
 
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { revalidatePath } from "next/cache";
+import { triggerOrderNotification } from "@/lib/notifications";
 
 export async function updateOrderStatus(orderId: string, newStatus: string, note?: string) {
     try {
@@ -23,6 +24,17 @@ export async function updateOrderStatus(orderId: string, newStatus: string, note
             });
 
         if (historyError) throw historyError;
+
+        // Trigger shipping or delivery notifications in background
+        if (newStatus.toLowerCase() === "shipped") {
+            triggerOrderNotification(orderId, "shipped").catch(err => {
+                console.error("[updateOrderStatus] Shipped notification error:", err);
+            });
+        } else if (newStatus.toLowerCase() === "delivered") {
+            triggerOrderNotification(orderId, "delivered").catch(err => {
+                console.error("[updateOrderStatus] Delivered notification error:", err);
+            });
+        }
 
         revalidatePath(`/admin/orders/${orderId}`);
         revalidatePath(`/admin/orders`);

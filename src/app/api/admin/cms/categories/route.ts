@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { CACHE_TAGS } from "@/lib/cache";
 
 type CategoryPayload = {
     id?: string;
@@ -116,6 +118,7 @@ export async function POST(req: NextRequest) {
 
             if (updateTargetError) throw updateTargetError;
 
+            revalidateTag(CACHE_TAGS.cmsCategories);
             return NextResponse.json({ success: true });
         }
 
@@ -132,6 +135,7 @@ export async function POST(req: NextRequest) {
                 .is("deleted_at", null);
 
             if (error) throw error;
+            revalidateTag(CACHE_TAGS.cmsCategories);
             return NextResponse.json({ success: true });
         }
 
@@ -189,6 +193,7 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error;
 
+        revalidateTag(CACHE_TAGS.cmsCategories);
         return NextResponse.json({ success: true });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to save category";
@@ -249,6 +254,7 @@ export async function PATCH(req: NextRequest) {
 
         if (error) throw error;
 
+        revalidateTag(CACHE_TAGS.cmsCategories);
         return NextResponse.json({ success: true });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to update category";

@@ -17,6 +17,7 @@ export async function GET(req: NextRequest) {
     try {
         const { searchParams } = new URL(req.url);
         const query = cleanQuery(searchParams.get("query") || "");
+        const allParam = searchParams.get("all") === "true";
         const idsParam = (searchParams.get("ids") || "").trim();
         const limit = clampLimit(Number(searchParams.get("limit") || DEFAULT_LIMIT));
 
@@ -43,6 +44,14 @@ export async function GET(req: NextRequest) {
             const ordered = products.sort((a, b) => (orderMap.get(a.id) ?? 0) - (orderMap.get(b.id) ?? 0));
 
             return NextResponse.json({ products: ordered });
+        }
+
+        if (allParam) {
+            const { data, error } = await baseQuery
+                .order("name", { ascending: true });
+
+            if (error) throw error;
+            return NextResponse.json({ products: data ?? [] });
         }
 
         if (query.length < 2) {

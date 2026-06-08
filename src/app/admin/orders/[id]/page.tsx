@@ -21,6 +21,8 @@ import type { OrderWithDetails, CustomOrderStatus } from "@/types/orders";
 import OrderStatusBadge from "@/components/admin/orders/OrderStatusBadge";
 import PaymentStatusBadge from "@/components/admin/orders/PaymentStatusBadge";
 import OrderActions from "@/components/admin/orders/OrderActions";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
+import { getThumbnailUrl } from "@/lib/imageOptimization";
 
 async function loadCustomStatuses(): Promise<CustomOrderStatus[]> {
     try {
@@ -271,36 +273,31 @@ export default function OrderDetailPage() {
 
                     {/* Order Items */}
                     <Card title="Order Items" icon={Package}>
-                        <div className="overflow-x-auto -mx-5">
-                            <table className="w-full">
-                                <thead>
-                                    <tr className="border-b border-gray-100">
-                                        {["Product", "Color", "Mode", "Qty", "Unit Price", "Total"].map((h) => (
-                                            <th
-                                                key={h}
-                                                className="px-5 py-2.5 text-left text-[11px] font-semibold text-gray-400 uppercase tracking-wider whitespace-nowrap"
-                                            >
-                                                {h}
-                                            </th>
-                                        ))}
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-50">
-                                    {order.items.map((item, idx) => (
-                                        <tr key={item.id} className={idx % 2 === 0 ? "" : "bg-gray-50/40"}>
-                                            <td className="px-5 py-3">
-                                                <div className="flex items-center gap-3">
-                                                    {item.image_url ? (
-                                                        <img
-                                                            src={item.image_url}
-                                                            alt={item.product_name}
-                                                            className="w-10 h-10 rounded-md object-cover border border-gray-200 flex-shrink-0"
-                                                        />
-                                                    ) : (
-                                                        <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                                            <Package className="w-4 h-4 text-gray-400" />
-                                                        </div>
-                                                    )}
+                        <Table wrapperClassName="border-0 rounded-none shadow-none -mx-5">
+                            <TableHeader>
+                                <TableRow>
+                                    {["Product", "Color", "Mode", "Qty", "Unit Price", "Total"].map((h) => (
+                                        <TableHead key={h}>{h}</TableHead>
+                                    ))}
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {order.items.map((item, idx) => (
+                                    <TableRow key={item.id} className={idx % 2 === 0 ? "" : "bg-gray-50/40"}>
+                                        <TableCell>
+                                            <div className="flex items-center gap-3">
+                                                {item.image_url ? (
+                                                    <img
+                                                        src={getThumbnailUrl(item.image_url)}
+                                                        alt={item.product_name}
+                                                        className="w-10 h-10 rounded-md object-cover border border-gray-200 flex-shrink-0"
+                                                    />
+                                                ) : (
+                                                    <div className="w-10 h-10 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                                        <Package className="w-4 h-4 text-gray-400" />
+                                                    </div>
+                                                )}
+                                                <div>
                                                     <span className="text-[13px] font-medium text-gray-800">
                                                         {item.product_name}
                                                     </span>
@@ -310,34 +307,34 @@ export default function OrderDetailPage() {
                                                         </span>
                                                     )}
                                                 </div>
-                                            </td>
-                                            <td className="px-5 py-3 text-[13px] text-gray-600 whitespace-nowrap">
-                                                {item.color_name || "—"}
-                                            </td>
-                                            <td className="px-5 py-3 whitespace-nowrap">
-                                                <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 capitalize">
-                                                    {item.selling_mode}
-                                                </span>
-                                            </td>
-                                            <td className="px-5 py-3 text-[13px] text-gray-700 whitespace-nowrap font-medium">
-                                                {item.selling_mode === "meter"
-                                                    ? `${item.quantity_or_meters}m`
-                                                    : `×${item.quantity_or_meters}`}
-                                            </td>
-                                            <td className="px-5 py-3 text-[13px] text-gray-600 whitespace-nowrap">
-                                                {fp(item.price_per_unit)}
-                                                {item.selling_mode === "meter" && (
-                                                    <span className="text-gray-400">/m</span>
-                                                )}
-                                            </td>
-                                            <td className="px-5 py-3 text-[13px] font-semibold text-gray-900 whitespace-nowrap">
-                                                {fp(item.total_price)}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                        </div>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell className="text-[13px] text-gray-600 whitespace-nowrap">
+                                            {item.color_name || "—"}
+                                        </TableCell>
+                                        <TableCell className="whitespace-nowrap">
+                                            <span className="inline-block px-2 py-0.5 rounded-full text-[11px] font-medium bg-gray-100 text-gray-600 capitalize">
+                                                {item.selling_mode}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-[13px] text-gray-700 whitespace-nowrap font-medium">
+                                            {item.selling_mode === "meter"
+                                                ? `${item.quantity_or_meters}m`
+                                                : `×${item.quantity_or_meters}`}
+                                        </TableCell>
+                                        <TableCell className="text-[13px] text-gray-600 whitespace-nowrap">
+                                            {fp(item.price_per_unit)}
+                                            {item.selling_mode === "meter" && (
+                                                <span className="text-gray-400">/m</span>
+                                            )}
+                                        </TableCell>
+                                        <TableCell className="text-[13px] font-semibold text-gray-900 whitespace-nowrap">
+                                            {fp(item.total_price)}
+                                        </TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
 
                         {/* Snapshot note */}
                         <p className="mt-3 text-[11px] text-gray-400 italic px-0.5">

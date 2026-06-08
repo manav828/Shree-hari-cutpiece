@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { CACHE_TAGS } from "@/lib/cache";
 import {
     BLOG_SORT_FIELDS,
     isThemeAgnosticLayout,
@@ -200,6 +202,7 @@ export async function POST(req: NextRequest) {
 
         if (revisionError) throw revisionError;
 
+        revalidateTag(CACHE_TAGS.blogPosts);
         return NextResponse.json({ post }, { status: 201 });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to create blog post";
@@ -232,6 +235,7 @@ export async function PATCH(req: NextRequest) {
                 .single();
 
             if (error) throw error;
+            revalidateTag(CACHE_TAGS.blogPosts);
             return NextResponse.json({ post: data });
         }
 
@@ -250,6 +254,7 @@ export async function PATCH(req: NextRequest) {
                 .in("id", ids);
 
             if (error) throw error;
+            revalidateTag(CACHE_TAGS.blogPosts);
             return NextResponse.json({ ok: true, updated_count: ids.length });
         }
 
@@ -263,6 +268,7 @@ export async function PATCH(req: NextRequest) {
                 .in("id", ids);
 
             if (error) throw error;
+            revalidateTag(CACHE_TAGS.blogPosts);
             return NextResponse.json({ ok: true, deleted_count: ids.length });
         }
 

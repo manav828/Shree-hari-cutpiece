@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type BlogCategory = {
     id: string;
@@ -77,33 +78,6 @@ function formatDate(value: string | null) {
     });
 }
 
-const IST_OFFSET_MINUTES = 330;
-
-function toIstDateTimeInput(value: string | null) {
-    if (!value) return "";
-    const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "";
-    const istDate = new Date(date.getTime() + IST_OFFSET_MINUTES * 60000);
-    const pad = (num: number) => String(num).padStart(2, "0");
-    return `${istDate.getUTCFullYear()}-${pad(istDate.getUTCMonth() + 1)}-${pad(istDate.getUTCDate())}T${pad(istDate.getUTCHours())}:${pad(istDate.getUTCMinutes())}`;
-}
-
-function toIsoDateTimeFromIst(value: string | null): string | null {
-    if (!value) return null;
-    const [datePart, timePart] = value.split("T");
-    if (!datePart || !timePart) return null;
-    const [yearRaw, monthRaw, dayRaw] = datePart.split("-");
-    const [hourRaw, minuteRaw] = timePart.split(":");
-    const year = Number(yearRaw);
-    const month = Number(monthRaw);
-    const day = Number(dayRaw);
-    const hour = Number(hourRaw);
-    const minute = Number(minuteRaw);
-    if ([year, month, day, hour, minute].some((val) => Number.isNaN(val))) return null;
-    const utcMs = Date.UTC(year, month - 1, day, hour, minute) - IST_OFFSET_MINUTES * 60000;
-    return new Date(utcMs).toISOString();
-}
-
 function formatIstDateTime(value: string | null) {
     if (!value) return "-";
     return new Date(value).toLocaleString("en-IN", {
@@ -115,11 +89,6 @@ function formatIstDateTime(value: string | null) {
         hour12: true,
         timeZone: "Asia/Kolkata",
     });
-}
-
-function getLivePath(language: BlogListPost["language"], slug: string) {
-    const base = language === "hi" ? "/hi/blogs" : "/blogs";
-    return `${base}/${slug}`;
 }
 
 export default function AdminBlog() {
@@ -140,11 +109,10 @@ export default function AdminBlog() {
     const [dateFrom, setDateFrom] = useState("");
     const [dateTo, setDateTo] = useState("");
     const [page, setPage] = useState(1);
-    const [limit, setLimit] = useState(20);
+    const [limit, setLimit] = useState(25);
     const [total, setTotal] = useState(0);
     const [totalPages, setTotalPages] = useState(1);
     const [selected, setSelected] = useState<Record<string, boolean>>({});
-    const [scheduledDrafts, setScheduledDrafts] = useState<Record<string, string>>({});
 
     const params = useMemo(() => {
         const query = new URLSearchParams();
@@ -290,37 +258,7 @@ export default function AdminBlog() {
         setSelected(next);
     };
 
-    const updateQuickEdit = async (postId: string, nextStatus: BlogListPost["status"], scheduledFor?: string | null) => {
-        try {
-            const normalizedSchedule = nextStatus === "scheduled" ? toIsoDateTimeFromIst(scheduledFor ?? null) : null;
-            const res = await fetch("/api/admin/blogs", {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    action: "quick-edit",
-                    id: postId,
-                    status: nextStatus,
-                    scheduled_for: normalizedSchedule,
-                }),
-            });
 
-            const json = await res.json();
-            if (!res.ok) throw new Error(json.error || "Failed to update post status");
-
-            setPosts((prev) => prev.map((post) => (
-                post.id === postId
-                    ? {
-                        ...post,
-                        status: json.post.status,
-                        scheduled_for: json.post.scheduled_for ?? null,
-                        published_at: json.post.published_at ?? post.published_at,
-                    }
-                    : post
-            )));
-        } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to update post");
-        }
-    };
 
     const runBulkAction = async (action: "publish" | "unpublish" | "delete") => {
         if (selectedIds.length === 0) return;
@@ -555,22 +493,8 @@ export default function AdminBlog() {
                                 className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
                             />
                         </div>
-                        <div>
-                            <label className="block text-xs text-gray-500 mb-1">Rows Per Page</label>
-                            <select
-                                value={limit}
-                                onChange={(e) => {
-                                    setLimit(Number(e.target.value));
-                                    setPage(1);
-                                }}
-                                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm bg-white"
-                            >
-                                <option value={20}>20 / page</option>
-                                <option value={50}>50 / page</option>
-                                <option value={100}>100 / page</option>
-                            </select>
-                        </div>
-                        <div className="flex items-end">
+
+                        <div className="flex items-end sm:col-span-2">
                             <button
                                 onClick={() => {
                                     setSearch("");
@@ -592,43 +516,41 @@ export default function AdminBlog() {
             </div>
 
             <div className="mt-4 bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Blog Listing</h2>
-                    {selectedIds.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                            <span className="text-gray-600">{selectedIds.length} selected</span>
-                            <button
-                                onClick={() => runBulkAction("publish")}
-                                className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
-                            >
-                                Publish
-                            </button>
-                            <button
-                                onClick={() => runBulkAction("unpublish")}
-                                className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
-                            >
-                                Unpublish
-                            </button>
-                            <button
-                                onClick={() => runBulkAction("delete")}
-                                className="px-3 py-1.5 rounded border border-red-200 text-xs font-medium text-red-700 hover:bg-red-50"
-                            >
-                                Delete
-                            </button>
-                        </div>
-                    )}
-                </div>
+                {selectedIds.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-2 text-xs mb-4">
+                        <span className="text-gray-600">{selectedIds.length} selected</span>
+                        <button
+                            onClick={() => runBulkAction("publish")}
+                            className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
+                        >
+                            Publish
+                        </button>
+                        <button
+                            onClick={() => runBulkAction("unpublish")}
+                            className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
+                        >
+                            Unpublish
+                        </button>
+                        <button
+                            onClick={() => runBulkAction("delete")}
+                            className="px-3 py-1.5 rounded border border-red-200 text-xs font-medium text-red-700 hover:bg-red-50"
+                        >
+                            Delete
+                        </button>
+                    </div>
+                )}
 
                 {loading ? (
                     <p className="text-sm text-gray-500">Loading posts...</p>
                 ) : posts.length === 0 ? (
                     <p className="text-sm text-gray-500">No blog posts found.</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full text-sm">
                             <thead>
                                 <tr className="text-left text-gray-500 border-b border-gray-200">
-                                    <th className="py-2 pr-4">
+                                    <th className="py-2 pl-6 pr-4">
                                         <input
                                             type="checkbox"
                                             checked={selectedIds.length > 0 && selectedIds.length === posts.length}
@@ -639,11 +561,11 @@ export default function AdminBlog() {
                                     <th className="py-2 pr-4">Category</th>
                                     <th className="py-2 pr-4">Language</th>
                                     <th className="py-2 pr-4">Status</th>
-                                    <th className="py-2 pr-4">Schedule</th>
-                                    <th className="py-2 pr-4">Publish Date</th>
-                                    <th className="py-2 pr-4">Views (30d)</th>
-                                    <th className="py-2 pr-4">Health</th>
-                                    <th className="py-2">Quick Edit</th>
+                                    <th className="py-2 pr-4 text-left">Schedule</th>
+                                    <th className="py-2 pr-4 text-left">Publish Date</th>
+                                    <th className="py-2 pr-4 text-left">Views (30d)</th>
+                                    <th className="py-2 pr-4 text-left">Health</th>
+                                    <th className="py-2 pl-4 pr-6 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -652,12 +574,10 @@ export default function AdminBlog() {
                                     const lowTraffic = healthFlags.lowTraffic.has(post.id);
                                     const seoIncomplete = healthFlags.seoIncomplete.has(post.id);
                                     const unlinked = healthFlags.unlinked.has(post.id);
-                                    const scheduledValue = scheduledDrafts[post.id] ?? toIstDateTimeInput(post.scheduled_for);
-                                    const livePath = getLivePath(post.language, post.slug);
 
                                     return (
                                         <tr key={post.id} className="border-b border-gray-100">
-                                            <td className="py-3 pr-4">
+                                            <td className="py-3 pl-6 pr-4">
                                                 <input
                                                     type="checkbox"
                                                     checked={Boolean(selected[post.id])}
@@ -685,16 +605,8 @@ export default function AdminBlog() {
                                                     {STATUS_LABELS[post.status]}
                                                 </span>
                                             </td>
-                                            <td className="py-3 pr-4">
-                                                <div className="flex flex-col gap-1">
-                                                    <input
-                                                        type="datetime-local"
-                                                        value={scheduledValue}
-                                                        onChange={(e) => setScheduledDrafts((prev) => ({ ...prev, [post.id]: e.target.value }))}
-                                                        className="px-2 py-1 rounded border border-gray-300 text-xs"
-                                                    />
-                                                    <span className="text-[10px] text-gray-400">IST</span>
-                                                </div>
+                                            <td className="py-3 pr-4 text-gray-750 whitespace-nowrap">
+                                                {formatIstDateTime(post.scheduled_for)}
                                             </td>
                                             <td className="py-3 pr-4 text-gray-700">{formatDate(post.published_at)}</td>
                                             <td className="py-3 pr-4 text-gray-700">{views}</td>
@@ -708,42 +620,14 @@ export default function AdminBlog() {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td className="py-3">
-                                                <div className="flex flex-col gap-2">
-                                                    <select
-                                                        value={post.status}
-                                                        onChange={(e) => updateQuickEdit(post.id, e.target.value as BlogListPost["status"], scheduledValue || null)}
-                                                        className="px-2 py-1 rounded border border-gray-300 text-xs bg-white"
+                                            <td className="py-3 pl-4 pr-6 text-right whitespace-nowrap">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <Link
+                                                        href={`/admin/blog/${post.id}`}
+                                                        className="px-3 py-1.5 rounded border border-gray-300 text-xs font-semibold text-gray-750 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-200 transition-colors shadow-xs bg-white"
                                                     >
-                                                        <option value="draft">Draft</option>
-                                                        <option value="scheduled">Scheduled</option>
-                                                        <option value="published">Published</option>
-                                                        <option value="unpublished">Unpublished</option>
-                                                    </select>
-                                                    <button
-                                                        onClick={() => updateQuickEdit(post.id, "scheduled", scheduledValue || null)}
-                                                        className="px-2 py-1 rounded border border-gray-300 text-xs hover:bg-gray-50"
-                                                    >
-                                                        Save Schedule
-                                                    </button>
-                                                    <div className="flex flex-wrap items-center gap-2">
-                                                        <Link
-                                                            href={`/admin/blog/${post.id}`}
-                                                            className="px-2 py-1 rounded border border-gray-300 text-[11px] hover:bg-gray-50"
-                                                        >
-                                                            Edit
-                                                        </Link>
-                                                        {post.status === "published" && (
-                                                            <Link
-                                                                href={livePath}
-                                                                target="_blank"
-                                                                rel="noreferrer"
-                                                                className="px-2 py-1 rounded border border-gray-300 text-[11px] hover:bg-gray-50"
-                                                            >
-                                                                View Live
-                                                            </Link>
-                                                        )}
-                                                    </div>
+                                                        Edit
+                                                    </Link>
                                                 </div>
                                             </td>
                                         </tr>
@@ -752,29 +636,55 @@ export default function AdminBlog() {
                             </tbody>
                         </table>
                     </div>
-                )}
 
-                <div className="mt-4 flex items-center justify-between text-sm text-gray-600">
-                    <p>
-                        Page {page} of {totalPages}
-                    </p>
-                    <div className="flex items-center gap-2">
-                        <button
-                            onClick={() => setPage((prev) => Math.max(prev - 1, 1))}
-                            disabled={page <= 1 || loading}
-                            className="px-3 py-1.5 rounded border border-gray-300 disabled:opacity-50"
-                        >
-                            Previous
-                        </button>
-                        <button
-                            onClick={() => setPage((prev) => Math.min(prev + 1, totalPages))}
-                            disabled={page >= totalPages || loading}
-                            className="px-3 py-1.5 rounded border border-gray-300 disabled:opacity-50"
-                        >
-                            Next
-                        </button>
+                    {/* Pagination Footer */}
+                    <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
+                        <p className="text-[12px] text-gray-500">
+                            Showing{" "}
+                            <span className="font-medium text-gray-700">
+                                {posts.length > 0 ? (page - 1) * limit + 1 : 0}–
+                                {Math.min(page * limit, total)}
+                            </span>{" "}
+                            of <span className="font-medium text-gray-700">{total}</span> blogs
+                        </p>
+                        <div className="flex items-center justify-center">
+                            <select
+                                value={limit}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-600 outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={250}>250</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                disabled={page <= 1 || loading}
+                                className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="px-3 py-1 text-[12px] text-gray-600 font-medium">
+                                {page} / {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={page >= totalPages || loading}
+                                className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
                 </div>
+            )}
             </div>
         </div>
     );

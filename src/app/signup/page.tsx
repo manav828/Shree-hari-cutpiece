@@ -46,7 +46,12 @@ export default function SignupPage() {
         const result = await signup(formData.name.trim(), formData.email.trim(), "", formData.password);
 
         if (result.success) {
-            router.push("/account");
+            let redirectUrl = "/account";
+            if (typeof window !== "undefined") {
+                const params = new URLSearchParams(window.location.search);
+                redirectUrl = params.get("redirect") || "/account";
+            }
+            router.push(redirectUrl);
         } else {
             setError(result.error || "Something went wrong.");
             setIsLoading(false);
@@ -79,6 +84,15 @@ export default function SignupPage() {
 
                 <section className="relative z-10 flex h-full w-full items-center justify-center bg-[#fcf9f4] px-[clamp(1rem,3vw,2.25rem)] py-[clamp(0.75rem,2.4vh,2rem)] shadow-[-20px_0_40px_rgba(28,28,25,0.02)] md:w-1/2 md:shadow-none lg:px-[clamp(2.5rem,5vw,5.5rem)]">
                     <div className="w-full max-w-md">
+                        <Link 
+                            href="/" 
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#56423d] hover:text-[#9f3f29] transition-colors mb-6"
+                        >
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Home
+                        </Link>
                         <div className="mb-4 md:hidden">
                             <Link href="/" className={`${headingFont.className} text-3xl italic text-[#9f3f29]`}>
                                 The Artisanal Archive
@@ -214,7 +228,13 @@ export default function SignupPage() {
 
                         <p className="mt-[clamp(0.55rem,1.3vh,1rem)] text-center text-sm text-[#56423d]">
                             Already part of the circle?{" "}
-                            <Link href="/login" className="font-semibold text-[#9f3f29] transition-colors hover:text-[#bf573f]">
+                            <Link 
+                                href={typeof window !== "undefined" && new URLSearchParams(window.location.search).get("redirect") 
+                                    ? `/login?redirect=${encodeURIComponent(new URLSearchParams(window.location.search).get("redirect")!)}` 
+                                    : "/login"
+                                } 
+                                className="font-semibold text-[#9f3f29] transition-colors hover:text-[#bf573f]"
+                            >
                                 Log in here
                             </Link>
                         </p>

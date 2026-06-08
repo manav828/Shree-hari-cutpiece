@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Link from "next/link";
 import { FormEvent, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
@@ -437,8 +438,11 @@ export default function CheckoutPage() {
               ) : null}
 
               {!user && !isLoading ? (
-                <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-                  Please sign in before payment. We will redirect you if you continue.
+                <div className="mb-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 flex items-center justify-between">
+                  <span>Please sign in to complete your checkout.</span>
+                  <Link href="/login?redirect=/checkout" className="underline font-semibold hover:text-amber-950">
+                    Sign In Now
+                  </Link>
                 </div>
               ) : null}
 
@@ -621,7 +625,7 @@ export default function CheckoutPage() {
                   {items.map((item) => (
                     <article key={item.id} className="flex gap-3">
                       <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#dfd8d1]">
-                        <Image src={item.image} alt={item.name} width={140} height={180} className="h-full w-full object-cover" />
+                        <Image src={getThumbnailUrl(item.image)} alt={item.name} width={140} height={180} className="h-full w-full object-cover" />
                       </div>
                       <div>
                         <h4 className="text-sm font-semibold text-[#1c1c19]">{item.name}</h4>
@@ -653,22 +657,31 @@ export default function CheckoutPage() {
                   <span className={`${bohemianHeadingFont.className} text-4xl text-[#9f3f29]`}>{currencyFormatter.format(finalTotal)}</span>
                 </div>
 
-                <button
-                  type="submit"
-                  disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
-                  className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65"
-                >
-                  {isSubmitting ? (
-                    <span className="inline-flex items-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
-                    </span>
-                  ) : selectedGateway === "cod" ? (
-                    "Place Order (Cash on Delivery)"
-                  ) : (
-                    "Place Order & Pay"
-                  )}
-                </button>
+                {!user ? (
+                  <Link
+                    href="/login?redirect=/checkout"
+                    className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] text-center"
+                  >
+                    Login to Place Order
+                  </Link>
+                ) : (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
+                    className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65"
+                  >
+                    {isSubmitting ? (
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
+                      </span>
+                    ) : selectedGateway === "cod" ? (
+                      "Place Order (Cash on Delivery)"
+                    ) : (
+                      "Place Order & Pay"
+                    )}
+                  </button>
+                )}
 
                 <p className="mt-4 flex items-center justify-center gap-2 text-[11px] uppercase tracking-[0.12em] text-[#7a6f68]">
                   <ShieldCheck className="h-3.5 w-3.5" />

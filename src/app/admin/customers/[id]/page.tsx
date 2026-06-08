@@ -5,6 +5,10 @@ import { Fragment, useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Mail, Phone, MapPin, Package, User, StickyNote, ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
 import type { AdminCustomerDetails, CustomerAccountStatus, CustomerInteraction } from "@/types/customers";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
+import { Input } from "@/components/admin/ui/Input";
+import { Select } from "@/components/admin/ui/Select";
+import { Textarea } from "@/components/admin/ui/Textarea";
 
 function formatDate(value: string | null) {
     if (!value) return "—";
@@ -427,103 +431,101 @@ export default function AdminCustomerDetailPage() {
                         {details.orders.length === 0 ? (
                             <p className="text-sm text-gray-500">No orders found for this customer.</p>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="text-left text-gray-500 border-b border-gray-200">
-                                            <th className="py-2 pr-4"> </th>
-                                            <th className="py-2 pr-4">Order #</th>
-                                            <th className="py-2 pr-4">Date</th>
-                                            <th className="py-2 pr-4">Status</th>
-                                            <th className="py-2 pr-4">Payment</th>
-                                            <th className="py-2 pr-4">Items</th>
-                                            <th className="py-2 pr-4">Coupon</th>
-                                            <th className="py-2 pr-4">Discount</th>
-                                            <th className="py-2">Total</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {details.orders.map((order) => (
-                                            <Fragment key={order.id}>
-                                                <tr className="border-b border-gray-100">
-                                                    <td className="py-3 pr-2">
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => setExpandedOrderId((prev) => (prev === order.id ? null : order.id))}
-                                                            className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
-                                                            title={expandedOrderId === order.id ? "Collapse order details" : "Expand order details"}
-                                                        >
-                                                            {expandedOrderId === order.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                                                        </button>
-                                                    </td>
-                                                    <td className="py-3 pr-4 font-medium text-gray-900">
-                                                        <Link href={`/admin/orders/${order.id}`} className="hover:underline">
-                                                            {order.order_number}
-                                                        </Link>
-                                                    </td>
-                                                    <td className="py-3 pr-4 text-gray-700">{formatDate(order.created_at)}</td>
-                                                    <td className="py-3 pr-4 text-gray-700 capitalize">{order.status}</td>
-                                                    <td className="py-3 pr-4 text-gray-700 capitalize">{order.payment_status}</td>
-                                                    <td className="py-3 pr-4 text-gray-700">
-                                                        {order.item_lines} lines · {order.units_count} units
-                                                    </td>
-                                                    <td className="py-3 pr-4 text-gray-700">{order.coupon_code || "—"}</td>
-                                                    <td className="py-3 pr-4 text-gray-700">
-                                                        {order.discount_amount > 0 ? formatInr(order.discount_amount) : "—"}
-                                                    </td>
-                                                    <td className="py-3 text-gray-700 font-medium">{formatInr(order.total_amount)}</td>
-                                                </tr>
+                            <Table wrapperClassName="border-0 rounded-none shadow-none">
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-10 pr-0"></TableHead>
+                                        <TableHead>Order #</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead>Payment</TableHead>
+                                        <TableHead>Items</TableHead>
+                                        <TableHead>Coupon</TableHead>
+                                        <TableHead>Discount</TableHead>
+                                        <TableHead>Total</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {details.orders.map((order) => (
+                                        <Fragment key={order.id}>
+                                            <TableRow>
+                                                <TableCell className="pr-0">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setExpandedOrderId((prev) => (prev === order.id ? null : order.id))}
+                                                        className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-gray-200 text-gray-500 hover:bg-gray-50"
+                                                        title={expandedOrderId === order.id ? "Collapse order details" : "Expand order details"}
+                                                    >
+                                                        {expandedOrderId === order.id ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                                                    </button>
+                                                </TableCell>
+                                                <TableCell className="font-medium text-gray-900">
+                                                    <Link href={`/admin/orders/${order.id}`} className="hover:underline">
+                                                        {order.order_number}
+                                                    </Link>
+                                                </TableCell>
+                                                <TableCell>{formatDate(order.created_at)}</TableCell>
+                                                <TableCell className="capitalize">{order.status}</TableCell>
+                                                <TableCell className="capitalize">{order.payment_status}</TableCell>
+                                                <TableCell>
+                                                    {order.item_lines} lines · {order.units_count} units
+                                                </TableCell>
+                                                <TableCell>{order.coupon_code || "—"}</TableCell>
+                                                <TableCell>
+                                                    {order.discount_amount > 0 ? formatInr(order.discount_amount) : "—"}
+                                                </TableCell>
+                                                <TableCell className="font-medium">{formatInr(order.total_amount)}</TableCell>
+                                            </TableRow>
 
-                                                {expandedOrderId === order.id && (
-                                                    <tr className="border-b border-gray-100 bg-gray-50/50">
-                                                        <td colSpan={9} className="py-3 pl-12 pr-4">
-                                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-700">
-                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                                                                    <p className="text-[11px] uppercase text-gray-500 mb-1">Amount Breakdown</p>
-                                                                    <p>Subtotal: {formatInr(order.subtotal)}</p>
-                                                                    <p>Shipping: {formatInr(order.shipping_amount)}</p>
-                                                                    <p>Discount: {formatInr(order.discount_amount)}</p>
-                                                                    <p className="font-semibold text-gray-900 mt-1">Total: {formatInr(order.total_amount)}</p>
-                                                                </div>
-                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                                                                    <p className="text-[11px] uppercase text-gray-500 mb-1">Delivery Snapshot</p>
-                                                                    <p>
-                                                                        {order.shipping_city || "—"}
-                                                                        {order.shipping_state ? `, ${order.shipping_state}` : ""}
-                                                                    </p>
-                                                                    <p>{order.shipping_pincode || "—"}</p>
-                                                                    <p className="mt-1">Placed: {formatDateTime(order.created_at)}</p>
-                                                                </div>
-                                                                <div className="rounded-lg border border-gray-200 bg-white p-3">
-                                                                    <p className="text-[11px] uppercase text-gray-500 mb-2">Quick Actions</p>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Link
-                                                                            href={`/admin/orders/${order.id}`}
-                                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
-                                                                        >
-                                                                            <ExternalLink className="w-3.5 h-3.5" />
-                                                                            Open Order
-                                                                        </Link>
-                                                                        <Link
-                                                                            href={`/admin/orders/${order.id}/print`}
-                                                                            target="_blank"
-                                                                            rel="noopener noreferrer"
-                                                                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
-                                                                        >
-                                                                            <ExternalLink className="w-3.5 h-3.5" />
-                                                                            Invoice / Print
-                                                                        </Link>
-                                                                    </div>
+                                            {expandedOrderId === order.id && (
+                                                <TableRow className="bg-gray-50/50">
+                                                    <TableCell colSpan={9} className="py-3 pl-12 pr-4">
+                                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs text-gray-700">
+                                                            <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                <p className="text-[11px] uppercase text-gray-500 mb-1">Amount Breakdown</p>
+                                                                <p>Subtotal: {formatInr(order.subtotal)}</p>
+                                                                <p>Shipping: {formatInr(order.shipping_amount)}</p>
+                                                                <p>Discount: {formatInr(order.discount_amount)}</p>
+                                                                <p className="font-semibold text-gray-900 mt-1">Total: {formatInr(order.total_amount)}</p>
+                                                            </div>
+                                                            <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                <p className="text-[11px] uppercase text-gray-500 mb-1">Delivery Snapshot</p>
+                                                                <p>
+                                                                    {order.shipping_city || "—"}
+                                                                    {order.shipping_state ? `, ${order.shipping_state}` : ""}
+                                                                </p>
+                                                                <p>{order.shipping_pincode || "—"}</p>
+                                                                <p className="mt-1">Placed: {formatDateTime(order.created_at)}</p>
+                                                            </div>
+                                                            <div className="rounded-lg border border-gray-200 bg-white p-3">
+                                                                <p className="text-[11px] uppercase text-gray-500 mb-2">Quick Actions</p>
+                                                                <div className="flex items-center gap-2">
+                                                                    <Link
+                                                                        href={`/admin/orders/${order.id}`}
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
+                                                                    >
+                                                                        <ExternalLink className="w-3.5 h-3.5" />
+                                                                        Open Order
+                                                                    </Link>
+                                                                    <Link
+                                                                        href={`/admin/orders/${order.id}/print`}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md border border-gray-200 hover:bg-gray-50"
+                                                                    >
+                                                                        <ExternalLink className="w-3.5 h-3.5" />
+                                                                        Invoice / Print
+                                                                    </Link>
                                                                 </div>
                                                             </div>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </Fragment>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </Fragment>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         )}
                     </Card>
                 </div>
@@ -556,49 +558,49 @@ export default function AdminCustomerDetailPage() {
                                 {editingAddressId ? "Edit Address" : "Add Address"}
                             </p>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                <input
+                                <Input
                                     value={addressForm.full_name}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, full_name: e.target.value }))}
                                     placeholder="Full name *"
-                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                    className="bg-white"
                                 />
-                                <input
+                                <Input
                                     value={addressForm.phone}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
                                     placeholder="Phone *"
-                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                    className="bg-white"
                                 />
                             </div>
-                            <input
+                            <Input
                                 value={addressForm.address_line1}
                                 onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line1: e.target.value }))}
                                 placeholder="Address line 1 *"
-                                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                className="bg-white"
                             />
-                            <input
+                            <Input
                                 value={addressForm.address_line2}
                                 onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line2: e.target.value }))}
                                 placeholder="Address line 2"
-                                className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                className="bg-white"
                             />
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                <input
+                                <Input
                                     value={addressForm.city}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))}
                                     placeholder="City *"
-                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                    className="bg-white"
                                 />
-                                <input
+                                <Input
                                     value={addressForm.state}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
                                     placeholder="State *"
-                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                    className="bg-white"
                                 />
-                                <input
+                                <Input
                                     value={addressForm.pincode}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, pincode: e.target.value }))}
                                     placeholder="Pincode *"
-                                    className="px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                    className="bg-white"
                                 />
                             </div>
                             <div className="flex items-center gap-4 text-xs text-gray-700">
@@ -698,28 +700,24 @@ export default function AdminCustomerDetailPage() {
 
                     <Card title="Notes & Account" icon={StickyNote}>
                         <div className="space-y-3">
-                            <div>
-                                <label className="text-xs text-gray-500 block mb-1">Account Status</label>
-                                <select
-                                    value={statusInput}
-                                    onChange={(e) => setStatusInput(e.target.value as CustomerAccountStatus)}
-                                    className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm bg-white"
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="suspended">Suspended</option>
-                                    <option value="blocked">Blocked</option>
-                                </select>
-                            </div>
+                            <Select
+                                label="Account Status"
+                                value={statusInput}
+                                onChange={(e) => setStatusInput(e.target.value as CustomerAccountStatus)}
+                                className="bg-white"
+                            >
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="blocked">Blocked</option>
+                            </Select>
 
-                            <div>
-                                <label className="text-xs text-gray-500 block mb-1">Internal Notes</label>
-                                <textarea
-                                    value={notesInput}
-                                    onChange={(e) => setNotesInput(e.target.value)}
-                                    className="w-full min-h-[100px] px-3 py-2 rounded-md border border-gray-300 text-sm"
-                                    placeholder="Add internal notes for support/admin team"
-                                />
-                            </div>
+                            <Textarea
+                                label="Internal Notes"
+                                value={notesInput}
+                                onChange={(e) => setNotesInput(e.target.value)}
+                                className="bg-white min-h-[100px]"
+                                placeholder="Add internal notes for support/admin team"
+                            />
 
                             <button
                                 onClick={saveProfile}
@@ -769,10 +767,10 @@ export default function AdminCustomerDetailPage() {
 
                     <Card title="Recent Interactions" icon={StickyNote}>
                         <div className="space-y-3 mb-4">
-                            <textarea
+                            <Textarea
                                 value={noteInput}
                                 onChange={(e) => setNoteInput(e.target.value)}
-                                className="w-full min-h-[80px] px-3 py-2 rounded-md border border-gray-300 text-sm"
+                                className="bg-white min-h-[80px]"
                                 placeholder="Add a new interaction note"
                             />
                             <button

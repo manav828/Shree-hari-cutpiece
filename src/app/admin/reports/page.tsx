@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
+import { Input } from "@/components/admin/ui/Input";
 import {
     TrendingUp,
-    IndianRupee,
     ShoppingBag,
     Calendar,
     Download,
@@ -161,7 +162,7 @@ export default function AdminReports() {
     const [sortField, setSortField] = useState<string>("");
     const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(15);
+    const [limit, setLimit] = useState(25);
     
     // Overview sub-tab (temporal grouping mode)
     const [timeGrouping, setTimeGrouping] = useState<"day" | "week" | "month" | "year">("day");
@@ -581,12 +582,12 @@ export default function AdminReports() {
 
     // Client-side pagination split
     const paginatedDataset = useMemo(() => {
-        const from = (currentPage - 1) * pageSize;
-        const to = from + pageSize;
+        const from = (currentPage - 1) * limit;
+        const to = from + limit;
         return sortedDataset.slice(from, to);
-    }, [sortedDataset, currentPage, pageSize]);
+    }, [sortedDataset, currentPage, limit]);
 
-    const totalPages = Math.max(1, Math.ceil(sortedDataset.length / pageSize));
+    const totalPages = Math.max(1, Math.ceil(sortedDataset.length / limit));
 
     const handleSort = (field: string) => {
         if (sortField === field) {
@@ -761,29 +762,29 @@ export default function AdminReports() {
                 {/* Date Inputs */}
                 <div className="flex items-center gap-3">
                     <div className="relative">
-                        <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                        <Input
                             type="date"
                             value={startDate}
                             onChange={(e) => {
                                 setPreset("custom");
                                 setStartDate(e.target.value);
                             }}
-                            className="pl-9 pr-3 py-2 text-[13px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white text-gray-700"
+                            className="pl-9 bg-white text-gray-700"
                             title="From date"
                         />
                     </div>
                     <span className="text-gray-400 text-sm">to</span>
                     <div className="relative">
-                        <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input
+                        <Calendar className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                        <Input
                             type="date"
                             value={endDate}
                             onChange={(e) => {
                                 setPreset("custom");
                                 setEndDate(e.target.value);
                             }}
-                            className="pl-9 pr-3 py-2 text-[13px] border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 bg-white text-gray-700"
+                            className="pl-9 bg-white text-gray-700"
                             title="To date"
                         />
                     </div>
@@ -880,13 +881,13 @@ export default function AdminReports() {
 
                         {/* Search Input */}
                         <div className="relative max-w-xs w-full">
-                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                            <input
+                            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 z-10" />
+                            <Input
                                 type="text"
                                 placeholder={`Search ${activeTab} data...`}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-9 pr-3 py-1.5 text-xs border border-gray-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 bg-white"
+                                className="pl-9 bg-white"
                             />
                         </div>
                     </div>
@@ -904,226 +905,226 @@ export default function AdminReports() {
                                 <span>No data found for this date range.</span>
                             </div>
                         ) : (
-                            <table className="w-full text-[13px]">
-                                <thead>
-                                    <tr className="border-b border-gray-100 bg-gray-50/50 select-none">
+                            <Table className="text-[13px]" wrapperClassName="border-0 rounded-none">
+                                <TableHeader>
+                                    <TableRow className="border-b border-gray-100 bg-gray-50/50 select-none hover:bg-gray-50/50">
                                         
                                         {/* Render Headers Dynamically based on active tab */}
                                         {activeTab === "overview" && (
                                             <>
-                                                <th onClick={() => handleSort("label")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("label")} className="text-left text-[10px] cursor-pointer group">
                                                     Period <SortIcon field="label" />
-                                                </th>
-                                                <th onClick={() => handleSort("orders")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("orders")} className="text-left text-[10px] cursor-pointer group">
                                                     Orders <SortIcon field="orders" />
-                                                </th>
-                                                <th onClick={() => handleSort("gross")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("gross")} className="text-left text-[10px] cursor-pointer group">
                                                     Gross Sales <SortIcon field="gross" />
-                                                </th>
-                                                <th onClick={() => handleSort("returns")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("returns")} className="text-left text-[10px] cursor-pointer group">
                                                     Returns <SortIcon field="returns" />
-                                                </th>
-                                                <th onClick={() => handleSort("net")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("net")} className="text-left text-[10px] cursor-pointer group">
                                                     Net Sales <SortIcon field="net" />
-                                                </th>
-                                                <th onClick={() => handleSort("aov")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("aov")} className="text-left text-[10px] cursor-pointer group">
                                                     Avg Order Value <SortIcon field="aov" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "orders" && (
                                             <>
-                                                <th onClick={() => handleSort("order_number")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("order_number")} className="text-left text-[10px] cursor-pointer group">
                                                     Order # <SortIcon field="order_number" />
-                                                </th>
-                                                <th onClick={() => handleSort("created_at")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("created_at")} className="text-left text-[10px] cursor-pointer group">
                                                     Date <SortIcon field="created_at" />
-                                                </th>
-                                                <th onClick={() => handleSort("customer")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("customer")} className="text-left text-[10px] cursor-pointer group">
                                                     Customer <SortIcon field="customer" />
-                                                </th>
-                                                <th onClick={() => handleSort("payment_method")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("payment_method")} className="text-left text-[10px] cursor-pointer group">
                                                     Payment Method <SortIcon field="payment_method" />
-                                                </th>
-                                                <th onClick={() => handleSort("subtotal")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("subtotal")} className="text-left text-[10px] cursor-pointer group">
                                                     Subtotal <SortIcon field="subtotal" />
-                                                </th>
-                                                <th onClick={() => handleSort("discount")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("discount")} className="text-left text-[10px] cursor-pointer group">
                                                     Discount <SortIcon field="discount" />
-                                                </th>
-                                                <th onClick={() => handleSort("shipping")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("shipping")} className="text-left text-[10px] cursor-pointer group">
                                                     Shipping <SortIcon field="shipping" />
-                                                </th>
-                                                <th onClick={() => handleSort("total")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total")} className="text-left text-[10px] cursor-pointer group">
                                                     Total <SortIcon field="total" />
-                                                </th>
-                                                <th onClick={() => handleSort("status")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("status")} className="text-left text-[10px] cursor-pointer group">
                                                     Order Status <SortIcon field="status" />
-                                                </th>
-                                                <th onClick={() => handleSort("payment_status")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("payment_status")} className="text-left text-[10px] cursor-pointer group">
                                                     Payment Status <SortIcon field="payment_status" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "items" && (
                                             <>
-                                                <th onClick={() => handleSort("order_number")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("order_number")} className="text-left text-[10px] cursor-pointer group">
                                                     Order # <SortIcon field="order_number" />
-                                                </th>
-                                                <th onClick={() => handleSort("created_at")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("created_at")} className="text-left text-[10px] cursor-pointer group">
                                                     Date <SortIcon field="created_at" />
-                                                </th>
-                                                <th onClick={() => handleSort("product_name")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("product_name")} className="text-left text-[10px] cursor-pointer group">
                                                     Product <SortIcon field="product_name" />
-                                                </th>
-                                                <th onClick={() => handleSort("color")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("color")} className="text-left text-[10px] cursor-pointer group">
                                                     Color/SKU <SortIcon field="color" />
-                                                </th>
-                                                <th onClick={() => handleSort("quantity")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("quantity")} className="text-left text-[10px] cursor-pointer group">
                                                     Qty/Meters <SortIcon field="quantity" />
-                                                </th>
-                                                <th onClick={() => handleSort("price_per_unit")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("price_per_unit")} className="text-left text-[10px] cursor-pointer group">
                                                     Unit Price <SortIcon field="price_per_unit" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_price")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_price")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Price <SortIcon field="total_price" />
-                                                </th>
-                                                <th onClick={() => handleSort("status")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("status")} className="text-left text-[10px] cursor-pointer group">
                                                     Order Status <SortIcon field="status" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "products" && (
                                             <>
-                                                <th onClick={() => handleSort("product_name")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("product_name")} className="text-left text-[10px] cursor-pointer group">
                                                     Product Name <SortIcon field="product_name" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_qty")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_qty")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Quantity Sold <SortIcon field="total_qty" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_revenue")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_revenue")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Revenue <SortIcon field="total_revenue" />
-                                                </th>
-                                                <th onClick={() => handleSort("order_count")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("order_count")} className="text-left text-[10px] cursor-pointer group">
                                                     Orders Count <SortIcon field="order_count" />
-                                                </th>
-                                                <th onClick={() => handleSort("aov")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("aov")} className="text-left text-[10px] cursor-pointer group">
                                                     Average Order Value <SortIcon field="aov" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "geography" && (
                                             <>
-                                                <th onClick={() => handleSort("type")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("type")} className="text-left text-[10px] cursor-pointer group">
                                                     Type <SortIcon field="type" />
-                                                </th>
-                                                <th onClick={() => handleSort("name")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("name")} className="text-left text-[10px] cursor-pointer group">
                                                     Location Name <SortIcon field="name" />
-                                                </th>
-                                                <th onClick={() => handleSort("orders")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("orders")} className="text-left text-[10px] cursor-pointer group">
                                                     Orders Count <SortIcon field="orders" />
-                                                </th>
-                                                <th onClick={() => handleSort("gross")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("gross")} className="text-left text-[10px] cursor-pointer group">
                                                     Gross Sales <SortIcon field="gross" />
-                                                </th>
-                                                <th onClick={() => handleSort("aov")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("aov")} className="text-left text-[10px] cursor-pointer group">
                                                     Average Order Value <SortIcon field="aov" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "coupons" && (
                                             <>
-                                                <th onClick={() => handleSort("code")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("code")} className="text-left text-[10px] cursor-pointer group">
                                                     Coupon Code <SortIcon field="code" />
-                                                </th>
-                                                <th onClick={() => handleSort("usage")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("usage")} className="text-left text-[10px] cursor-pointer group">
                                                     Usage Count <SortIcon field="usage" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_discount")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_discount")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Discount Given <SortIcon field="total_discount" />
-                                                </th>
-                                                <th onClick={() => handleSort("driven_sales")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("driven_sales")} className="text-left text-[10px] cursor-pointer group">
                                                     Driven Sales Revenue <SortIcon field="driven_sales" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "categories" && (
                                             <>
-                                                <th onClick={() => handleSort("category_name")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("category_name")} className="text-left text-[10px] cursor-pointer group">
                                                     Category Name <SortIcon field="category_name" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_qty")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_qty")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Quantity Sold <SortIcon field="total_qty" />
-                                                </th>
-                                                <th onClick={() => handleSort("total_revenue")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("total_revenue")} className="text-left text-[10px] cursor-pointer group">
                                                     Total Revenue <SortIcon field="total_revenue" />
-                                                </th>
-                                                <th onClick={() => handleSort("order_count")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("order_count")} className="text-left text-[10px] cursor-pointer group">
                                                     Orders Count <SortIcon field="order_count" />
-                                                </th>
-                                                <th onClick={() => handleSort("aov")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("aov")} className="text-left text-[10px] cursor-pointer group">
                                                     Average Order Value <SortIcon field="aov" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
 
                                         {activeTab === "payments" && (
                                             <>
-                                                <th onClick={() => handleSort("method")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                <TableHead onClick={() => handleSort("method")} className="text-left text-[10px] cursor-pointer group">
                                                     Payment Method <SortIcon field="method" />
-                                                </th>
-                                                <th onClick={() => handleSort("orders")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("orders")} className="text-left text-[10px] cursor-pointer group">
                                                     Orders Count <SortIcon field="orders" />
-                                                </th>
-                                                <th onClick={() => handleSort("gross")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("gross")} className="text-left text-[10px] cursor-pointer group">
                                                     Gross Sales <SortIcon field="gross" />
-                                                </th>
-                                                <th onClick={() => handleSort("aov")} className="px-4 py-3 text-left text-[10px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group">
+                                                </TableHead>
+                                                <TableHead onClick={() => handleSort("aov")} className="text-left text-[10px] cursor-pointer group">
                                                     Average Order Value <SortIcon field="aov" />
-                                                </th>
+                                                </TableHead>
                                             </>
                                         )}
                                         
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-gray-100 bg-white">
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody className="divide-y divide-gray-100 bg-white">
                                     
                                     {/* Render Rows Dynamically based on active tab */}
                                     {paginatedDataset.map((row: any, idx) => (
-                                        <tr key={row.id || row.key || row.code || row.name || row.category_name || row.method || idx} className="hover:bg-gray-50/50 transition-colors">
+                                        <TableRow key={row.id || row.key || row.code || row.name || row.category_name || row.method || idx} className="hover:bg-gray-50/50 transition-colors">
                                             
                                             {activeTab === "overview" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-medium text-gray-900">{row.label}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{row.orders}</td>
-                                                    <td className="px-4 py-3.5 text-gray-800 font-semibold">{formatPrice(row.gross)}</td>
-                                                    <td className="px-4 py-3.5 text-red-600 font-medium">{formatPrice(row.returns)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-semibold">{formatPrice(row.net)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{formatPrice(row.aov)}</td>
+                                                    <TableCell className="font-medium text-gray-900">{row.label}</TableCell>
+                                                    <TableCell className="text-gray-600">{row.orders}</TableCell>
+                                                    <TableCell className="text-gray-800 font-semibold">{formatPrice(row.gross)}</TableCell>
+                                                    <TableCell className="text-red-600 font-medium">{formatPrice(row.returns)}</TableCell>
+                                                    <TableCell className="text-gray-900 font-semibold">{formatPrice(row.net)}</TableCell>
+                                                    <TableCell className="text-gray-600">{formatPrice(row.aov)}</TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "orders" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-semibold text-indigo-600">
+                                                    <TableCell className="font-semibold text-indigo-600">
                                                         <a href={`/admin/orders/${row.id}`} className="hover:underline">
                                                             {row.order_number}
                                                         </a>
-                                                    </td>
-                                                    <td className="px-4 py-3.5 text-gray-500 text-[12px]">{formatDate(row.created_at)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-800 font-medium truncate max-w-[150px]" title={row.customer}>{row.customer}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{row.payment_method}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{formatPrice(row.subtotal)}</td>
-                                                    <td className="px-4 py-3.5 text-red-500">-{formatPrice(row.discount)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-500">+{formatPrice(row.shipping)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.total)}</td>
-                                                    <td className="px-4 py-3.5">
+                                                    </TableCell>
+                                                    <TableCell className="text-gray-500 text-[12px]">{formatDate(row.created_at)}</TableCell>
+                                                    <TableCell className="text-gray-800 font-medium truncate max-w-[150px]" title={row.customer}>{row.customer}</TableCell>
+                                                    <TableCell className="text-gray-600">{row.payment_method}</TableCell>
+                                                    <TableCell className="text-gray-600">{formatPrice(row.subtotal)}</TableCell>
+                                                    <TableCell className="text-red-500">-{formatPrice(row.discount)}</TableCell>
+                                                    <TableCell className="text-gray-500">+{formatPrice(row.shipping)}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.total)}</TableCell>
+                                                    <TableCell>
                                                         <span className={`inline-block px-2.5 py-1 text-[10px] font-bold uppercase rounded-full ${
                                                             row.status === "delivered" ? "bg-emerald-50 text-emerald-700" :
                                                             row.status === "cancelled" ? "bg-red-50 text-red-700" :
@@ -1131,117 +1132,132 @@ export default function AdminReports() {
                                                         }`}>
                                                             {row.status}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-4 py-3.5">
+                                                    </TableCell>
+                                                    <TableCell>
                                                         <span className={`inline-block px-2.5 py-1 text-[10px] font-bold uppercase rounded-full ${
                                                             row.payment_status === "paid" ? "bg-emerald-50 text-emerald-700" :
                                                             row.payment_status === "refunded" ? "bg-red-50 text-red-700" : "bg-amber-50 text-amber-700"
                                                         }`}>
                                                             {row.payment_status}
                                                         </span>
-                                                    </td>
+                                                    </TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "items" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-semibold text-indigo-600">{row.order_number}</td>
-                                                    <td className="px-4 py-3.5 text-gray-500 text-[12px]">{formatDate(row.created_at)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-800 font-medium max-w-[200px] truncate" title={row.product_name}>{row.product_name}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{row.color}</td>
-                                                    <td className="px-4 py-3.5 text-gray-800 font-medium">{row.quantity}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{formatPrice(row.price_per_unit)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.total_price)}</td>
-                                                    <td className="px-4 py-3.5">
+                                                    <TableCell className="font-semibold text-indigo-600">{row.order_number}</TableCell>
+                                                    <TableCell className="text-gray-500 text-[12px]">{formatDate(row.created_at)}</TableCell>
+                                                    <TableCell className="text-gray-800 font-medium max-w-[200px] truncate" title={row.product_name}>{row.product_name}</TableCell>
+                                                    <TableCell className="text-gray-600">{row.color}</TableCell>
+                                                    <TableCell className="text-gray-800 font-medium">{row.quantity}</TableCell>
+                                                    <TableCell className="text-gray-600">{formatPrice(row.price_per_unit)}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.total_price)}</TableCell>
+                                                    <TableCell>
                                                         <span className="text-[11px] font-semibold text-gray-600">{row.status}</span>
-                                                    </td>
+                                                    </TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "products" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-medium text-gray-900 max-w-[220px] truncate" title={row.product_name}>{row.product_name}</td>
-                                                    <td className="px-4 py-3.5 text-gray-700 font-medium">{row.total_qty}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.total_revenue)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{row.order_count}</td>
-                                                    <td className="px-4 py-3.5 text-gray-500">{formatPrice(row.aov)}</td>
+                                                    <TableCell className="font-medium text-gray-900 max-w-[220px] truncate" title={row.product_name}>{row.product_name}</TableCell>
+                                                    <TableCell className="text-gray-700 font-medium">{row.total_qty}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.total_revenue)}</TableCell>
+                                                    <TableCell className="text-gray-600">{row.order_count}</TableCell>
+                                                    <TableCell className="text-gray-500">{formatPrice(row.aov)}</TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "geography" && (
                                                 <>
-                                                    <td className="px-4 py-3.5">
+                                                    <TableCell>
                                                         <span className={`inline-block px-2 py-0.5 text-[10px] font-bold rounded ${
                                                             row.type === "State" ? "bg-indigo-50 text-indigo-700" : "bg-slate-100 text-slate-700"
                                                         }`}>
                                                             {row.type}
                                                         </span>
-                                                    </td>
-                                                    <td className="px-4 py-3.5 font-medium text-gray-900">{row.name}</td>
-                                                    <td className="px-4 py-3.5 text-gray-700">{row.orders}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.gross)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{formatPrice(row.aov)}</td>
+                                                    </TableCell>
+                                                    <TableCell className="font-medium text-gray-900">{row.name}</TableCell>
+                                                    <TableCell className="text-gray-700">{row.orders}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.gross)}</TableCell>
+                                                    <TableCell className="text-gray-600">{formatPrice(row.aov)}</TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "coupons" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-bold text-indigo-600 tracking-wider">{row.code}</td>
-                                                    <td className="px-4 py-3.5 text-gray-700 font-medium">{row.usage}</td>
-                                                    <td className="px-4 py-3.5 text-red-600 font-semibold">-{formatPrice(row.total_discount)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.driven_sales)}</td>
+                                                    <TableCell className="font-bold text-indigo-600 tracking-wider">{row.code}</TableCell>
+                                                    <TableCell className="text-gray-700 font-medium">{row.usage}</TableCell>
+                                                    <TableCell className="text-red-600 font-semibold">-{formatPrice(row.total_discount)}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.driven_sales)}</TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "categories" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-medium text-gray-900">{row.category_name}</td>
-                                                    <td className="px-4 py-3.5 text-gray-700 font-medium">{row.total_qty}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.total_revenue)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{row.order_count}</td>
-                                                    <td className="px-4 py-3.5 text-gray-500">{formatPrice(row.aov)}</td>
+                                                    <TableCell className="font-medium text-gray-900">{row.category_name}</TableCell>
+                                                    <TableCell className="text-gray-700 font-medium">{row.total_qty}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.total_revenue)}</TableCell>
+                                                    <TableCell className="text-gray-600">{row.order_count}</TableCell>
+                                                    <TableCell className="text-gray-500">{formatPrice(row.aov)}</TableCell>
                                                 </>
                                             )}
 
                                             {activeTab === "payments" && (
                                                 <>
-                                                    <td className="px-4 py-3.5 font-bold text-gray-800">{row.method}</td>
-                                                    <td className="px-4 py-3.5 text-gray-700 font-medium">{row.orders}</td>
-                                                    <td className="px-4 py-3.5 text-gray-900 font-bold">{formatPrice(row.gross)}</td>
-                                                    <td className="px-4 py-3.5 text-gray-600">{formatPrice(row.aov)}</td>
+                                                    <TableCell className="font-bold text-gray-800">{row.method}</TableCell>
+                                                    <TableCell className="text-gray-700 font-medium">{row.orders}</TableCell>
+                                                    <TableCell className="text-gray-900 font-bold">{formatPrice(row.gross)}</TableCell>
+                                                    <TableCell className="text-gray-600">{formatPrice(row.aov)}</TableCell>
                                                 </>
                                             )}
 
-                                        </tr>
+                                        </TableRow>
                                     ))}
-                                </tbody>
-                            </table>
+                                </TableBody>
+                            </Table>
                         )}
                     </div>
 
                     {/* Pagination Row */}
                     {!loading && sortedDataset.length > 0 && (
-                        <div className="px-4 py-3 border-t border-gray-100 flex items-center justify-between bg-gray-50/10">
+                        <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
                             <p className="text-[12px] text-gray-500 select-none">
-                                Showing <span className="font-semibold text-gray-700">{((currentPage - 1) * pageSize) + 1}–{Math.min(currentPage * pageSize, sortedDataset.length)}</span> of <span className="font-semibold text-gray-700">{sortedDataset.length}</span> rows
+                                Showing <span className="font-medium text-gray-700">{((currentPage - 1) * limit) + 1}–{Math.min(currentPage * limit, sortedDataset.length)}</span> of <span className="font-medium text-gray-700">{sortedDataset.length}</span> rows
                             </p>
-                            
-                            <div className="flex items-center gap-1.5">
+                            <div className="flex items-center justify-center">
+                                <select
+                                    value={limit}
+                                    onChange={(e) => {
+                                        setLimit(Number(e.target.value));
+                                        setCurrentPage(1);
+                                    }}
+                                    className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-600 outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                                >
+                                    <option value={10}>10</option>
+                                    <option value={25}>25</option>
+                                    <option value={50}>50</option>
+                                    <option value={100}>100</option>
+                                    <option value={250}>250</option>
+                                </select>
+                            </div>
+                            <div className="flex items-center gap-1">
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                                     disabled={currentPage <= 1}
-                                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white shadow-2xs cursor-pointer"
+                                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     title="Prev page"
                                 >
                                     <ChevronLeft className="w-4 h-4" />
                                 </button>
-                                <span className="px-3.5 py-1 text-[12px] text-gray-600 font-bold bg-gray-50 border border-gray-200 rounded-lg select-none">
+                                <span className="px-3 py-1 text-[12px] text-gray-600 font-medium">
                                     {currentPage} / {totalPages}
                                 </span>
                                 <button
                                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
                                     disabled={currentPage >= totalPages}
-                                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors bg-white shadow-2xs cursor-pointer"
+                                    className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                                     title="Next page"
                                 >
                                     <ChevronRight className="w-4 h-4" />

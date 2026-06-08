@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CartSidebar from "@/components/cart/CartSidebar";
@@ -183,8 +184,17 @@ export default function OrderDetailPage() {
                 image: item.image_url || "",
                 price: item.price_per_unit,
                 meters: item.quantity_or_meters,
-                selling_mode: item.selling_mode || "meter",
-                selected_options: item.selected_options_json || undefined,
+                selling_mode: (item.selling_mode === "piece" || item.selling_mode === "meter") ? item.selling_mode : "meter",
+                selected_options: item.selected_options_json
+                    ? (item.selected_options_json as any[]).map((opt) => ({
+                        group_id: opt.group_id,
+                        group_name: opt.group_name || "",
+                        input_type: opt.input_type || "select",
+                        value_ids: opt.value_ids,
+                        value_labels: opt.value_labels,
+                        input_value: opt.input_value,
+                      }))
+                    : undefined,
                 slug: "",
                 analytics_source: "account_order_reorder_all",
             });
@@ -202,8 +212,17 @@ export default function OrderDetailPage() {
             image: item.image_url || "",
             price: item.price_per_unit,
             meters: item.quantity_or_meters,
-            selling_mode: item.selling_mode || "meter",
-            selected_options: item.selected_options_json || undefined,
+            selling_mode: (item.selling_mode === "piece" || item.selling_mode === "meter") ? item.selling_mode : "meter",
+            selected_options: item.selected_options_json
+                ? (item.selected_options_json as any[]).map((opt) => ({
+                    group_id: opt.group_id,
+                    group_name: opt.group_name || "",
+                    input_type: opt.input_type || "select",
+                    value_ids: opt.value_ids,
+                    value_labels: opt.value_labels,
+                    input_value: opt.input_value,
+                  }))
+                : undefined,
             slug: "",
             analytics_source: "account_order_reorder_item",
         });
@@ -378,7 +397,7 @@ export default function OrderDetailPage() {
                                             <div className="w-16 h-20 relative flex-shrink-0 rounded-lg overflow-hidden bg-background-secondary border border-border">
                                                 {item.image_url ? (
                                                     <Image
-                                                        src={item.image_url}
+                                                        src={getThumbnailUrl(item.image_url)}
                                                         alt={item.product_name}
                                                         fill
                                                         className="object-cover"

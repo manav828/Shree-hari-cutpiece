@@ -3,11 +3,16 @@
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { supabase } from "@/lib/supabase";
+import { supabase as supabaseClient } from "@/lib/supabase";
+const supabase = supabaseClient as any;
+import { getThumbnailUrl } from "@/lib/imageOptimization";
 import {
     Plus, Search, SlidersHorizontal, Trash2, Pencil, ExternalLink,
-    Package, AlertTriangle, Loader2
+    Package, Loader2, ChevronLeft, ChevronRight
 } from "lucide-react";
+import { Input } from "@/components/admin/ui/Input";
+import { Select } from "@/components/admin/ui/Select";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
 
 /* ─── Types ─── */
 interface ProductVariant {
@@ -41,7 +46,8 @@ function getThumbnail(variants: ProductVariant[]): string {
     const def = variants.find((v) => v.is_default) || variants[0];
     if (!def) return "";
     const primary = def.variant_images?.find((i) => i.is_primary);
-    return primary?.image_url || def.variant_images?.[0]?.image_url || "";
+    const rawUrl = primary?.image_url || def.variant_images?.[0]?.image_url || "";
+    return getThumbnailUrl(rawUrl);
 }
 
 function getPriceRange(variants: ProductVariant[]): string {
@@ -72,6 +78,8 @@ export default function AdminProducts() {
     const [showFilters, setShowFilters] = useState(false);
     const [deleteId, setDeleteId] = useState<string | null>(null);
     const [togglingId, setTogglingId] = useState<string | null>(null);
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(25);
 
     const fetchProducts = async () => {
         const executeFetch = async (retries = 3): Promise<any> => {
@@ -110,10 +118,14 @@ export default function AdminProducts() {
 
     useEffect(() => {
         fetchProducts();
-        supabase.from("categories").select("id, name").order("sort_order").then(({ data }) => {
+        supabase.from("categories").select("id, name").order("sort_order").then(({ data }: any) => {
             if (data) setCategories(data);
         });
     }, []);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search, catFilter, modeFilter, statusFilter]);
 
     const toggleActive = async (id: string, current: boolean) => {
         setTogglingId(id);
@@ -125,7 +137,7 @@ export default function AdminProducts() {
     const deleteProduct = async (id: string) => {
         const { data: vs } = await supabase.from("product_variants").select("id").eq("product_id", id);
         if (vs?.length) {
-            await supabase.from("variant_images").delete().in("variant_id", vs.map((v) => v.id));
+            await supabase.from("variant_images").delete().in("variant_id", vs.map((v: any) => v.id));
             await supabase.from("product_variants").delete().eq("product_id", id);
         }
         await supabase.from("products").delete().eq("id", id);
@@ -137,7 +149,14 @@ export default function AdminProducts() {
         return products.filter((p) => {
             if (search) {
                 const q = search.toLowerCase();
-                if (!p.name.toLowerCase().includes(q) && !p.product_variants.some((v) => v.color_name.toLowerCase().includes(q))) return false;
+                const matchesText = p.name.toLowerCase().includes(q) || p.product_variants.some((v) => v.color_name.toLowerCase().includes(q));
+                
+                // Allow matching by unit terms (miter/meter/m vs pcs/piece/quantity)
+                const matchesUnit = 
+                    ((q === "pcs" || q === "piece" || q === "pcs item" || q === "quantity") && p.sell_mode === "quantity") ||
+                    ((q === "meter" || q === "miter" || q === "mtr" || q === "m") && p.sell_mode === "meter");
+                
+                if (!matchesText && !matchesUnit) return false;
             }
             if (catFilter !== "all" && p.categories?.name !== catFilter) return false;
             if (modeFilter !== "all" && p.sell_mode !== modeFilter) return false;
@@ -146,6 +165,13 @@ export default function AdminProducts() {
             return true;
         });
     }, [products, search, catFilter, modeFilter, statusFilter]);
+
+    const paginated = useMemo(() => {
+        const start = (page - 1) * limit;
+        return filtered.slice(start, start + limit);
+    }, [filtered, page, limit]);
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / limit));
 
     const activeFilters = [catFilter !== "all", modeFilter !== "all", statusFilter !== "all"].filter(Boolean).length;
 
@@ -158,6 +184,9 @@ export default function AdminProducts() {
                     <p className="text-[13px] text-gray-400 mt-0.5">{products.length} products</p>
                 </div>
                 <div className="flex items-center gap-2">
+                    <Link href="/admin/products/stock" className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <SlidersHorizontal className="h-3.5 w-3.5" /> Manage Stock
+                    </Link>
                     <Link href="/admin/products/categories" className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <Package className="h-3.5 w-3.5" /> Categories
                     </Link>
@@ -170,11 +199,13 @@ export default function AdminProducts() {
             {/* ─── Search + Filters ─── */}
             <div className="flex items-center gap-2 mb-4">
                 <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300" />
-                    <input
-                        type="text" placeholder="Search by name or color..." value={search}
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-300 z-10" />
+                    <Input
+                        type="text"
+                        placeholder="Search by name or color..."
+                        value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full pl-9 pr-3 py-2 text-[13px] bg-white border border-gray-200 rounded-lg placeholder:text-gray-300 focus:ring-2 focus:ring-gray-900/10 focus:border-gray-300 outline-none transition-all"
+                        className="pl-9 bg-white"
                     />
                 </div>
                 <button
@@ -189,20 +220,20 @@ export default function AdminProducts() {
 
             {showFilters && (
                 <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-white border border-gray-200 rounded-lg">
-                    <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="px-2.5 py-2 text-[13px] border border-gray-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-gray-900/10">
+                    <Select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="bg-white">
                         <option value="all">All Categories</option>
                         {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                    <select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="px-2.5 py-2 text-[13px] border border-gray-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-gray-900/10">
-                        <option value="all">All Modes</option>
-                        <option value="meter">Per Meter</option>
-                        <option value="quantity">Per Piece</option>
-                    </select>
-                    <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-2.5 py-2 text-[13px] border border-gray-200 rounded-lg bg-white outline-none focus:ring-2 focus:ring-gray-900/10">
+                    </Select>
+                    <Select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="bg-white">
+                        <option value="all">All Sell Modes</option>
+                        <option value="meter">Meter / Miter (m)</option>
+                        <option value="quantity">Piece / Pcs (pcs)</option>
+                    </Select>
+                    <Select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="bg-white">
                         <option value="all">All Status</option>
                         <option value="active">Active</option>
                         <option value="draft">Draft</option>
-                    </select>
+                    </Select>
                 </div>
             )}
 
@@ -216,88 +247,168 @@ export default function AdminProducts() {
                     <p className="text-xs text-gray-400 mt-0.5">Try adjusting your search or filters</p>
                 </div>
             ) : (
-                <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                    {filtered.map((product, idx) => {
-                        const thumb = getThumbnail(product.product_variants);
-                        const price = getPriceRange(product.product_variants);
-                        const stock = getStockInfo(product.product_variants);
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    <Table wrapperClassName="border-0 rounded-none">
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-12 pr-0"></TableHead> {/* Thumbnail */}
+                                <TableHead>Product Name</TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead>Sell Mode</TableHead>
+                                <TableHead className="hidden md:table-cell">Colors</TableHead>
+                                <TableHead>Price Range</TableHead>
+                                <TableHead>Stock Status</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginated.map((product) => {
+                            const thumb = getThumbnail(product.product_variants);
+                            const price = getPriceRange(product.product_variants);
+                            const stock = getStockInfo(product.product_variants);
 
-                        return (
-                            <div key={product.id} className={`flex items-center gap-4 px-4 py-3.5 hover:bg-gray-50/60 transition-colors group ${idx > 0 ? "border-t border-gray-100" : ""}`}>
-                                {/* Thumbnail */}
-                                <div className="w-11 h-11 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
-                                    {thumb ? (
-                                        <Image src={thumb} alt={product.name} width={44} height={44} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center"><Package className="h-4 w-4 text-gray-300" /></div>
-                                    )}
-                                </div>
-
-                                {/* Info */}
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-center gap-2">
-                                        <p className="text-[13px] font-semibold text-gray-900 truncate">{product.name}</p>
-                                        {!product.is_active && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 rounded">Draft</span>}
-                                    </div>
-                                    <div className="flex items-center gap-3 mt-0.5">
-                                        <span className="text-[12px] text-gray-400">{product.categories?.name || "Uncategorized"}</span>
-                                        <span className="text-[12px] text-gray-300">·</span>
-                                        <span className="text-[12px] text-gray-400">{product.sell_mode === "meter" ? "Per Meter" : "Per Piece"}</span>
-                                    </div>
-                                </div>
-
-                                {/* Color Swatches */}
-                                <div className="hidden md:flex items-center gap-1 flex-shrink-0">
-                                    {product.product_variants.slice(0, 5).map((v) => (
-                                        <div key={v.id} title={v.color_name} className="w-4 h-4 rounded-full border border-gray-200" style={{ backgroundColor: v.color_hex || "#ccc" }} />
-                                    ))}
-                                    {product.product_variants.length > 5 && (
-                                        <span className="text-[11px] text-gray-400 ml-0.5">+{product.product_variants.length - 5}</span>
-                                    )}
-                                </div>
-
-                                {/* Price */}
-                                <div className="hidden sm:block flex-shrink-0 text-right w-28">
-                                    <p className="text-[13px] font-semibold text-gray-900">{price}</p>
-                                    <p className={`text-[11px] font-medium flex items-center justify-end gap-1 ${stock.cls}`}>
-                                        {stock.label === "Low stock" && <AlertTriangle className="h-3 w-3" />}
-                                        {stock.total} {product.sell_mode === "meter" ? "m" : "pcs"}
-                                    </p>
-                                </div>
-
-                                {/* Status Toggle */}
-                                <button
-                                    onClick={() => toggleActive(product.id, product.is_active)}
-                                    disabled={togglingId === product.id}
-                                    className={`flex-shrink-0 w-9 h-5 rounded-full relative transition-colors ${product.is_active ? "bg-emerald-500" : "bg-gray-300"}`}
-                                >
-                                    <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${product.is_active ? "left-[18px]" : "left-0.5"}`} />
-                                </button>
-
-                                {/* Actions */}
-                                <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                    <Link href={`/shop/${product.slug}`} target="_blank" title="View on store" className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-                                        <ExternalLink className="h-3.5 w-3.5" />
-                                    </Link>
-                                    <Link href={`/admin/products/${product.id}/edit`} title="Edit product" className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors">
-                                        <Pencil className="h-3.5 w-3.5" />
-                                    </Link>
-                                    {deleteId === product.id ? (
-                                        <div className="flex items-center gap-1 ml-1">
-                                            <button onClick={() => deleteProduct(product.id)} className="px-2 py-1 text-[11px] font-medium text-white bg-red-500 rounded hover:bg-red-600">Delete</button>
-                                            <button onClick={() => setDeleteId(null)} className="px-2 py-1 text-[11px] font-medium text-gray-500 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+                            return (
+                                <TableRow key={product.id} className="group">
+                                    {/* Thumbnail */}
+                                    <TableCell className="pr-0">
+                                        <div className="w-10 h-10 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
+                                            {thumb ? (
+                                                <Image src={thumb} alt={product.name} width={40} height={40} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center"><Package className="h-4 w-4 text-gray-300" /></div>
+                                            )}
                                         </div>
-                                    ) : (
-                                        <button onClick={() => setDeleteId(product.id)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors">
-                                            <Trash2 className="h-3.5 w-3.5" />
+                                    </TableCell>
+
+                                    {/* Product Name */}
+                                    <TableCell className="font-semibold text-gray-900 whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            <span className="truncate max-w-[200px] sm:max-w-xs">{product.name}</span>
+                                            {!product.is_active && <span className="px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-500 rounded">Draft</span>}
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Category */}
+                                    <TableCell className="text-gray-500">{product.categories?.name || "Uncategorized"}</TableCell>
+
+                                    {/* Sell Mode */}
+                                    <TableCell className="text-gray-500 capitalize">{product.sell_mode === "meter" ? "Per Meter" : "Per Piece"}</TableCell>
+
+                                    {/* Colors */}
+                                    <TableCell className="hidden md:table-cell">
+                                        <div className="flex items-center gap-1">
+                                            {product.product_variants.slice(0, 5).map((v) => (
+                                                <div key={v.id} title={v.color_name} className="w-3.5 h-3.5 rounded-full border border-gray-200" style={{ backgroundColor: v.color_hex || "#ccc" }} />
+                                            ))}
+                                            {product.product_variants.length > 5 && (
+                                                <span className="text-[11px] text-gray-400 ml-0.5">+{product.product_variants.length - 5}</span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Price */}
+                                    <TableCell className="font-medium text-gray-900">{price}</TableCell>
+
+                                    {/* Stock */}
+                                    <TableCell>
+                                        <div className="flex flex-col">
+                                            <span className={`text-xs font-semibold ${stock.cls}`}>
+                                                {stock.label}
+                                            </span>
+                                            <span className="text-[10px] text-gray-400">
+                                                {stock.total} {product.sell_mode === "meter" ? "m" : "pcs"}
+                                            </span>
+                                        </div>
+                                    </TableCell>
+
+                                    {/* Status Toggle */}
+                                    <TableCell>
+                                        <button
+                                            onClick={() => toggleActive(product.id, product.is_active)}
+                                            disabled={togglingId === product.id}
+                                            className={`w-9 h-5 rounded-full relative transition-colors ${product.is_active ? "bg-emerald-500" : "bg-gray-300"}`}
+                                            aria-label={product.is_active ? "Deactivate product" : "Activate product"}
+                                        >
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${product.is_active ? "left-[18px]" : "left-0.5"}`} />
                                         </button>
-                                    )}
-                                </div>
-                            </div>
-                        );
-                    })}
+                                    </TableCell>
+
+                                    {/* Actions */}
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <Link href={`/shop/${product.slug}`} target="_blank" title="View on store" className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors inline-flex">
+                                                <ExternalLink className="h-3.5 w-3.5" />
+                                            </Link>
+                                            <Link href={`/admin/products/${product.id}/edit`} title="Edit product" className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors inline-flex">
+                                                <Pencil className="h-3.5 w-3.5" />
+                                            </Link>
+                                            {deleteId === product.id ? (
+                                                <div className="flex items-center gap-1 ml-1">
+                                                    <button onClick={() => deleteProduct(product.id)} className="px-2 py-1 text-[11px] font-medium text-white bg-red-500 rounded hover:bg-red-600">Delete</button>
+                                                    <button onClick={() => setDeleteId(null)} className="px-2 py-1 text-[11px] font-medium text-gray-500 bg-gray-100 rounded hover:bg-gray-200">Cancel</button>
+                                                </div>
+                                            ) : (
+                                                <button onClick={() => setDeleteId(product.id)} title="Delete" className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-md transition-colors inline-flex">
+                                                    <Trash2 className="h-3.5 w-3.5" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })}
+                    </TableBody>
+                </Table>
+
+                {/* Pagination Footer */}
+                <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
+                    <p className="text-[12px] text-gray-500">
+                        Showing{" "}
+                        <span className="font-medium text-gray-700">
+                            {filtered.length > 0 ? (page - 1) * limit + 1 : 0}–
+                            {Math.min(page * limit, filtered.length)}
+                        </span>{" "}
+                        of <span className="font-medium text-gray-700">{filtered.length}</span> products
+                    </p>
+                    <div className="flex items-center justify-center">
+                        <select
+                            value={limit}
+                            onChange={(e) => {
+                                setLimit(Number(e.target.value));
+                                setPage(1);
+                            }}
+                            className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-600 outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                        >
+                            <option value={10}>10</option>
+                            <option value={25}>25</option>
+                            <option value={50}>50</option>
+                            <option value={100}>100</option>
+                            <option value={250}>250</option>
+                        </select>
+                    </div>
+                    <div className="flex items-center gap-1">
+                        <button
+                            onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                            disabled={page <= 1}
+                            className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronLeft className="w-4 h-4" />
+                        </button>
+                        <span className="px-3 py-1 text-[12px] text-gray-600 font-medium">
+                            {page} / {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                            disabled={page >= totalPages}
+                            className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                        >
+                            <ChevronRight className="w-4 h-4" />
+                        </button>
+                    </div>
                 </div>
-            )}
-        </div>
-    );
+            </div>
+        )}
+    </div>
+);
 }

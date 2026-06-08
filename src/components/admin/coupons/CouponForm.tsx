@@ -48,13 +48,13 @@ type Props = {
 
 type FieldErrors = Partial<Record<keyof CouponFormValues, string>>;
 
-const DESTINATION_OPTIONS = [
+const DESTINATION_OPTIONS: { readonly value: string; readonly label: string }[] = [
     { value: "/shop", label: "Shop Page (/shop)" },
     { value: "/checkout", label: "Checkout Page (/checkout)" },
     { value: "/account", label: "Account Page (/account)" },
     { value: "/contact", label: "Contact Page (/contact)" },
     { value: "/", label: "Homepage (/)" },
-] as const;
+];
 
 const DESTINATION_OTHER = "__other__";
 

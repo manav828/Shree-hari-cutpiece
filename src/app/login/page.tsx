@@ -37,7 +37,12 @@ export default function LoginPage() {
         setIsLoading(true);
         const result = await login(formData.email.trim(), formData.password);
         if (result.success) {
-            router.push("/account");
+            let redirectUrl = "/account";
+            if (typeof window !== "undefined") {
+                const params = new URLSearchParams(window.location.search);
+                redirectUrl = params.get("redirect") || "/account";
+            }
+            router.push(redirectUrl);
         } else {
             setError(result.error || "Something went wrong.");
             setIsLoading(false);
@@ -73,6 +78,15 @@ export default function LoginPage() {
 
                 <section className="relative z-10 flex h-full w-full items-center justify-center bg-[#fcf9f4] px-[clamp(1rem,3vw,2.25rem)] py-[clamp(0.75rem,2.4vh,2rem)] shadow-[-20px_0_40px_rgba(28,28,25,0.02)] md:w-1/2 md:shadow-none lg:px-[clamp(2.5rem,5vw,5.5rem)]">
                     <div className="w-full max-w-md space-y-[clamp(0.7rem,1.7vh,1.9rem)]">
+                        <Link 
+                            href="/" 
+                            className="inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-[#56423d] hover:text-[#9f3f29] transition-colors mb-2"
+                        >
+                            <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.6} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                            </svg>
+                            Back to Home
+                        </Link>
                         <header className="text-center md:text-left">
                             <h1 className={`${headingFont.className} mb-2 text-[clamp(2rem,4.8vh,3.1rem)] leading-[0.96] text-[#9f3f29]`}>Welcome back.</h1>
                             <p className="text-base text-[#56423d]">Continue your journey with Terra &amp; Loom.</p>
@@ -159,18 +173,34 @@ export default function LoginPage() {
                                 disabled={isLoading}
                                 className="group flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-[#9f3f29] to-[#bf573f] py-[clamp(0.66rem,1.55vh,0.95rem)] text-base font-medium text-white shadow-[0_4px_16px_rgba(159,63,41,0.15)] transition-opacity duration-300 hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-70"
                             >
-                                {isLoading ? "Signing in..." : "Sign In"}
-                                {!isLoading && (
-                                    <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M5 12h14M13 6l6 6-6 6" />
-                                    </svg>
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <svg className="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                        </svg>
+                                        Signing in...
+                                    </span>
+                                ) : (
+                                    <>
+                                        Sign In
+                                        <svg className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.7} d="M5 12h14M13 6l6 6-6 6" />
+                                        </svg>
+                                    </>
                                 )}
                             </button>
                         </form>
 
                         <p className="pt-[clamp(0.35rem,0.9vh,0.75rem)] text-center text-sm text-[#56423d]">
                             New to the archive?{" "}
-                            <Link href="/signup" className="font-medium text-[#9f3f29] underline decoration-[#9f3f29]/30 underline-offset-4 hover:text-[#bf573f] hover:decoration-[#9f3f29]">
+                            <Link 
+                                href={typeof window !== "undefined" && new URLSearchParams(window.location.search).get("redirect") 
+                                    ? `/signup?redirect=${encodeURIComponent(new URLSearchParams(window.location.search).get("redirect")!)}` 
+                                    : "/signup"
+                                } 
+                                className="font-medium text-[#9f3f29] underline decoration-[#9f3f29]/30 underline-offset-4 hover:text-[#bf573f] hover:decoration-[#9f3f29]"
+                            >
                                 Create an account
                             </Link>
                         </p>

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import CartSidebar from "@/components/cart/CartSidebar";
@@ -71,7 +72,7 @@ function OrderCard({ order }: { order: Order }) {
                     <div className="flex -space-x-2">
                         {order.items.slice(0, 3).map((item) => (
                             <div key={item.id} className="w-9 h-9 rounded-md border-2 border-white overflow-hidden relative bg-background-secondary">
-                                {item.image_url ? <Image src={item.image_url} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
+                                {item.image_url ? <Image src={getThumbnailUrl(item.image_url)} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
                             </div>
                         ))}
                         {order.items.length > 3 && (
@@ -102,7 +103,7 @@ function OrderCard({ order }: { order: Order }) {
                         {order.items.map((item) => (
                             <div key={item.id} className="flex items-center gap-4">
                                 <div className="w-14 h-16 relative bg-white flex-shrink-0 rounded-lg border border-border overflow-hidden">
-                                    {item.image_url ? <Image src={item.image_url} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
+                                    {item.image_url ? <Image src={getThumbnailUrl(item.image_url)} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-sm font-medium text-foreground truncate">{item.product_name}</p>

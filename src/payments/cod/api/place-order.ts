@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
+import { triggerOrderNotification } from "@/lib/notifications";
 
 type CheckoutItem = {
     id: string;
@@ -289,6 +290,11 @@ export default async function handlePlaceOrder(req: NextRequest) {
         if (statusHistoryError) {
             throw new Error("Failed to save order status history");
         }
+
+        // Fire order confirmation notifications in background
+        triggerOrderNotification(orderData.id, "confirmation").catch(err => {
+            console.error("[place-order] Background notification dispatch error:", err);
+        });
 
         return NextResponse.json({
             success: true,

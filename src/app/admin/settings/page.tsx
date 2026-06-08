@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Loader2, Check, Monitor, LayoutTemplate, Palette } from "lucide-react";
+import { Loader2, Check, Monitor, LayoutTemplate, Palette, Mail } from "lucide-react";
+import Link from "next/link";
 
 type ThemeOption = "classic" | "luxury" | "bohemian";
 
@@ -198,6 +199,27 @@ export default function AdminSettings() {
                         )}
                     </div>
                     {/* END THEME SELECTOR */}
+
+                    {/* NOTIFICATIONS & TEMPLATES CARD */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                            <div className="space-y-1">
+                                <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                                    <Mail className="h-5 w-5 text-indigo-600" />
+                                    Notifications & Communications
+                                </h2>
+                                <p className="text-sm text-gray-500">
+                                    Configure order confirmation, shipping, and delivery notifications. Edit email (Resend/SMTP) and WhatsApp (Twilio/Mock) templates and configure API keys and settings.
+                                </p>
+                            </div>
+                            <Link
+                                href="/admin/notifications-templates"
+                                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white text-sm font-bold rounded-lg shadow-sm hover:shadow transition-all cursor-pointer flex-shrink-0"
+                            >
+                                Configure Templates & Keys
+                            </Link>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="lg:col-span-1 space-y-6">

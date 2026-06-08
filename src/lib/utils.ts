@@ -16,5 +16,14 @@ export function generateWhatsAppLink(productName: string, price: number): string
   const message = encodeURIComponent(
     `Hi! I'm interested in ordering "${productName}" (${formatPrice(price)}/meter) from Shree Hari Cutpiece. Please share more details.`
   );
-  return `https://wa.me/${brand.whatsappNumber}?text=${message}`;
+    return `https://wa.me/${brand.whatsappNumber}?text=${message}`;
+}
+
+export function replaceVariables(template: string, vars: Record<string, string>): string {
+    let output = template;
+    for (const [key, value] of Object.entries(vars)) {
+        const regex = new RegExp(`{${key}}`, 'g');
+        output = output.replace(regex, value ?? '');
+    }
+    return output;
 }

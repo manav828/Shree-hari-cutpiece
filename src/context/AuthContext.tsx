@@ -191,6 +191,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             },
         });
         if (error) return { success: false, error: error.message };
+
+        // Asynchronously trigger welcome registration notification in the background
+        fetch("/api/notifications/welcome", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, phone, name })
+        }).catch(console.error);
+
         return { success: true };
     };
 

@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
 
 type BannerPlacement = "announcement_bar" | "homepage_hero" | "shop_top" | "popup";
 type BannerLayoutMode = "contained" | "full_width";
@@ -287,6 +288,20 @@ export default function BannersManager() {
         try {
             const imageUrls = await uploadBulkImages(bulkFiles);
 
+            if (bulkDraft.placement === "homepage_hero" && bulkDraft.is_active) {
+                const activeHeroes = banners.filter(b => b.placement === "homepage_hero" && b.is_active);
+                for (const activeHero of activeHeroes) {
+                    await fetch("/api/admin/cms/banners", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...activeHero,
+                            is_active: false,
+                        }),
+                    });
+                }
+            }
+
             const titlePrefix = bulkDraft.title_prefix.trim() || "Banner";
             const payloadBanners = imageUrls.map((imageUrl, idx) => ({
                 title: `${titlePrefix} ${idx + 1}`,
@@ -296,7 +311,7 @@ export default function BannersManager() {
                 placement: bulkDraft.placement,
                 bg_color: bulkDraft.bg_color,
                 text_color: bulkDraft.text_color,
-                is_active: bulkDraft.is_active,
+                is_active: bulkDraft.placement === "homepage_hero" ? (bulkDraft.is_active && idx === 0) : bulkDraft.is_active,
                 start_date: bulkDraft.start_date || null,
                 end_date: bulkDraft.end_date || null,
                 priority: bulkDraft.priority_start - idx,
@@ -364,6 +379,20 @@ export default function BannersManager() {
         setSaving(true);
         setMessage(null);
         try {
+            if (draft.placement === "homepage_hero" && draft.is_active) {
+                const activeHeroes = banners.filter(b => b.placement === "homepage_hero" && b.is_active);
+                for (const activeHero of activeHeroes) {
+                    await fetch("/api/admin/cms/banners", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...activeHero,
+                            is_active: false,
+                        }),
+                    });
+                }
+            }
+
             const res = await fetch("/api/admin/cms/banners", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -394,6 +423,20 @@ export default function BannersManager() {
         setSaving(true);
         setMessage(null);
         try {
+            if (draft.placement === "homepage_hero" && draft.is_active) {
+                const activeHeroes = banners.filter(b => b.placement === "homepage_hero" && b.is_active && b.id !== draft.id);
+                for (const activeHero of activeHeroes) {
+                    await fetch("/api/admin/cms/banners", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...activeHero,
+                            is_active: false,
+                        }),
+                    });
+                }
+            }
+
             let payload = { ...draft };
             let extraCreated = 0;
             let updatedPrimary = false;
@@ -573,12 +616,28 @@ export default function BannersManager() {
     const quickToggle = async (banner: Banner) => {
         setSaving(true);
         try {
+            const nextActive = !banner.is_active;
+
+            if (banner.placement === "homepage_hero" && nextActive) {
+                const activeHeroes = banners.filter(b => b.placement === "homepage_hero" && b.is_active && b.id !== banner.id);
+                for (const activeHero of activeHeroes) {
+                    await fetch("/api/admin/cms/banners", {
+                        method: "PATCH",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            ...activeHero,
+                            is_active: false,
+                        }),
+                    });
+                }
+            }
+
             const res = await fetch("/api/admin/cms/banners", {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     ...banner,
-                    is_active: !banner.is_active,
+                    is_active: nextActive,
                 }),
             });
             const json = await res.json();
@@ -987,103 +1046,129 @@ export default function BannersManager() {
                 ) : listRows.length === 0 ? (
                     <div className="p-8 text-sm text-gray-500">No banners found.</div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
-                        {listRows.map((row) => {
-                            if (isHeroGroupRow(row)) {
-                                const representative = row.representative;
-                                const status = row.activeCount > 0 ? getStatus(representative) : "Inactive";
-                                const nextActive = row.activeCount === 0;
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-24">Preview</TableHead>
+                                <TableHead>Placement & Priority</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {listRows.map((row) => {
+                                if (isHeroGroupRow(row)) {
+                                    const representative = row.representative;
+                                    const status = row.activeCount > 0 ? getStatus(representative) : "Inactive";
+                                    const nextActive = row.activeCount === 0;
 
-                                return (
-                                    <div key="homepage_hero_group" className="p-4 flex items-center gap-3">
-                                        <div className="w-20 h-10 rounded-md overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0 grid grid-cols-2 gap-px">
-                                            {row.banners.slice(0, 4).map((banner) => (
-                                                <div key={banner.id} className="bg-gray-100">
-                                                    {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" /> : null}
+                                    return (
+                                        <TableRow key="homepage_hero_group" className="group">
+                                            <TableCell>
+                                                <div className="w-20 h-10 rounded-md overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0 grid grid-cols-2 gap-px">
+                                                    {row.banners.slice(0, 4).map((banner) => (
+                                                        <div key={banner.id} className="bg-gray-100">
+                                                            {banner.image_url ? <img src={banner.image_url} alt={banner.title} className="w-full h-full object-cover" /> : null}
+                                                        </div>
+                                                    ))}
                                                 </div>
-                                            ))}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-semibold text-gray-900 truncate">Homepage Hero Banners</p>
-                                            <p className="text-xs text-gray-500 truncate">{row.count} images · {representative.placement} · Top Priority {representative.priority}</p>
-                                        </div>
-                                        <span className={`text-xs px-2 py-1 rounded ${status === "Active" ? "bg-emerald-100 text-emerald-700" : status === "Scheduled" ? "bg-amber-100 text-amber-700" : status === "Expired" ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"}`}>
-                                            {status}
-                                        </span>
-                                        <div className="flex items-center gap-1">
-                                            <button
-                                                onClick={() => quickTogglePlacement("homepage_hero", nextActive)}
-                                                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${row.activeCount > 0 ? "bg-emerald-500" : "bg-gray-300"}`}
-                                                title={row.activeCount > 0 ? "Turn all off" : "Turn all on"}
-                                                aria-label={row.activeCount > 0 ? "Turn all homepage hero banners off" : "Turn all homepage hero banners on"}
-                                            >
-                                                <span
-                                                    className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${row.activeCount > 0 ? "translate-x-5" : "translate-x-1"}`}
-                                                />
-                                            </button>
-                                            <button
-                                                onClick={() => startEdit(representative)}
-                                                className="p-1.5 rounded border border-gray-200 text-gray-600"
-                                                title="Edit hero banner set"
-                                            >
-                                                <Pencil className="w-4 h-4" />
-                                            </button>
-                                            <button
-                                                onClick={() => softDeletePlacement("homepage_hero")}
-                                                className="p-1.5 rounded border border-red-200 text-red-600"
-                                                title="Soft delete all hero banners"
-                                            >
-                                                <Trash2 className="w-4 h-4" />
-                                            </button>
-                                        </div>
-                                    </div>
-                                );
-                            }
+                                            </TableCell>
+                                            <TableCell>
+                                                <div className="flex flex-col">
+                                                    <span className="text-sm font-semibold text-gray-900 truncate">Homepage Hero Banners</span>
+                                                    <span className="text-xs text-gray-500 truncate">{row.count} images · {representative.placement} · Top Priority {representative.priority}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell>
+                                                <span className={`text-xs px-2 py-1 rounded ${status === "Active" ? "bg-emerald-100 text-emerald-700" : status === "Scheduled" ? "bg-amber-100 text-amber-700" : status === "Expired" ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"}`}>
+                                                    {status}
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <div className="flex items-center justify-end gap-1">
+                                                    <button
+                                                        onClick={() => quickTogglePlacement("homepage_hero", nextActive)}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${row.activeCount > 0 ? "bg-emerald-500" : "bg-gray-300"}`}
+                                                        title={row.activeCount > 0 ? "Turn all off" : "Turn all on"}
+                                                        aria-label={row.activeCount > 0 ? "Turn all homepage hero banners off" : "Turn all homepage hero banners on"}
+                                                    >
+                                                        <span
+                                                            className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${row.activeCount > 0 ? "translate-x-5" : "translate-x-1"}`}
+                                                        />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => startEdit(representative)}
+                                                        className="p-1.5 rounded border border-gray-200 text-gray-600"
+                                                        title="Edit hero banner set"
+                                                    >
+                                                        <Pencil className="w-4 h-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => softDeletePlacement("homepage_hero")}
+                                                        className="p-1.5 rounded border border-red-200 text-red-600"
+                                                        title="Soft delete all hero banners"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </TableCell>
+                                        </TableRow>
+                                    );
+                                }
 
-                            const b = row;
-                            const status = getStatus(b);
-                            return (
-                                <div key={b.id} className="p-4 flex items-center gap-3">
-                                    <div className="w-14 h-10 rounded-md overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
-                                        {b.image_url ? <img src={b.image_url} alt={b.title} className="w-full h-full object-cover" /> : null}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-sm font-semibold text-gray-900 truncate">{b.title}</p>
-                                        <p className="text-xs text-gray-500 truncate">{b.placement} · Priority {b.priority}</p>
-                                    </div>
-                                    <span className={`text-xs px-2 py-1 rounded ${status === "Active" ? "bg-emerald-100 text-emerald-700" : status === "Scheduled" ? "bg-amber-100 text-amber-700" : status === "Expired" ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"}`}>
-                                        {status}
-                                    </span>
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => quickToggle(b)}
-                                            className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${b.is_active ? "bg-emerald-500" : "bg-gray-300"}`}
-                                            title={b.is_active ? "Turn off" : "Turn on"}
-                                            aria-label={b.is_active ? "Turn banner off" : "Turn banner on"}
-                                        >
-                                            <span
-                                                className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${b.is_active ? "translate-x-5" : "translate-x-1"}`}
-                                            />
-                                        </button>
-                                        <button
-                                            onClick={() => startEdit(b)}
-                                            className="p-1.5 rounded border border-gray-200 text-gray-600"
-                                            title="Edit"
-                                        >
-                                            <Pencil className="w-4 h-4" />
-                                        </button>
-                                        <button
-                                            onClick={() => softDelete(b.id)}
-                                            className="p-1.5 rounded border border-red-200 text-red-600"
-                                            title="Soft delete"
-                                        >
-                                            <Trash2 className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
+                                const b = row;
+                                const status = getStatus(b);
+                                return (
+                                    <TableRow key={b.id} className="group">
+                                        <TableCell>
+                                            <div className="w-14 h-10 rounded-md overflow-hidden border border-gray-200 bg-gray-100 flex-shrink-0">
+                                                {b.image_url ? <img src={b.image_url} alt={b.title} className="w-full h-full object-cover" /> : null}
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <div className="flex flex-col">
+                                                <span className="text-sm font-semibold text-gray-900 truncate">{b.title}</span>
+                                                <span className="text-xs text-gray-500 truncate">{b.placement} · Priority {b.priority}</span>
+                                            </div>
+                                        </TableCell>
+                                        <TableCell>
+                                            <span className={`text-xs px-2 py-1 rounded ${status === "Active" ? "bg-emerald-100 text-emerald-700" : status === "Scheduled" ? "bg-amber-100 text-amber-700" : status === "Expired" ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-600"}`}>
+                                                {status}
+                                            </span>
+                                        </TableCell>
+                                        <TableCell className="text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button
+                                                    onClick={() => quickToggle(b)}
+                                                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${b.is_active ? "bg-emerald-500" : "bg-gray-300"}`}
+                                                    title={b.is_active ? "Turn off" : "Turn on"}
+                                                    aria-label={b.is_active ? "Turn banner off" : "Turn banner on"}
+                                                >
+                                                    <span
+                                                        className={`inline-block h-5 w-5 transform rounded-full bg-white transition-transform ${b.is_active ? "translate-x-5" : "translate-x-1"}`}
+                                                    />
+                                                </button>
+                                                <button
+                                                    onClick={() => startEdit(b)}
+                                                    className="p-1.5 rounded border border-gray-200 text-gray-600"
+                                                    title="Edit"
+                                                >
+                                                    <Pencil className="w-4 h-4" />
+                                                </button>
+                                                <button
+                                                    onClick={() => softDelete(b.id)}
+                                                    className="p-1.5 rounded border border-red-200 text-red-600"
+                                                    title="Soft delete"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                </button>
+                                            </div>
+                                        </TableCell>
+                                    </TableRow>
+                                );
+                            })}
+                        </TableBody>
+                    </Table>
                 )}
             </div>
         </div>

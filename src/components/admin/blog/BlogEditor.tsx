@@ -2078,8 +2078,8 @@ export default function BlogEditor({ postId }: Props) {
                             </button>
                         </div>
                         {coverMediaPreview && (
-                            <div className="mt-2 overflow-hidden rounded-md border border-gray-200">
-                                <img src={coverMediaPreview} alt="Cover preview" className="h-24 w-full object-cover" />
+                            <div className="mt-2 overflow-hidden rounded-md border border-gray-200 max-w-md bg-gray-50">
+                                <img src={coverMediaPreview} alt="Cover preview" className="w-full aspect-[16/9] object-cover" />
                             </div>
                         )}
                     </div>
@@ -2627,8 +2627,8 @@ export default function BlogEditor({ postId }: Props) {
                                         </button>
                                     </div>
                                     {ogMediaPreview && (
-                                        <div className="mt-2 overflow-hidden rounded-md border border-gray-200">
-                                            <img src={ogMediaPreview} alt="OG preview" className="h-20 w-full object-cover" />
+                                        <div className="mt-2 overflow-hidden rounded-md border border-gray-200 max-w-md bg-gray-50">
+                                            <img src={ogMediaPreview} alt="OG preview" className="w-full aspect-[1.91/1] object-cover" />
                                         </div>
                                     )}
                                     <p className="text-[11px] text-gray-500 mt-1">Image used when sharing on Facebook/WhatsApp. If empty, cover image is used.</p>

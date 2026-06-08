@@ -1,0 +1,2 @@
+# Place your customer-specific custom SQL migration patches in this directory.
+# E.g., custom_001_loyalty_points.sql

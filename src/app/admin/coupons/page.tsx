@@ -2,6 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { showToast } from "@/lib/toast";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
+import { Input } from "@/components/admin/ui/Input";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type AdminCoupon = {
     id: string;
@@ -32,20 +36,19 @@ export default function AdminCoupons() {
     const [analytics, setAnalytics] = useState<CouponAnalytics | null>(null);
     const [loading, setLoading] = useState(true);
     const [analyticsLoading, setAnalyticsLoading] = useState(true);
-    const [error, setError] = useState("");
-    const [success, setSuccess] = useState("");
     const [search, setSearch] = useState("");
+    const [page, setPage] = useState(1);
+    const [limit, setLimit] = useState(25);
 
     const loadCoupons = async () => {
         setLoading(true);
-        setError("");
         try {
             const res = await fetch("/api/admin/coupons");
             const json = await res.json();
             if (!res.ok) throw new Error(json.error || "Failed to fetch coupons");
             setCoupons(json.coupons || []);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to fetch coupons");
+            showToast(err instanceof Error ? err.message : "Failed to fetch coupons", "error");
         } finally {
             setLoading(false);
         }
@@ -59,7 +62,7 @@ export default function AdminCoupons() {
             if (!res.ok) throw new Error(json.error || "Failed to fetch coupon analytics");
             setAnalytics(json as CouponAnalytics);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to fetch coupon analytics");
+            showToast(err instanceof Error ? err.message : "Failed to fetch coupon analytics", "error");
         } finally {
             setAnalyticsLoading(false);
         }
@@ -69,6 +72,10 @@ export default function AdminCoupons() {
         loadCoupons();
         loadAnalytics();
     }, []);
+
+    useEffect(() => {
+        setPage(1);
+    }, [search]);
 
     const formatINR = (value: number) => `₹${value.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
 
@@ -81,10 +88,14 @@ export default function AdminCoupons() {
         );
     }, [coupons, search]);
 
-    const toggleStatus = async (coupon: AdminCoupon) => {
-        setError("");
-        setSuccess("");
+    const paginatedCoupons = useMemo(() => {
+        const start = (page - 1) * limit;
+        return filteredCoupons.slice(start, start + limit);
+    }, [filteredCoupons, page, limit]);
 
+    const totalPages = Math.max(1, Math.ceil(filteredCoupons.length / limit));
+
+    const toggleStatus = async (coupon: AdminCoupon) => {
         try {
             const nextStatus = coupon.status === "active" ? "inactive" : "active";
             const res = await fetch(`/api/admin/coupons/${coupon.id}`, {
@@ -98,9 +109,9 @@ export default function AdminCoupons() {
             setCoupons((prev) => prev.map((item) => (
                 item.id === coupon.id ? { ...item, status: nextStatus } : item
             )));
-            setSuccess(`Coupon ${nextStatus === "active" ? "activated" : "deactivated"}.`);
+            showToast(`Coupon ${nextStatus === "active" ? "activated" : "deactivated"}.`, "success");
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to update coupon");
+            showToast(err instanceof Error ? err.message : "Failed to update coupon", "error");
         }
     };
 
@@ -115,18 +126,6 @@ export default function AdminCoupons() {
                     Create Coupon
                 </Link>
             </div>
-
-            {error && (
-                <div className="mb-4 p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-sm">
-                    {error}
-                </div>
-            )}
-
-            {success && (
-                <div className="mb-4 p-3 rounded-lg border border-green-200 bg-green-50 text-green-700 text-sm">
-                    {success}
-                </div>
-            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
                 <div className="rounded-lg border border-gray-200 bg-white p-4">
@@ -162,14 +161,14 @@ export default function AdminCoupons() {
             </div>
 
             <div className="bg-white p-6 rounded-lg border border-gray-200 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
-                    <h2 className="text-lg font-semibold text-gray-900">Coupon Listing</h2>
-                    <input
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-end gap-3 mb-4">
+                    <Input
                         type="text"
                         placeholder="Search by code or name"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="w-full sm:w-72 px-3 py-2 rounded-md border border-gray-300 text-sm"
+                        className="sm:w-72"
+                        wrapperClassName="w-auto"
                     />
                 </div>
 
@@ -178,71 +177,118 @@ export default function AdminCoupons() {
                 ) : filteredCoupons.length === 0 ? (
                     <p className="text-sm text-gray-500">No coupons found.</p>
                 ) : (
-                    <div className="overflow-x-auto">
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="text-left text-gray-500 border-b border-gray-200">
-                                    <th className="py-2 pr-4">Code</th>
-                                    <th className="py-2 pr-4">Name</th>
-                                    <th className="py-2 pr-4">Discount</th>
-                                    <th className="py-2 pr-4">Eligibility</th>
-                                    <th className="py-2 pr-4">Visibility</th>
-                                    <th className="py-2 pr-4">Status</th>
-                                    <th className="py-2">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {filteredCoupons.map((coupon) => (
-                                    <tr key={coupon.id} className="border-b border-gray-100">
-                                        <td className="py-3 pr-4 font-semibold text-gray-900">{coupon.code}</td>
-                                        <td className="py-3 pr-4">{coupon.name}</td>
-                                        <td className="py-3 pr-4">
-                                            {coupon.discount_type === "percentage"
-                                                ? `${coupon.discount_value}%`
-                                                : `₹${coupon.discount_value}`}
-                                        </td>
-                                        <td className="py-3 pr-4 text-gray-600">
-                                            {coupon.max_completed_orders_for_eligibility !== null
-                                                ? `Orders <= ${coupon.max_completed_orders_for_eligibility}`
-                                                : "All order counts"}
-                                            {coupon.min_cart_subtotal ? ` · Min ₹${coupon.min_cart_subtotal}` : ""}
-                                        </td>
-                                        <td className="py-3 pr-4 text-gray-600">
-                                            {coupon.show_on_home_banner ? "Home" : ""}
-                                            {coupon.show_on_home_banner && coupon.show_on_checkout_modal ? " + " : ""}
-                                            {coupon.show_on_checkout_modal ? "Checkout" : ""}
-                                            {coupon.specific_user_only ? " · Specific Users" : ""}
-                                        </td>
-                                        <td className="py-3 pr-4">
-                                            <span className={`px-2 py-1 rounded text-xs font-medium ${coupon.status === "active"
-                                                ? "bg-green-100 text-green-700"
-                                                : "bg-gray-100 text-gray-700"
-                                                }`}>
-                                                {coupon.status}
-                                            </span>
-                                        </td>
-                                        <td className="py-3">
-                                            <div className="flex items-center gap-2">
-                                                <Link
-                                                    href={`/admin/coupons/${coupon.id}`}
-                                                    className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
-                                                >
-                                                    Edit
-                                                </Link>
-                                                <button
-                                                    onClick={() => toggleStatus(coupon)}
-                                                    className="px-3 py-1.5 rounded border border-gray-300 text-xs font-medium hover:bg-gray-50"
-                                                >
-                                                    {coupon.status === "active" ? "Deactivate" : "Activate"}
-                                                </button>
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
+                    <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                        <Table wrapperClassName="border-0 rounded-none">
+                            <TableHeader>
+                            <TableRow>
+                                <TableHead>Code</TableHead>
+                                <TableHead>Name</TableHead>
+                                <TableHead>Discount</TableHead>
+                                <TableHead>Eligibility</TableHead>
+                                <TableHead>Visibility</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {paginatedCoupons.map((coupon) => (
+                                <TableRow key={coupon.id}>
+                                    <TableCell className="font-semibold text-gray-900 whitespace-nowrap">{coupon.code}</TableCell>
+                                    <TableCell className="text-gray-700">{coupon.name}</TableCell>
+                                    <TableCell className="text-gray-700">
+                                        {coupon.discount_type === "percentage"
+                                            ? `${coupon.discount_value}%`
+                                            : `₹${coupon.discount_value}`}
+                                    </TableCell>
+                                    <TableCell className="text-gray-650 text-xs">
+                                        {coupon.max_completed_orders_for_eligibility !== null
+                                            ? `Orders <= ${coupon.max_completed_orders_for_eligibility}`
+                                            : "All order counts"}
+                                        {coupon.min_cart_subtotal ? ` · Min ₹${coupon.min_cart_subtotal}` : ""}
+                                    </TableCell>
+                                    <TableCell className="text-gray-650 text-xs">
+                                        {coupon.show_on_home_banner ? "Home" : ""}
+                                        {coupon.show_on_home_banner && coupon.show_on_checkout_modal ? " + " : ""}
+                                        {coupon.show_on_checkout_modal ? "Checkout" : ""}
+                                        {coupon.specific_user_only ? " · Specific Users" : ""}
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <span className={`px-2 py-1 rounded text-xs font-semibold ${coupon.status === "active"
+                                            ? "bg-green-150 text-green-700"
+                                            : "bg-gray-150 text-gray-700"
+                                            }`}>
+                                            {coupon.status}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell className="whitespace-nowrap">
+                                        <div className="flex items-center gap-2">
+                                            <Link
+                                                href={`/admin/coupons/${coupon.id}`}
+                                                className="px-3 py-1.5 rounded border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer shadow-sm"
+                                            >
+                                                Edit
+                                            </Link>
+                                            <button
+                                                onClick={() => toggleStatus(coupon)}
+                                                className="px-3 py-1.5 rounded border border-gray-300 text-xs font-semibold text-gray-700 hover:bg-gray-50 hover:text-indigo-600 hover:border-indigo-200 transition-all cursor-pointer shadow-sm"
+                                            >
+                                                {coupon.status === "active" ? "Deactivate" : "Activate"}
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+
+                    {/* Pagination Footer */}
+                    <div className="px-4 py-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 bg-white">
+                        <p className="text-[12px] text-gray-500">
+                            Showing{" "}
+                            <span className="font-medium text-gray-700">
+                                {filteredCoupons.length > 0 ? (page - 1) * limit + 1 : 0}–
+                                {Math.min(page * limit, filteredCoupons.length)}
+                            </span>{" "}
+                            of <span className="font-medium text-gray-700">{filteredCoupons.length}</span> coupons
+                        </p>
+                        <div className="flex items-center justify-center">
+                            <select
+                                value={limit}
+                                onChange={(e) => {
+                                    setLimit(Number(e.target.value));
+                                    setPage(1);
+                                }}
+                                className="px-2 py-1 text-xs border border-gray-200 rounded-md bg-white text-gray-600 outline-none focus:ring-1 focus:ring-slate-400 cursor-pointer"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                                <option value={250}>250</option>
+                            </select>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <button
+                                onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                                disabled={page <= 1}
+                                className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronLeft className="w-4 h-4" />
+                            </button>
+                            <span className="px-3 py-1 text-[12px] text-gray-600 font-medium">
+                                {page} / {totalPages}
+                            </span>
+                            <button
+                                onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                                disabled={page >= totalPages}
+                                className="p-1.5 rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                            >
+                                <ChevronRight className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
-                )}
+                </div>
+            )}
             </div>
         </div>
     );

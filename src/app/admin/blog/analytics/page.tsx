@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import { showToast } from "@/lib/toast";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
 
 type AnalyticsResponse = {
     range_days: number;
@@ -40,14 +42,12 @@ export default function BlogAnalyticsPage() {
     const [rangeDays, setRangeDays] = useState(30);
     const [data, setData] = useState<AnalyticsResponse | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
 
     useEffect(() => {
         let isMounted = true;
 
         const loadAnalytics = async () => {
             setLoading(true);
-            setError("");
             try {
                 const res = await fetch(`/api/admin/blogs/analytics?days=${rangeDays}`);
                 const json = await res.json();
@@ -56,7 +56,7 @@ export default function BlogAnalyticsPage() {
                 setData(json as AnalyticsResponse);
             } catch (err: unknown) {
                 if (!isMounted) return;
-                setError(err instanceof Error ? err.message : "Failed to load analytics");
+                showToast(err instanceof Error ? err.message : "Failed to load analytics", "error");
                 setData(null);
             } finally {
                 if (isMounted) setLoading(false);
@@ -113,12 +113,6 @@ export default function BlogAnalyticsPage() {
                     </select>
                 </div>
             </div>
-
-            {error && (
-                <div className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-                    {error}
-                </div>
-            )}
 
             {loading ? (
                 <p className="text-sm text-gray-500">Loading analytics...</p>
@@ -217,32 +211,30 @@ export default function BlogAnalyticsPage() {
                         {data.top_posts_by_ctr.length === 0 ? (
                             <p className="text-sm text-gray-500">No CTR data yet.</p>
                         ) : (
-                            <div className="overflow-x-auto">
-                                <table className="w-full text-sm">
-                                    <thead>
-                                        <tr className="text-left text-gray-500 border-b border-gray-200">
-                                            <th className="py-2 pr-4">Post</th>
-                                            <th className="py-2 pr-4">Views</th>
-                                            <th className="py-2 pr-4">Product Clicks</th>
-                                            <th className="py-2">CTR</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        {data.top_posts_by_ctr.map((row) => (
-                                            <tr key={row.id} className="border-b border-gray-100">
-                                                <td className="py-2 pr-4">
-                                                    <Link href={`/admin/blog/${row.id}`} className="font-medium text-gray-900 hover:underline">
-                                                        {row.title}
-                                                    </Link>
-                                                </td>
-                                                <td className="py-2 pr-4 text-gray-700">{row.views}</td>
-                                                <td className="py-2 pr-4 text-gray-700">{row.product_clicks}</td>
-                                                <td className="py-2 text-gray-700">{(row.ctr * 100).toFixed(1)}%</td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Post</TableHead>
+                                        <TableHead>Views</TableHead>
+                                        <TableHead>Product Clicks</TableHead>
+                                        <TableHead>CTR</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {data.top_posts_by_ctr.map((row) => (
+                                        <TableRow key={row.id}>
+                                            <TableCell className="font-medium text-gray-900">
+                                                <Link href={`/admin/blog/${row.id}`} className="hover:underline">
+                                                    {row.title}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="text-gray-700 font-medium">{row.views}</TableCell>
+                                            <TableCell className="text-gray-700 font-medium">{row.product_clicks}</TableCell>
+                                            <TableCell className="text-gray-750 font-bold">{(row.ctr * 100).toFixed(1)}%</TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
                         )}
                     </div>
 

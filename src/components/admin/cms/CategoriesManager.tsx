@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ChevronDown, ChevronUp, Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
 
 type Category = {
     id: string;
@@ -348,57 +349,83 @@ export default function CategoriesManager() {
                 ) : sorted.length === 0 ? (
                     <div className="p-8 text-sm text-gray-500">No categories found.</div>
                 ) : (
-                    <div className="divide-y divide-gray-100">
-                        {sorted.map((c, idx) => (
-                            <div key={c.id} className="p-4 flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden flex-shrink-0">
-                                    {c.image ? <img src={c.image} alt={c.name} className="w-full h-full object-cover" /> : null}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900 truncate">{c.name}</p>
-                                    <p className="text-xs text-gray-500 truncate">/{c.slug}</p>
-                                </div>
-                                <span className={`text-xs px-2 py-1 rounded font-medium ${c.filter_layout === "top" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
-                                    {c.filter_layout === "top" ? "Top Select Filter" : "Sidebar Filter"}
-                                </span>
-                                <span className={`text-xs px-2 py-1 rounded ${c.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
-                                    {c.is_active ? "Active" : "Inactive"}
-                                </span>
-                                <div className="flex items-center gap-1">
-                                    <button
-                                        disabled={idx === 0 || saving}
-                                        onClick={() => reorder(c.id, sorted[idx - 1].id)}
-                                        className="p-1.5 rounded border border-gray-200 text-gray-600 disabled:opacity-40"
-                                        title="Move up"
-                                    >
-                                        <ChevronUp className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        disabled={idx === sorted.length - 1 || saving}
-                                        onClick={() => reorder(c.id, sorted[idx + 1].id)}
-                                        className="p-1.5 rounded border border-gray-200 text-gray-600 disabled:opacity-40"
-                                        title="Move down"
-                                    >
-                                        <ChevronDown className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => startEdit(c)}
-                                        className="p-1.5 rounded border border-gray-200 text-gray-600"
-                                        title="Edit"
-                                    >
-                                        <Pencil className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => softDelete(c.id)}
-                                        className="p-1.5 rounded border border-red-200 text-red-600"
-                                        title="Soft delete"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead className="w-12 pr-0"></TableHead>
+                                <TableHead>Category</TableHead>
+                                <TableHead>Filter Layout</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead>Sort Order</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
+                            </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                            {sorted.map((c, idx) => (
+                                <TableRow key={c.id} className="group">
+                                    <TableCell className="pr-0">
+                                        <div className="w-10 h-10 rounded-md bg-gray-100 overflow-hidden flex-shrink-0">
+                                            {c.image ? <img src={c.image} alt={c.name} className="w-full h-full object-cover" /> : null}
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="font-semibold text-gray-900 whitespace-nowrap">
+                                        <div className="flex flex-col">
+                                            <span className="truncate max-w-[200px]">{c.name}</span>
+                                            <span className="text-xs text-gray-500">/{c.slug}</span>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className={`text-xs px-2 py-1 rounded font-medium ${c.filter_layout === "top" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                                            {c.filter_layout === "top" ? "Top Select Filter" : "Sidebar Filter"}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <span className={`text-xs px-2 py-1 rounded ${c.is_active ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
+                                            {c.is_active ? "Active" : "Inactive"}
+                                        </span>
+                                    </TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                disabled={idx === 0 || saving}
+                                                onClick={() => reorder(c.id, sorted[idx - 1].id)}
+                                                className="p-1 rounded border border-gray-200 text-gray-650 disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                                                title="Move up"
+                                            >
+                                                <ChevronUp className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                disabled={idx === sorted.length - 1 || saving}
+                                                onClick={() => reorder(c.id, sorted[idx + 1].id)}
+                                                className="p-1 rounded border border-gray-200 text-gray-650 disabled:opacity-40 hover:bg-gray-50 cursor-pointer"
+                                                title="Move down"
+                                            >
+                                                <ChevronDown className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <div className="flex items-center justify-end gap-1">
+                                            <button
+                                                onClick={() => startEdit(c)}
+                                                className="p-1.5 rounded border border-gray-200 text-gray-650 hover:bg-gray-50 cursor-pointer"
+                                                title="Edit"
+                                            >
+                                                <Pencil className="w-3.5 h-3.5" />
+                                            </button>
+                                            <button
+                                                onClick={() => softDelete(c.id)}
+                                                className="p-1.5 rounded border border-red-200 text-red-650 hover:bg-red-55 cursor-pointer"
+                                                title="Soft delete"
+                                            >
+                                                <Trash2 className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
                 )}
             </div>
         </div>

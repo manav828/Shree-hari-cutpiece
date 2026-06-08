@@ -1,6 +1,7 @@
 import "server-only";
 import { unstable_cache } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { CACHE_TAGS, CACHE_TTL_SECONDS, getCacheEnabled } from "@/lib/cache";
 
 export type SiteConfigMap = Record<string, string>;
 
@@ -32,61 +33,69 @@ export type CmsBanner = {
     priority: number;
 };
 
-export const CMS_BANNERS_TAG = "cms_banners";
+export const CMS_BANNERS_TAG = CACHE_TAGS.cmsBanners;
+export const CMS_SITE_CONFIG_TAG = CACHE_TAGS.siteConfig;
+export const CMS_CATEGORIES_TAG = CACHE_TAGS.cmsCategories;
 
-const loadSiteConfigMapCached = unstable_cache(
-    async (): Promise<SiteConfigMap> => {
-        const { data, error } = await supabaseAdmin
-            .from("site_config")
-            .select("key, value");
+async function fetchSiteConfigMap(): Promise<SiteConfigMap> {
+    const { data, error } = await supabaseAdmin
+        .from("site_config")
+        .select("key, value");
 
-        if (error || !data) {
-            return {};
-        }
+    if (error || !data) {
+        return {};
+    }
 
-        return data.reduce<SiteConfigMap>((acc, row) => {
-            acc[row.key] = row.value ?? "";
-            return acc;
-        }, {});
-    },
+    return data.reduce<SiteConfigMap>((acc, row) => {
+        acc[row.key] = row.value ?? "";
+        return acc;
+    }, {});
+}
+
+const fetchSiteConfigMapCached = unstable_cache(
+    fetchSiteConfigMap,
     ["site_config_map"],
-    { revalidate: 30 },
+    { revalidate: CACHE_TTL_SECONDS, tags: [CACHE_TAGS.siteConfig] },
 );
 
 export async function getSiteConfigMap(): Promise<SiteConfigMap> {
-    return loadSiteConfigMapCached();
+    const cacheEnabled = await getCacheEnabled();
+    return cacheEnabled ? fetchSiteConfigMapCached() : fetchSiteConfigMap();
 }
 
-const loadActiveCategoriesCached = unstable_cache(
-    async (): Promise<CmsCategory[]> => {
-        const { data, error } = await supabaseAdmin
-            .from("categories")
-            .select("id, name, slug, description, image, sort_order, is_active, filter_layout")
-            .is("deleted_at", null)
-            .eq("is_active", true)
-            .order("sort_order", { ascending: true });
+async function fetchActiveCmsCategories(): Promise<CmsCategory[]> {
+    const { data, error } = await supabaseAdmin
+        .from("categories")
+        .select("id, name, slug, description, image, sort_order, is_active, filter_layout")
+        .is("deleted_at", null)
+        .eq("is_active", true)
+        .order("sort_order", { ascending: true });
 
-        if (error || !data) {
-            return [];
-        }
+    if (error || !data) {
+        return [];
+    }
 
-        return data.map((row) => ({
-            id: row.id,
-            name: row.name,
-            slug: row.slug,
-            description: row.description ?? "",
-            image: row.image ?? "",
-            sort_order: row.sort_order ?? 0,
-            is_active: row.is_active ?? true,
-            filter_layout: row.filter_layout ?? "sidebar",
-        }));
-    },
+    return data.map((row) => ({
+        id: row.id,
+        name: row.name,
+        slug: row.slug,
+        description: row.description ?? "",
+        image: row.image ?? "",
+        sort_order: row.sort_order ?? 0,
+        is_active: row.is_active ?? true,
+        filter_layout: row.filter_layout ?? "sidebar",
+    }));
+}
+
+const fetchActiveCmsCategoriesCached = unstable_cache(
+    fetchActiveCmsCategories,
     ["cms_categories_active"],
-    { revalidate: 30 },
+    { revalidate: CACHE_TTL_SECONDS, tags: [CACHE_TAGS.cmsCategories] },
 );
 
 export async function getActiveCmsCategories(): Promise<CmsCategory[]> {
-    return loadActiveCategoriesCached();
+    const cacheEnabled = await getCacheEnabled();
+    return cacheEnabled ? fetchActiveCmsCategoriesCached() : fetchActiveCmsCategories();
 }
 
 function getTodayInIstDateString(): string {
@@ -107,40 +116,43 @@ function isBannerActiveToday(banner: CmsBanner, todayIst: string): boolean {
     return true;
 }
 
-const loadCmsBannersCached = unstable_cache(
-    async (): Promise<CmsBanner[]> => {
-        const { data, error } = await supabaseAdmin
-            .from("banners")
-            .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority")
-            .is("deleted_at", null)
-            .order("priority", { ascending: false })
-            .order("created_at", { ascending: false });
+async function fetchCmsBanners(): Promise<CmsBanner[]> {
+    const { data, error } = await supabaseAdmin
+        .from("banners")
+        .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority")
+        .is("deleted_at", null)
+        .order("priority", { ascending: false })
+        .order("created_at", { ascending: false });
 
-        if (error || !data) {
-            return [];
-        }
+    if (error || !data) {
+        return [];
+    }
 
-        return data.map((row) => ({
-            id: row.id,
-            title: row.title,
-            content_text: row.content_text ?? "",
-            image_url: row.image_url ?? "",
-            link_url: row.link_url ?? "",
-            placement: row.placement as CmsBannerPlacement,
-            bg_color: row.bg_color ?? "#000000",
-            text_color: row.text_color ?? "#FFFFFF",
-            is_active: row.is_active ?? true,
-            start_date: row.start_date ?? null,
-            end_date: row.end_date ?? null,
-            priority: row.priority ?? 0,
-        }));
-    },
+    return data.map((row) => ({
+        id: row.id,
+        title: row.title,
+        content_text: row.content_text ?? "",
+        image_url: row.image_url ?? "",
+        link_url: row.link_url ?? "",
+        placement: row.placement as CmsBannerPlacement,
+        bg_color: row.bg_color ?? "#000000",
+        text_color: row.text_color ?? "#FFFFFF",
+        is_active: row.is_active ?? true,
+        start_date: row.start_date ?? null,
+        end_date: row.end_date ?? null,
+        priority: row.priority ?? 0,
+    }));
+}
+
+const fetchCmsBannersCached = unstable_cache(
+    fetchCmsBanners,
     ["cms_banners_all"],
-    { revalidate: 30, tags: [CMS_BANNERS_TAG] },
+    { revalidate: CACHE_TTL_SECONDS, tags: [CACHE_TAGS.cmsBanners] },
 );
 
 export async function getActiveCmsBannersByPlacement(placement: CmsBannerPlacement): Promise<CmsBanner[]> {
-    const all = await loadCmsBannersCached();
+    const cacheEnabled = await getCacheEnabled();
+    const all = cacheEnabled ? await fetchCmsBannersCached() : await fetchCmsBanners();
     const todayIst = getTodayInIstDateString();
 
     const active = all.filter((banner) => banner.placement === placement && isBannerActiveToday(banner, todayIst));

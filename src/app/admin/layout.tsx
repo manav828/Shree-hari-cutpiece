@@ -19,8 +19,13 @@ import {
     X,
     ChevronLeft,
     ChevronRight,
-    CreditCard
+    CreditCard,
+    Mail,
+    ChevronDown
 } from "lucide-react";
+import AdminCacheControls from "@/components/admin/layout/AdminCacheControls";
+import AdminNotificationsBell from "@/components/admin/layout/AdminNotificationsBell";
+import GlobalToastContainer from "@/components/admin/layout/GlobalToastContainer";
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
     const pathname = usePathname();
@@ -29,6 +34,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const [isChecking, setIsChecking] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isCmsOpen, setIsCmsOpen] = useState(false);
+
+    useEffect(() => {
+        if (
+            pathname.startsWith("/admin/blog") ||
+            pathname.startsWith("/admin/notifications-templates") ||
+            pathname.startsWith("/admin/cms")
+        ) {
+            setIsCmsOpen(true);
+        }
+    }, [pathname]);
 
     useEffect(() => {
         const stored = localStorage.getItem("shreehari_admin_sidebar_collapsed");
@@ -64,9 +80,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
         { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
         { name: "Customers", href: "/admin/customers", icon: Users },
         { name: "Coupons", href: "/admin/coupons", icon: Tags },
-        { name: "Content & Banners", href: "/admin/cms", icon: Layout },
+        {
+            name: "Content Management",
+            icon: Layout,
+            isGroup: true,
+            isOpen: isCmsOpen,
+            setOpen: setIsCmsOpen,
+            subItems: [
+                { name: "Blog", href: "/admin/blog", icon: FileText },
+                { name: "Notification Templates", href: "/admin/notifications-templates", icon: Mail },
+                { name: "Banners & Content", href: "/admin/cms", icon: Layout },
+            ]
+        },
         { name: "Documentation", href: "/admin/documentation", icon: BookOpen },
-        { name: "Blog", href: "/admin/blog", icon: FileText },
         { name: "Reports", href: "/admin/reports", icon: BarChart },
         { name: "Payments", href: "/admin/payments", icon: CreditCard },
         { name: "Settings", href: "/admin/settings", icon: Settings },
@@ -121,24 +147,75 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 </div>
 
                 {/* Navigation */}
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4">
+                <nav className="flex-1 px-3 space-y-1 overflow-y-auto mt-4 admin-sidebar-nav">
                     {!collapsed && <p className="px-3 pt-3 pb-2 text-[10px] font-semibold text-slate-300 uppercase tracking-[0.12em] select-none">Menu</p>}
-                    {navItems.map((item) => {
+                    {navItems.map((item: any) => {
+                        if (item.isGroup) {
+                            const hasActiveSub = item.subItems?.some((sub: any) => 
+                                pathname === sub.href || (pathname.startsWith(`${sub.href}/`) && sub.href !== "/admin")
+                            );
+                            const currentCollapsed = isMobile ? false : isCollapsed;
+                            return (
+                                <div key={item.name} className="space-y-1">
+                                    <button
+                                        onClick={() => item.setOpen(!item.isOpen)}
+                                        className={`w-full flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-150 ${
+                                            currentCollapsed ? "justify-center px-0" : ""
+                                        } ${hasActiveSub && !item.isOpen
+                                            ? "bg-gradient-to-r from-cyan-300 to-blue-400 text-slate-900 font-semibold shadow-sm animate-pulse-subtle"
+                                            : "text-slate-200 hover:text-white hover:bg-slate-700/70"
+                                        }`}
+                                        title={currentCollapsed ? item.name : undefined}
+                                    >
+                                        <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${hasActiveSub && !item.isOpen ? "text-slate-900" : "text-slate-300"}`} strokeWidth={1.8} />
+                                        {!currentCollapsed && (
+                                            <div className="flex-1 flex items-center justify-between text-left">
+                                                <span>{item.name}</span>
+                                                <ChevronDown className={`h-3 w-3 transform transition-transform duration-150 ${item.isOpen ? "rotate-180" : ""}`} />
+                                            </div>
+                                        )}
+                                    </button>
+                                    {item.isOpen && !currentCollapsed && (
+                                        <div className="pl-6 space-y-1 mt-0.5">
+                                            {item.subItems?.map((sub: any) => {
+                                                const isSubActive = pathname === sub.href || (pathname.startsWith(`${sub.href}/`) && sub.href !== "/admin");
+                                                return (
+                                                    <Link
+                                                        key={sub.href}
+                                                        href={sub.href}
+                                                        className={`flex items-center gap-2.5 px-3 py-2 text-[12.5px] font-medium rounded-md transition-all duration-150 ${
+                                                            isSubActive
+                                                                ? "bg-gradient-to-r from-cyan-300/80 to-blue-400/80 text-slate-900 font-semibold shadow-sm"
+                                                                : "text-slate-300 hover:text-white hover:bg-slate-700/50"
+                                                        }`}
+                                                    >
+                                                        <sub.icon className={`h-3.5 w-3.5 flex-shrink-0 ${isSubActive ? "text-slate-900" : "text-slate-400"}`} strokeWidth={isSubActive ? 2.2 : 1.8} />
+                                                        <span>{sub.name}</span>
+                                                    </Link>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        }
+
                         const isActive = pathname === item.href || (pathname.startsWith(`${item.href}/`) && item.href !== "/admin");
+                        const currentCollapsed = isMobile ? false : isCollapsed;
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 className={`flex items-center gap-3 px-3 py-2.5 text-[13px] font-medium rounded-lg transition-all duration-150 ${
-                                    collapsed ? "justify-center px-0" : ""
+                                    currentCollapsed ? "justify-center px-0" : ""
                                 } ${isActive
                                     ? "bg-gradient-to-r from-cyan-300 to-blue-400 text-slate-900 shadow-md shadow-blue-900/20 font-semibold"
                                     : "text-slate-200 hover:text-white hover:bg-slate-700/70"
                                     }`}
-                                title={collapsed ? item.name : undefined}
+                                title={currentCollapsed ? item.name : undefined}
                             >
                                 <item.icon className={`h-[18px] w-[18px] flex-shrink-0 ${isActive ? "text-slate-900" : "text-slate-300"}`} strokeWidth={isActive ? 2.2 : 1.8} />
-                                {!collapsed && <span>{item.name}</span>}
+                                {!currentCollapsed && <span>{item.name}</span>}
                             </Link>
                         );
                     })}
@@ -189,9 +266,22 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                         <Menu className="h-5 w-5" />
                     </button>
                     <span className="text-sm font-semibold text-slate-900">Shree Hari Admin</span>
-                    <button onClick={handleSignOut} className="p-1.5 text-slate-400 hover:text-red-500">
-                        <LogOut className="h-4 w-4" />
-                    </button>
+                    <div className="flex items-center gap-2">
+                        <AdminNotificationsBell />
+                        <AdminCacheControls />
+                        <button onClick={handleSignOut} className="p-1.5 text-slate-400 hover:text-red-500">
+                            <LogOut className="h-4 w-4" />
+                        </button>
+                    </div>
+                </header>
+
+                {/* Desktop Top Bar — cache controls always visible */}
+                <header className="hidden md:flex items-center justify-between bg-white/80 backdrop-blur-md border-b border-blue-100 px-6 py-2.5 flex-shrink-0 z-10">
+                    <p className="text-[12px] font-medium text-slate-400 tracking-wide">Shree Hari Admin Panel</p>
+                    <div className="flex items-center gap-3">
+                        <AdminNotificationsBell />
+                        <AdminCacheControls />
+                    </div>
                 </header>
 
                 {/* Scrollable Content Area */}
@@ -201,6 +291,26 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                     </div>
                 </div>
             </main>
+            <GlobalToastContainer />
+            <style dangerouslySetInnerHTML={{ __html: `
+                .admin-sidebar-nav::-webkit-scrollbar {
+                    width: 4px;
+                }
+                .admin-sidebar-nav::-webkit-scrollbar-track {
+                    background: transparent;
+                }
+                .admin-sidebar-nav::-webkit-scrollbar-thumb {
+                    background: rgba(255, 255, 255, 0.15);
+                    border-radius: 4px;
+                }
+                .admin-sidebar-nav::-webkit-scrollbar-thumb:hover {
+                    background: rgba(255, 255, 255, 0.3);
+                }
+                .admin-sidebar-nav {
+                    scrollbar-width: thin;
+                    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+                }
+            `}} />
         </div>
     );
 }

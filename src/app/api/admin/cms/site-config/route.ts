@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { CACHE_TAGS } from "@/lib/cache";
 
 type ConfigUpdate = {
     key: string;
@@ -124,6 +126,7 @@ export async function POST(req: NextRequest) {
 
             if (upsertError) throw upsertError;
 
+            revalidateTag(CACHE_TAGS.siteConfig);
             return NextResponse.json({ success: true, key, value: publicUrl });
         }
 
@@ -154,6 +157,7 @@ export async function POST(req: NextRequest) {
 
         if (error) throw error;
 
+        revalidateTag(CACHE_TAGS.siteConfig);
         return NextResponse.json({ success: true, count: payload.length });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to save site config";

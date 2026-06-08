@@ -73,7 +73,7 @@ export async function GET() {
       return acc;
     }, {});
 
-    for (const [dir, config] of Object.entries(gatewayConfigs)) {
+    for (const [, config] of Object.entries(gatewayConfigs)) {
       const isEnabled = settingsMap[config.isEnabledKey] === "true";
       if (isEnabled) {
         const methodData: any = {
