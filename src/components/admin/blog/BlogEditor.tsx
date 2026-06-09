@@ -1203,6 +1203,7 @@ export default function BlogEditor({ postId }: Props) {
     const [relatedPostIds, setRelatedPostIds] = useState<string[]>([]);
     const [relatedProductIds, setRelatedProductIds] = useState<string[]>([]);
     const [selectedProducts, setSelectedProducts] = useState<ProductOption[]>([]);
+    const [allProducts, setAllProducts] = useState<ProductOption[]>([]);
     const [productSearchQuery, setProductSearchQuery] = useState("");
     const [productSearchResults, setProductSearchResults] = useState<ProductOption[]>([]);
     const [productSearchLoading, setProductSearchLoading] = useState(false);
@@ -1299,6 +1300,26 @@ export default function BlogEditor({ postId }: Props) {
         markDirty();
     };
 
+    const toggleRelatedProduct = (productId: string) => {
+        setRelatedProductIds((prev) => {
+            let next: string[];
+            if (prev.includes(productId)) {
+                next = prev.filter((id) => id !== productId);
+            } else {
+                if (prev.length >= 10) return prev;
+                next = [...prev, productId];
+            }
+            setSelectedProducts(
+                next.map((id) => {
+                    const found = allProducts.find((p) => p.id === id) || selectedProducts.find((p) => p.id === id);
+                    return found || { id, name: id, slug: null };
+                })
+            );
+            markDirty();
+            return next;
+        });
+    };
+
     useEffect(() => {
         if (postId) {
             if (postId !== currentPostId) {
@@ -1316,11 +1337,12 @@ export default function BlogEditor({ postId }: Props) {
     useEffect(() => {
         const loadFilters = async () => {
             try {
-                const [categoryRes, tagRes, postsRes, themeRes] = await Promise.all([
+                const [categoryRes, tagRes, postsRes, themeRes, productsRes] = await Promise.all([
                     fetch("/api/admin/blogs/categories"),
                     fetch("/api/admin/blogs/tags"),
                     fetch("/api/admin/blogs?limit=200"),
                     fetch("/api/admin/theme"),
+                    fetch("/api/admin/products/search?all=true"),
                 ]);
 
                 const categoryJson = await categoryRes.json();
@@ -1336,6 +1358,11 @@ export default function BlogEditor({ postId }: Props) {
                     if (themeJson.theme) {
                         setActiveTheme(themeJson.theme);
                     }
+                }
+
+                if (productsRes.ok) {
+                    const productsJson = await productsRes.json();
+                    setAllProducts(productsJson.products ?? []);
                 }
             } catch {
                 // Ignore filter load errors.
@@ -2794,64 +2821,99 @@ export default function BlogEditor({ postId }: Props) {
                                         type="text"
                                         value={productSearchQuery}
                                         onChange={(e) => setProductSearchQuery(e.target.value)}
-                                        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm"
-                                        placeholder="Search by product name or slug"
+                                        className="w-full px-3 py-2 rounded-md border border-gray-300 text-sm mb-2"
+                                        placeholder="Search by product name..."
                                     />
-                                    {productSearchQuery.trim().length >= 2 && (
-                                        <div className="mt-2 max-h-40 overflow-auto rounded-md border border-gray-200 bg-white">
-                                            {productSearchLoading ? (
-                                                <p className="px-3 py-2 text-xs text-gray-500">Searching...</p>
-                                            ) : productSearchResults.length === 0 ? (
-                                                <p className="px-3 py-2 text-xs text-gray-500">No products found.</p>
-                                            ) : (
-                                                <div className="divide-y divide-gray-100">
-                                                    {productSearchResults.map((option) => (
-                                                        <button
-                                                            key={option.id}
-                                                            type="button"
-                                                            onClick={() => addRelatedProduct(option)}
-                                                            className="w-full text-left px-3 py-2 hover:bg-gray-50"
-                                                        >
-                                                            <p className="text-xs font-semibold text-gray-800">{option.name}</p>
-                                                            <p className="text-[11px] text-gray-500">/{option.slug ?? option.id}</p>
-                                                        </button>
-                                                    ))}
+                                    <div className="border border-gray-200 rounded-md max-h-48 overflow-y-auto bg-white divide-y divide-gray-100">
+                                        {(productSearchQuery.trim()
+                                            ? allProducts.filter((p) => p.name.toLowerCase().includes(productSearchQuery.toLowerCase()))
+                                            : allProducts
+                                        ).map((p) => (
+                                            <label key={p.id} className="flex items-center gap-2 px-3 py-2 text-xs text-gray-700 hover:bg-gray-50 cursor-pointer">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={relatedProductIds.includes(p.id)}
+                                                    onChange={() => toggleRelatedProduct(p.id)}
+                                                    className="h-3.5 w-3.5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                                                />
+                                                <div className="truncate">
+                                                    <p className="font-medium text-gray-800">{p.name}</p>
+                                                    <p className="text-[10px] text-gray-400">/{p.slug ?? p.id}</p>
                                                 </div>
-                                            )}
-                                        </div>
-                                    )}
-                                    {productSearchQuery.trim().length > 0 && productSearchQuery.trim().length < 2 && (
-                                        <p className="text-[11px] text-gray-400 mt-1">Type at least 2 letters to search.</p>
-                                    )}
+                                            </label>
+                                        ))}
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">Selected: {relatedProductIds.length} of 10 max</p>
                                 </div>
 
-                                <div>
-                                    <label className="block text-xs text-gray-500 mb-2">Selected products</label>
-                                    {selectedProducts.length === 0 ? (
-                                        <p className="text-xs text-gray-500">No products selected yet.</p>
-                                    ) : (
-                                        <div className="space-y-2">
-                                            {selectedProducts.map((product) => (
-                                                <div key={product.id} className="flex items-center justify-between rounded-md border border-gray-200 px-3 py-2">
-                                                    <div>
-                                                        <p className="text-xs font-semibold text-gray-800">{product.name}</p>
-                                                        <p className="text-[11px] text-gray-500">/{product.slug ?? product.id}</p>
+                                {selectedProducts.length > 0 && (
+                                    <div className="mt-3 space-y-2">
+                                        <label className="block text-xs font-semibold text-gray-700">Selected Products & Order</label>
+                                        <div className="space-y-1.5">
+                                            {selectedProducts.map((product, idx) => (
+                                                <div key={product.id} className="flex items-center justify-between rounded-md border border-gray-200 bg-gray-50 px-2.5 py-1.5 text-xs">
+                                                    <span className="font-medium text-gray-700 truncate max-w-[150px]">{product.name}</span>
+                                                    <div className="flex items-center gap-1.5">
+                                                        <button
+                                                            type="button"
+                                                            disabled={idx === 0}
+                                                            onClick={() => {
+                                                                setRelatedProductIds((prev) => {
+                                                                    const next = [...prev];
+                                                                    const temp = next[idx];
+                                                                    next[idx] = next[idx - 1];
+                                                                    next[idx - 1] = temp;
+                                                                    return next;
+                                                                });
+                                                                setSelectedProducts((prev) => {
+                                                                    const next = [...prev];
+                                                                    const temp = next[idx];
+                                                                    next[idx] = next[idx - 1];
+                                                                    next[idx - 1] = temp;
+                                                                    return next;
+                                                                });
+                                                                markDirty();
+                                                            }}
+                                                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                                                        >
+                                                            ▲
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            disabled={idx === selectedProducts.length - 1}
+                                                            onClick={() => {
+                                                                setRelatedProductIds((prev) => {
+                                                                    const next = [...prev];
+                                                                    const temp = next[idx];
+                                                                    next[idx] = next[idx + 1];
+                                                                    next[idx + 1] = temp;
+                                                                    return next;
+                                                                });
+                                                                setSelectedProducts((prev) => {
+                                                                    const next = [...prev];
+                                                                    const temp = next[idx];
+                                                                    next[idx] = next[idx + 1];
+                                                                    next[idx + 1] = temp;
+                                                                    return next;
+                                                                });
+                                                                markDirty();
+                                                            }}
+                                                            className="text-gray-400 hover:text-gray-600 disabled:opacity-30"
+                                                        >
+                                                            ▼
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => toggleRelatedProduct(product.id)}
+                                                            className="text-red-500 font-semibold ml-1 text-sm leading-none"
+                                                        >
+                                                            ×
+                                                        </button>
                                                     </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={() => removeRelatedProduct(product.id)}
-                                                        className="text-[11px] text-red-600"
-                                                    >
-                                                        Remove
-                                                    </button>
                                                 </div>
                                             ))}
                                         </div>
-                                    )}
-                                </div>
-
-                                {relatedProductIds.length >= 10 && (
-                                    <p className="text-xs text-red-600">Max 10 products allowed.</p>
+                                    </div>
                                 )}
                             </div>
                         )}

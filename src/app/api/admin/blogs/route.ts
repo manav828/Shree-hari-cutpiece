@@ -192,6 +192,32 @@ export async function POST(req: NextRequest) {
             if (tagsError) throw tagsError;
         }
 
+        const relatedPostIds = listFromUnknown(body?.related_post_ids);
+        if (relatedPostIds.length > 0) {
+            const rows = relatedPostIds
+                .filter((id) => id !== post.id)
+                .slice(0, 5)
+                .map((relatedPostId) => ({ post_id: post.id, related_post_id: relatedPostId }));
+            if (rows.length > 0) {
+                const { error: relPostsError } = await supabaseAdmin.from("blog_post_related_posts").insert(rows);
+                if (relPostsError) throw relPostsError;
+            }
+        }
+
+        const relatedProductIds = listFromUnknown(body?.related_product_ids);
+        if (relatedProductIds.length > 0) {
+            const rows = relatedProductIds.slice(0, 10).map((productId, index) => ({
+                post_id: post.id,
+                product_id: productId,
+                sort_order: index,
+            }));
+            if (rows.length > 0) {
+                const { error: relProductsError } = await supabaseAdmin.from("blog_post_related_products").insert(rows);
+                if (relProductsError) throw relProductsError;
+            }
+        }
+
+
         const { error: revisionError } = await supabaseAdmin
             .from("blog_post_revisions")
             .insert({

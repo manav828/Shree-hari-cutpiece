@@ -8,7 +8,7 @@ import Container from "@/components/ui/Container";
 import CartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
 import BlogRenderer from "@/components/blog/BlogRenderer";
 import ShareButtons from "@/components/blog/ShareButtons";
-import ProductCard from "@/components/shop/ProductCard";
+import ProductCard from "@/themes/bohemian/core/components/shop/ProductCard";
 import { BlogDetailPageProps } from "@/types/blog";
 import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Tag } from "lucide-react";
@@ -182,17 +182,22 @@ export default function BohemianBlogDetailPage({
 
                 {/* Related Products Section */}
                 {post.show_related_products !== false && relatedProducts.length > 0 && (
-                    <section className="mt-20 border-t border-[#e6e2da] pt-16 bg-[#fcf9f4]">
+                    <section className="mt-24 border-t border-[#ddc0ba]/40 pt-20 bg-[#fcf9f4]">
                         <Container>
-                            <h2 className={`${newsreader.className} text-4xl text-[#1c1c19] mb-10 text-center font-semibold`}>
-                                {post.related_products_title || "Shop This Story"}
-                            </h2>
+                            <div className="mb-9 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between max-w-6xl mx-auto">
+                                <h2 className={`${newsreader.className} text-4xl text-[#1c1c19] font-semibold`}>
+                                    {post.related_products_title || "Shop This Story"}
+                                </h2>
+                                <Link href="/shop" className="text-sm font-semibold text-[#9f3f29] transition-opacity hover:opacity-70">
+                                    Browse Living Collection
+                                </Link>
+                            </div>
                             <div
-                                className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth snap-x snap-mandatory pb-6 max-w-6xl mx-auto"
+                                className="flex gap-7 overflow-x-auto pb-6 -mx-4 px-4 sm:mx-0 sm:px-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] snap-x snap-mandatory max-w-6xl mx-auto"
                                 style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                             >
                                 {relatedProducts.map((product) => (
-                                    <div key={product.id} className="flex-shrink-0 w-[260px] sm:w-[300px] snap-start bg-white border border-[#e6e2da] rounded-2xl p-3">
+                                    <div key={product.id} className="flex-shrink-0 w-[265px] snap-start">
                                         <ProductCard product={product} />
                                     </div>
                                 ))}
