@@ -64,7 +64,7 @@ const fallbackBlogs = [
   {
     title: "The Rhythm of the Wheel",
     excerpt: "A deep dive into the meditative process of our master ceramists in Kyoto, finding perfection in the imperfect.",
-    image: "https://images.unsplash.com/photo-1565192647048-f997ed87f5e2?q=80&w=800&auto=format&fit=crop",
+    image: "https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800&auto=format&fit=crop",
     slug: "#",
   },
   {
