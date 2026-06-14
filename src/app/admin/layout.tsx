@@ -35,6 +35,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isCmsOpen, setIsCmsOpen] = useState(false);
+    const [isProductsOpen, setIsProductsOpen] = useState(false);
 
     useEffect(() => {
         if (
@@ -43,6 +44,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             pathname.startsWith("/admin/cms")
         ) {
             setIsCmsOpen(true);
+        }
+        if (
+            pathname.startsWith("/admin/products")
+        ) {
+            setIsProductsOpen(true);
         }
     }, [pathname]);
 
@@ -76,7 +82,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     const navItems = [
         { name: "Dashboard", href: "/admin", icon: LayoutDashboard },
-        { name: "Products", href: "/admin/products", icon: Package },
+        {
+            name: "Products",
+            icon: Package,
+            isGroup: true,
+            isOpen: isProductsOpen,
+            setOpen: setIsProductsOpen,
+            subItems: [
+                { name: "All Products", href: "/admin/products", icon: Package },
+                { name: "Categories", href: "/admin/products/categories", icon: Layout },
+                { name: "Stock Manager", href: "/admin/products/stock", icon: Settings },
+                { name: "Customer Reviews", href: "/admin/products/reviews", icon: Users },
+            ]
+        },
         { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
         { name: "Customers", href: "/admin/customers", icon: Users },
         { name: "Coupons", href: "/admin/coupons", icon: Tags },
@@ -178,7 +196,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                                     {item.isOpen && !currentCollapsed && (
                                         <div className="pl-6 space-y-1 mt-0.5">
                                             {item.subItems?.map((sub: any) => {
-                                                const isSubActive = pathname === sub.href || (pathname.startsWith(`${sub.href}/`) && sub.href !== "/admin");
+                                                const isSubActive = pathname === sub.href || (
+                                                    sub.href === "/admin/products"
+                                                        ? false
+                                                        : (pathname.startsWith(`${sub.href}/`) && sub.href !== "/admin")
+                                                );
                                                 return (
                                                     <Link
                                                         key={sub.href}

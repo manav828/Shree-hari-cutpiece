@@ -19,7 +19,7 @@ export default function Navbar() {
 
                     {/* Left Links */}
                     <nav className="hidden lg:flex items-center gap-8">
-                        <Link href="/shop" className="text-[11px] uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Collections</Link>
+                        <Link href="/shop" className="text-[11px] uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Shop</Link>
                         <Link href="/shop" className="text-[11px] uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Living</Link>
                         <Link href="/shop" className="text-[11px] uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Dining</Link>
                         <Link href="/about" className="text-[11px] uppercase tracking-[0.15em] hover:opacity-70 transition-opacity">Heritage</Link>

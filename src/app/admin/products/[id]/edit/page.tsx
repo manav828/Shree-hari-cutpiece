@@ -88,6 +88,7 @@ const TABS = [
     { id: "seo", label: "SEO", icon: Search },
     { id: "content", label: "Content", icon: FileText },
     { id: "tabs", label: "Product Tabs", icon: BookOpen },
+    { id: "reviews", label: "Customer Reviews", icon: Star },
 ];
 
 /* ═══════════════════════════════ MAIN ═══════════════════════════════ */
@@ -106,6 +107,18 @@ export default function EditProductPage() {
     const [activeTab, setActiveTab] = useState("details");
     const [tabFiles, setTabFiles] = useState<Record<string, File>>({});
     const [tabPreviews, setTabPreviews] = useState<Record<string, string>>({});
+
+    // Reviews Tab States
+    const [productReviews, setProductReviews] = useState<any[]>([]);
+    const [loadingReviews, setLoadingReviews] = useState(false);
+    
+    // Create review form states
+    const [newRevName, setNewRevName] = useState("");
+    const [newRevRating, setNewRevRating] = useState(5);
+    const [newRevComment, setNewRevComment] = useState("");
+    const [newRevImages, setNewRevImages] = useState<File[]>([]);
+    const [newRevVideo, setNewRevVideo] = useState<File | null>(null);
+    const [savingReview, setSavingReview] = useState(false);
 
     const [form, setForm] = useState<ProductForm>({
         name: "", slug: "", category_id: "", description: "", fabric: "", width: "",
@@ -471,6 +484,15 @@ export default function EditProductPage() {
             await saveOptionGroups();
             setVariants(updatedVariants);
             console.log("🎉 SAVE COMPLETE");
+            try {
+                await fetch("/api/admin/cache", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "clear" }),
+                });
+            } catch (cacheErr) {
+                console.error("Failed to clear storefront cache:", cacheErr);
+            }
             setToast("Product saved successfully!");
         } catch (e: any) {
             console.error("❌ SAVE FAILED:", e);
@@ -810,6 +832,113 @@ export default function EditProductPage() {
                     if (error) throw error;
                 }
             }
+        }
+    };
+
+    const fetchProductReviews = useCallback(async () => {
+        if (!productId || productId.startsWith("dummy-")) return;
+        setLoadingReviews(true);
+        try {
+            const res = await fetch(`/api/admin/products/${productId}/reviews`);
+            const data = await res.json();
+            if (res.ok) {
+                setProductReviews(data.reviews || []);
+            }
+        } catch (err) {
+            console.error("Error loading reviews:", err);
+        } finally {
+            setLoadingReviews(false);
+        }
+    }, [productId]);
+
+    useEffect(() => {
+        if (activeTab === "reviews") {
+            fetchProductReviews();
+        }
+    }, [activeTab, fetchProductReviews]);
+
+    const handleToggleReviewVisibility = async (reviewId: string, currentVisible: boolean) => {
+        try {
+            const res = await fetch(`/api/admin/products/${productId}/reviews`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ reviewId, isVisible: !currentVisible }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to update review visibility.");
+            }
+
+            setProductReviews(prev => prev.map(r => r.id === reviewId ? { ...r, is_visible: !currentVisible } : r));
+            setToast("Review visibility updated.");
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleDeleteReview = async (reviewId: string) => {
+        if (!confirm("Are you sure you want to delete this review?")) return;
+        try {
+            const res = await fetch(`/api/admin/products/${productId}/reviews?review_id=${reviewId}`, {
+                method: "DELETE",
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to delete review.");
+            }
+
+            setProductReviews(prev => prev.filter(r => r.id !== reviewId));
+            setToast("Review deleted successfully.");
+        } catch (err: any) {
+            alert(err.message);
+        }
+    };
+
+    const handleAddReview = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!newRevName.trim() || !newRevComment.trim()) {
+            alert("Name and description are required.");
+            return;
+        }
+
+        setSavingReview(true);
+        try {
+            const formData = new FormData();
+            formData.append("user_name", newRevName.trim());
+            formData.append("rating", String(newRevRating));
+            formData.append("comment_text", newRevComment.trim());
+            formData.append("is_visible", "true");
+
+            newRevImages.forEach(img => formData.append("images", img));
+            if (newRevVideo) {
+                formData.append("video", newRevVideo);
+            }
+
+            const res = await fetch(`/api/admin/products/${productId}/reviews`, {
+                method: "POST",
+                body: formData,
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || "Failed to add review.");
+            }
+
+            setToast("Review added successfully.");
+            setNewRevName("");
+            setNewRevRating(5);
+            setNewRevComment("");
+            setNewRevImages([]);
+            setNewRevVideo(null);
+            fetchProductReviews();
+        } catch (err: any) {
+            alert(err.message);
+        } finally {
+            setSavingReview(false);
         }
     };
 
@@ -2434,6 +2563,223 @@ export default function EditProductPage() {
                                     <Plus className="h-4 w-4" />
                                     Add Custom Tab
                                 </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ──── TAB: Customer Reviews ──── */}
+                    {activeTab === "reviews" && (
+                        <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-6 animate-fade-in">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-gray-100 pb-4">
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">Manage Customer Reviews</h3>
+                                    <p className="text-xs text-gray-500 mt-1">Review feedback, toggle display status, or curate custom reviews for this product.</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                                {/* Reviews List */}
+                                <div className="lg:col-span-2 space-y-4">
+                                    <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Submitted Reviews ({productReviews.length})</h4>
+                                    
+                                    {loadingReviews ? (
+                                        <div className="flex items-center justify-center py-12">
+                                            <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                                        </div>
+                                    ) : productReviews.length === 0 ? (
+                                        <div className="p-8 text-center border border-dashed border-gray-200 rounded-xl text-gray-400 text-sm">
+                                            No customer reviews found for this product.
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {productReviews.map((review: any) => (
+                                                <div key={review.id} className="p-4 border border-gray-150 rounded-xl bg-gray-50/30 flex flex-col sm:flex-row sm:items-start gap-4">
+                                                    <div className="flex-1 min-w-0 space-y-2">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex text-amber-500">
+                                                                {Array.from({ length: 5 }).map((_, i) => (
+                                                                    <Star key={i} className={`w-3.5 h-3.5 ${i < review.rating ? "fill-current text-amber-500" : "text-gray-200"}`} />
+                                                                ))}
+                                                            </div>
+                                                            <span className="text-xs font-semibold text-gray-700">{review.user_name}</span>
+                                                            <span className="text-[10px] text-gray-405">
+                                                                {new Date(review.created_at).toLocaleDateString()}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm text-gray-600 whitespace-pre-wrap">{review.comment_text}</p>
+                                                        
+                                                        {/* Images & Video Thumbnails */}
+                                                        {((review.images && review.images.length > 0) || review.video_url) && (
+                                                            <div className="flex flex-wrap gap-2 pt-1">
+                                                                {review.images?.map((url: string, idx: number) => (
+                                                                    <a key={idx} href={url} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-black flex-shrink-0 block hover:opacity-90">
+                                                                        <img src={url} alt="review attachment" className="w-full h-full object-cover" />
+                                                                    </a>
+                                                                ))}
+                                                                {review.video_url && (
+                                                                    <a href={review.video_url} target="_blank" rel="noopener noreferrer" className="w-12 h-12 rounded border border-gray-200 overflow-hidden bg-black flex-shrink-0 flex items-center justify-center hover:opacity-90">
+                                                                        <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                                    </a>
+                                                                )}
+                                                            </div>
+                                                        )}
+                                                    </div>
+
+                                                    <div className="flex items-center sm:flex-col sm:items-end gap-3 flex-shrink-0 pt-1">
+                                                        {/* Visibility toggle switch */}
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-xs text-gray-500 font-medium">{review.is_visible ? "Shown" : "Hidden"}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleToggleReviewVisibility(review.id, review.is_visible)}
+                                                                className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                                                                    review.is_visible ? "bg-emerald-500" : "bg-gray-200"
+                                                                }`}
+                                                            >
+                                                                <span
+                                                                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                                                        review.is_visible ? "translate-x-4" : "translate-x-0"
+                                                                    }`}
+                                                                />
+                                                            </button>
+                                                        </div>
+
+                                                        {/* Delete button */}
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleDeleteReview(review.id)}
+                                                            className="p-1.5 hover:bg-red-50 text-red-500 rounded transition-colors"
+                                                            title="Delete Review"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Curate Review Form */}
+                                <div className="p-5 border border-gray-200 rounded-xl bg-gray-50/50 space-y-4">
+                                    <h4 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Curate Custom Review</h4>
+                                    <form onSubmit={handleAddReview} className="space-y-4">
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-650 mb-1">Customer Name</label>
+                                            <input
+                                                type="text"
+                                                required
+                                                value={newRevName}
+                                                onChange={(e) => setNewRevName(e.target.value)}
+                                                className={inputCls}
+                                                placeholder="e.g. Ramesh Kumar"
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-650 mb-1">Star Rating</label>
+                                            <div className="flex gap-1">
+                                                {[1, 2, 3, 4, 5].map((num) => (
+                                                    <button
+                                                        key={num}
+                                                        type="button"
+                                                        onClick={() => setNewRevRating(num)}
+                                                        className="focus:outline-none"
+                                                    >
+                                                        <Star className={`w-6 h-6 ${num <= newRevRating ? "fill-current text-amber-500" : "text-gray-300"}`} />
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-655 mb-1">Review Comments</label>
+                                            <textarea
+                                                required
+                                                rows={4}
+                                                value={newRevComment}
+                                                onChange={(e) => setNewRevComment(e.target.value)}
+                                                className={inputCls}
+                                                placeholder="Write the curated feedback..."
+                                            />
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-655 mb-1">Attach Images (Max 2)</label>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                multiple
+                                                onChange={(e) => {
+                                                    const files = Array.from(e.target.files || []);
+                                                    if (newRevImages.length + files.length > 2) {
+                                                        alert("Max 2 images allowed.");
+                                                        return;
+                                                    }
+                                                    setNewRevImages(prev => [...prev, ...files]);
+                                                }}
+                                                className="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+                                            />
+                                            {newRevImages.length > 0 && (
+                                                <div className="flex gap-2 mt-2">
+                                                    {newRevImages.map((file, idx) => (
+                                                        <div key={idx} className="relative w-10 h-10 rounded border bg-white flex items-center justify-center group overflow-hidden">
+                                                            <span className="text-[8px] text-gray-400 truncate w-full px-1 text-center">{file.name}</span>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => setNewRevImages(prev => prev.filter((_, i) => i !== idx))}
+                                                                className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                            >
+                                                                <X className="w-3 h-3 text-white" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-xs font-semibold text-gray-655 mb-1">Attach Video (Max 1)</label>
+                                            <input
+                                                type="file"
+                                                accept="video/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0] || null;
+                                                    setNewRevVideo(file);
+                                                }}
+                                                className="block w-full text-xs text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 cursor-pointer"
+                                            />
+                                            {newRevVideo && (
+                                                <div className="relative w-10 h-10 rounded border bg-white flex items-center justify-center group mt-2 overflow-hidden">
+                                                    <span className="text-[8px] text-gray-400 truncate w-full px-1 text-center">{newRevVideo.name}</span>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setNewRevVideo(null)}
+                                                        className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                                    >
+                                                        <X className="w-3 h-3 text-white" />
+                                                    </button>
+                                                </div>
+                                            )}
+                                        </div>
+
+                                        <button
+                                            type="submit"
+                                            disabled={savingReview}
+                                            className="w-full inline-flex items-center justify-center gap-2 px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
+                                        >
+                                            {savingReview ? (
+                                                <>
+                                                    <Loader2 className="w-4 h-4 animate-spin" /> Adding...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Plus className="w-4 h-4" /> Add Review
+                                                </>
+                                            )}
+                                        </button>
+                                    </form>
+                                </div>
                             </div>
                         </div>
                     )}

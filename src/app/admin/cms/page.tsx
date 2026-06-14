@@ -24,7 +24,7 @@ import CategoriesManager from "@/components/admin/cms/CategoriesManager";
 import BannersManager from "@/components/admin/cms/BannersManager";
 import type { SiteConfigField } from "@/components/admin/cms/SiteConfigFormSection";
 
-type TabId = "sections" | "categories" | "store";
+type TabId = "sections" | "categories" | "banners" | "store";
 
 type ConfigType = "text" | "textarea" | "number" | "url";
 
@@ -439,6 +439,15 @@ export default function AdminCmsPage() {
               }`}
           >
             Categories CRUD
+          </button>
+          <button
+            onClick={() => setActiveTab("banners")}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${activeTab === "banners"
+              ? "bg-gray-900 text-white"
+              : "text-gray-600 hover:bg-gray-50"
+              }`}
+          >
+            Banners CRUD
           </button>
           <button
             onClick={() => setActiveTab("store")}
@@ -1360,6 +1369,13 @@ export default function AdminCmsPage() {
           {activeTab === "categories" && activeSection === null && (
             <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
               <CategoriesManager />
+            </div>
+          )}
+
+          {/* Banners Tab */}
+          {activeTab === "banners" && activeSection === null && (
+            <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+              <BannersManager />
             </div>
           )}
 

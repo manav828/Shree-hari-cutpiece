@@ -23,6 +23,7 @@ import {
 import Navbar from "@/themes/bohemian/components/layout/Navbar";
 import Footer from "@/themes/bohemian/components/layout/Footer";
 import CartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
+import ProductReviews from "@/components/shop/ProductReviews";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
@@ -330,6 +331,26 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	const viewedProductVariantRef = useRef<string | null>(null);
 
 	const [shareText, setShareText] = useState("Share Product");
+	const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
+	const [showProductReviews, setShowProductReviews] = useState(true);
+	const [allowUserReviews, setAllowUserReviews] = useState(true);
+	const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
+
+	useEffect(() => {
+		if (product?.id) {
+			// Fetch reviews settings + reviews data together
+			Promise.all([
+				fetch("/api/admin/settings/reviews", { cache: "no-store" }).then((r) => r.json()),
+				fetch(`/api/shop/reviews?product_id=${product.id}`).then((r) => r.json()),
+			])
+				.then(([settings, reviewsData]) => {
+					setShowProductReviews(settings.showProductReviews ?? true);
+					setAllowUserReviews(settings.allowUserReviews ?? true);
+					if (reviewsData.reviews) setDynamicReviews(reviewsData.reviews);
+				})
+				.catch((err) => console.error("Error loading reviews:", err));
+		}
+	}, [product?.id]);
 
 	const handleShareProduct = async () => {
 		const shareData = {
@@ -773,7 +794,9 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 		});
 	};
 
-	const averageRating = reviewsData.reduce((sum, review) => sum + review.rating, 0) / reviewsData.length;
+	const averageRating = dynamicReviews.length > 0
+		? dynamicReviews.reduce((sum: number, r: any) => sum + r.rating, 0) / dynamicReviews.length
+		: 0;
 	const categoryName = Array.isArray(product.categories) ? product.categories[0]?.name : product.categories?.name;
 	const shortDescription = product.short_description || product.description || "";
 	const descriptionHtml = product.description_html || "";
@@ -1003,10 +1026,18 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 							</div>
 
 							<div className="mt-4 flex items-center gap-2 text-[#785900]">
-								{[1, 2, 3, 4, 5].map((star) => (
-									<Star key={`rating-${star}`} className="h-4 w-4 fill-current" />
-								))}
-								<span className="text-xs text-[#7a6f68]">({reviewsData.length} curated reviews)</span>
+								{[1, 2, 3, 4, 5].map((star) => {
+									const avgRating = dynamicReviews.length > 0
+										? dynamicReviews.reduce((sum, r) => sum + r.rating, 0) / dynamicReviews.length
+										: 5;
+									return (
+										<Star
+											key={`rating-${star}`}
+											className={`h-4 w-4 ${star <= Math.round(avgRating) ? "fill-current" : "text-gray-300"}`}
+										/>
+									);
+								})}
+								<span className="text-xs text-[#7a6f68]">({dynamicReviews.length} curated review{dynamicReviews.length === 1 ? "" : "s"})</span>
 							</div>
 
 							{shortDescription ? (
@@ -1621,41 +1652,8 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 
 									if (tab.type === "reviews") {
 										return (
-											<div key={tab.id} className="space-y-7 animate-fade-in">
-												<div className="flex flex-wrap items-end justify-between gap-4">
-													<div>
-														<p className={`${bohemianHeadingFont.className} text-5xl leading-none text-[#1c1c19]`}>{averageRating.toFixed(1)}</p>
-														<p className="mt-1 text-sm text-[#7a6f68]">Average from {reviewsData.length} verified reviews</p>
-													</div>
-													<div className="flex items-center gap-1 text-[#785900]">
-														{[1, 2, 3, 4, 5].map((star) => (
-															<Star key={`rating-summary-${star}`} className="h-4 w-4 fill-current" />
-														))}
-													</div>
-												</div>
-
-												<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-													{reviewsData.map((review) => (
-														<article key={review.id} className="rounded-xl bg-[#f6f3ee] p-5">
-															<div className="mb-3 flex items-center gap-1 text-[#785900]">
-																{[1, 2, 3, 4, 5].map((star) => (
-																	<Star
-																		key={`${review.id}-${star}`}
-																		className={`h-3.5 w-3.5 ${star <= review.rating ? "fill-current" : "text-[#bcae9a]"}`}
-																	/>
-																))}
-															</div>
-															<p className="text-xs font-semibold uppercase tracking-[0.08em] text-[#1c1c19]">{review.title}</p>
-															<p className="mt-3 text-sm leading-relaxed text-[#56423d]">{review.comment}</p>
-															<div className="mt-5 flex items-center gap-3 border-t border-[#ddc0ba]/40 pt-4">
-																<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e5e2dd] text-[10px] font-bold text-[#5f5954]">
-																	{extractReviewInitials(review.name)}
-																</div>
-																<p className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5f5954]">{review.name}</p>
-															</div>
-														</article>
-													))}
-												</div>
+											<div key={tab.id} className="animate-fade-in">
+												<ProductReviews productId={product.id} productSlug={slug} theme="bohemian" />
 											</div>
 										);
 									}
@@ -1718,46 +1716,219 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 					</div>
 				</section>
 
-				<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24`}>
-					<div className="mb-12 text-center">
-						<h2 className={`${bohemianHeadingFont.className} text-5xl text-[#1c1c19]`}>Loved in Homes Worldwide</h2>
-						<p className="mt-3 text-sm text-[#6f645d]">Join our community of curators. Mention @ArtisanalArchive to be featured.</p>
-					</div>
-
-					<div className="mb-12 grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-5">
-						{SOCIAL_PROOF_IMAGES.map((image, index) => (
-							<div key={`social-proof-${index}`} className="group relative aspect-square overflow-hidden rounded-xl bg-[#f0ede8]">
-								<Image
-									src={image}
-									alt={`Styled customer home ${index + 1}`}
-									fill
-									sizes="(max-width: 768px) 50vw, 20vw"
-									className="object-cover transition-transform duration-500 group-hover:scale-105"
-								/>
+				{/* ── Loved in Homes Section — only if showProductReviews is ON ── */}
+				{showProductReviews && (
+					<section className={`${BOHEMIAN_SITE_CONTAINER} mt-24`}>
+						{/* Header: left-align + Add Review button on right */}
+						<div className="mb-10 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+							<div>
+								<h2 className={`${bohemianHeadingFont.className} text-4xl sm:text-5xl text-[#1c1c19]`}>Loved in Homes Worldwide</h2>
+								<p className="mt-2 text-sm text-[#6f645d]">Join our community of curators. Mention @ArtisanalArchive to be featured.</p>
 							</div>
-						))}
-					</div>
+							{allowUserReviews && (
+								<a
+									href={`#reviews-tab`}
+									onClick={(e) => {
+										e.preventDefault();
+										// Scroll to reviews tab and click it
+										const tabBtn = document.querySelector('[data-tab="reviews"]') as HTMLElement;
+										if (tabBtn) {
+											tabBtn.click();
+											setTimeout(() => tabBtn.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+										}
+									}}
+									className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-[#9f3f29] text-[#9f3f29] text-sm font-semibold hover:bg-[#9f3f29] hover:text-white transition-colors shrink-0"
+								>
+									<Star className="w-4 h-4 fill-current" />
+									Write a Review
+								</a>
+							)}
+						</div>
 
-					<div className="grid grid-cols-1 gap-5 md:grid-cols-3">
-						{reviewsData.map((review) => (
+						{/* Star rating summary */}
+						{dynamicReviews.length > 0 && (() => {
+							const total = dynamicReviews.length;
+							const avg = dynamicReviews.reduce((s: number, r: any) => s + r.rating, 0) / total;
+							const starCounts: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+							dynamicReviews.forEach((r: any) => { if (r.rating >= 1 && r.rating <= 5) starCounts[r.rating]++; });
+							return (
+								<div className="mb-10 flex flex-col md:flex-row gap-6 p-5 bg-[#f6f3ee] rounded-xl border border-[#ddc0ba]/40 justify-between items-stretch">
+									<div className="flex flex-col items-center justify-center min-w-[110px] md:pr-4">
+										<p className="text-5xl font-bold text-[#1c1c19] leading-none">{avg.toFixed(1)}</p>
+										<div className="flex mt-2">
+											{[1, 2, 3, 4, 5].map((s) => (
+												<Star key={s} className={`w-4 h-4 ${s <= Math.round(avg) ? "fill-current text-[#9f3f29]" : "text-[#ddc0ba]"}`} />
+											))}
+										</div>
+										<p className="text-xs text-[#7a6f68] mt-1">{total} review{total !== 1 ? "s" : ""}</p>
+									</div>
+									<div className="flex-1 max-w-lg space-y-2">
+										{[5, 4, 3, 2, 1].map((star) => {
+											const cnt = starCounts[star] || 0;
+											const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
+											return (
+												<Link key={star} href={`/shop/${slug}/reviews?stars=${star}`} className="flex items-center gap-2.5 group cursor-pointer hover:opacity-75 transition-opacity">
+													<span className="text-xs font-semibold text-[#7a6f68] w-10 text-right shrink-0">{star} star</span>
+													<div className="flex-1 h-2.5 bg-[#e8e2d9] rounded-full overflow-hidden">
+														<div className="h-full bg-[#9f3f29] group-hover:bg-[#bf573f] rounded-full transition-all duration-500" style={{ width: `${pct}%` }} />
+													</div>
+													<span className="text-xs text-[#7a6f68] w-9 shrink-0">{pct}%</span>
+													<span className="text-xs text-[#9d9088] w-7 shrink-0 text-right">({cnt})</span>
+												</Link>
+											);
+										})}
+									</div>
+									<div className="hidden md:flex flex-col items-center justify-center pl-6 border-l border-[#ddc0ba]/30 min-w-[200px] text-center">
+										<p className="text-[#1c1c19] font-bold text-sm">Loved & Trusted</p>
+										<p className="text-xs text-[#7a6f68] mt-1 max-w-[160px] leading-relaxed">100% of our buyers recommend our artisanal textiles.</p>
+									</div>
+								</div>
+							);
+						})()}
+
+					{/* Real review media strip — replaces dummy SOCIAL_PROOF_IMAGES */}
+					{(() => {
+						const allMedia: { url: string; isVideo: boolean; reviewerName: string }[] = [];
+						dynamicReviews.forEach((r: any) => {
+							(r.images || []).forEach((url: string) => {
+								if (url && url.startsWith("http")) allMedia.push({ url, isVideo: false, reviewerName: r.user_name });
+							});
+							if (r.video_url && r.video_url.startsWith("http")) allMedia.push({ url: r.video_url, isVideo: true, reviewerName: r.user_name });
+						});
+						if (allMedia.length === 0) return null;
+
+						const hasMoreMedia = allMedia.length > 15;
+						const displayedMedia = hasMoreMedia ? allMedia.slice(0, 14) : allMedia.slice(0, 15);
+
+						return (
+							<div className="mb-12 flex gap-3 overflow-x-auto pb-2" style={{ scrollbarWidth: "thin" }}>
+								{displayedMedia.map((media, idx) => (
+									<button
+										key={`bohemian-media-${idx}`}
+										onClick={() => {
+											setActiveMediaIndex(idx);
+										}}
+										className="relative flex-shrink-0 w-24 h-24 rounded-xl overflow-hidden border border-[#ddc0ba]/40 bg-[#f0ede8] cursor-zoom-in hover:opacity-90 transition-opacity"
+									>
+										{media.isVideo ? (
+											<>
+												<video src={media.url} className="w-full h-full object-cover opacity-80" muted playsInline />
+												<div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+													<svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+												</div>
+											</>
+										) : (
+											<img src={media.url} alt="Customer review photo" className="w-full h-full object-cover transition-transform duration-500 hover:scale-105" onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = "none"; }} />
+										)}
+									</button>
+								))}
+								{hasMoreMedia && (
+									<Link
+										href={`/shop/${slug}/reviews`}
+										className="relative flex-shrink-0 w-24 h-24 rounded-xl border border-[#ddc0ba]/40 bg-[#f6f3ee] hover:bg-[#efece7] flex flex-col items-center justify-center gap-1 text-center cursor-pointer transition-colors"
+									>
+										<span className="text-base font-bold text-[#9f3f29]">+{allMedia.length - 14}</span>
+										<span className="text-[10px] font-semibold text-[#6f645d] uppercase tracking-wider">More</span>
+									</Link>
+								)}
+							</div>
+						);
+					})()}
+
+					<div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+						{dynamicReviews.slice(0, 8).map((review: any) => (
 							<article key={`review-card-${review.id}`} className="rounded-xl bg-[#f6f3ee] p-6">
-								<div className="mb-3 flex items-center gap-1 text-[#785900]">
+								<div className="mb-3 flex items-center gap-1 text-[#9f3f29]">
 									{[1, 2, 3, 4, 5].map((star) => (
-										<Star key={`social-${review.id}-${star}`} className="h-3.5 w-3.5 fill-current" />
+										<Star
+											key={`social-${review.id}-${star}`}
+											className={`h-3.5 w-3.5 ${star <= review.rating ? "fill-current text-[#9f3f29]" : "text-gray-300"}`}
+										/>
 									))}
 								</div>
-								<h3 className="text-xs font-bold uppercase tracking-[0.08em] text-[#1c1c19]">{review.title}</h3>
-								<p className="mt-3 text-sm leading-relaxed text-[#56423d]">{review.comment}</p>
+								<p className="mt-3 text-sm leading-relaxed text-[#56423d]">{review.comment_text}</p>
 								<div className="mt-5 flex items-center gap-3 border-t border-[#ddc0ba]/40 pt-4">
 									<div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#e5e2dd] text-[10px] font-bold text-[#5f5954]">
-										{extractReviewInitials(review.name)}
+										{review.user_name.slice(0, 2).toUpperCase()}
 									</div>
-									<p className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5f5954]">{review.name}</p>
+									<p className="text-xs font-semibold uppercase tracking-[0.06em] text-[#5f5954]">{review.user_name}</p>
 								</div>
 							</article>
 						))}
+						{dynamicReviews.length === 0 && (
+							<p className="col-span-full text-center text-sm text-[#7a6f68] py-8">No reviews featured yet.</p>
+						)}
 					</div>
+
+					{dynamicReviews.length > 8 && (
+						<div className="mt-8 text-center">
+							<Link href={`/shop/${slug}/reviews`} className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-[#9f3f29] text-[#9f3f29] text-sm font-semibold hover:bg-[#9f3f29] hover:text-white transition-colors">
+								See All {dynamicReviews.length} Reviews
+								<ChevronRight className="w-4 h-4" />
+							</Link>
+						</div>
+					)}
+
+					{/* ── Lightbox ───────────────────────────────────────────── */}
+					{(() => {
+						const allMedia: { url: string; isVideo: boolean; reviewerName: string }[] = [];
+						dynamicReviews.forEach((r: any) => {
+							(r.images || []).forEach((url: string) => {
+								if (url && url.startsWith("http")) allMedia.push({ url, isVideo: false, reviewerName: r.user_name });
+							});
+							if (r.video_url && r.video_url.startsWith("http")) allMedia.push({ url: r.video_url, isVideo: true, reviewerName: r.user_name });
+						});
+
+						if (activeMediaIndex === null || !allMedia[activeMediaIndex]) return null;
+
+						return (
+							<div
+								onClick={() => setActiveMediaIndex(null)}
+								className="fixed top-0 left-0 w-screen h-screen z-[9999] bg-black/85 backdrop-blur-md flex items-center justify-center p-4 cursor-zoom-out animate-fade-in"
+							>
+								<button onClick={() => setActiveMediaIndex(null)} className="absolute top-4 right-4 text-white/70 hover:text-white p-2.5 z-50">
+									<svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /></svg>
+								</button>
+
+								{allMedia.length > 1 && (
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											setActiveMediaIndex((activeMediaIndex - 1 + allMedia.length) % allMedia.length);
+										}}
+										className="absolute left-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50 cursor-pointer"
+									>
+										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M15 19l-7-7 7-7" /></svg>
+									</button>
+								)}
+
+								{allMedia.length > 1 && (
+									<button
+										onClick={(e) => {
+											e.stopPropagation();
+											setActiveMediaIndex((activeMediaIndex + 1) % allMedia.length);
+										}}
+										className="absolute right-4 top-1/2 -translate-y-1/2 p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors z-50 cursor-pointer"
+									>
+										<svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 5l7 7-7 7" /></svg>
+									</button>
+								)}
+
+								<div className="max-w-4xl max-h-[90vh] flex flex-col items-center justify-center relative select-none" onClick={(e) => e.stopPropagation()}>
+									{allMedia[activeMediaIndex].isVideo ? (
+										<video src={allMedia[activeMediaIndex].url} controls autoPlay className="max-w-full max-h-[80vh] rounded-xl shadow-2xl" />
+									) : (
+										<img src={allMedia[activeMediaIndex].url} alt="Review media" className="max-w-full max-h-[80vh] rounded-xl shadow-2xl object-contain" />
+									)}
+									<p className="text-white/80 text-xs mt-3 bg-black/45 px-3 py-1.5 rounded-full select-none">
+										Review by {allMedia[activeMediaIndex].reviewerName} · {activeMediaIndex + 1} of {allMedia.length}
+									</p>
+								</div>
+							</div>
+						);
+					})()}
 				</section>
+				)}
 
 				{/* Standalone FAQs Section */}
 				{faqItems && faqItems.length > 0 && (

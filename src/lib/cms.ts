@@ -31,6 +31,7 @@ export type CmsBanner = {
     start_date: string | null;
     end_date: string | null;
     priority: number;
+    button_text: string;
 };
 
 export const CMS_BANNERS_TAG = CACHE_TAGS.cmsBanners;
@@ -119,7 +120,7 @@ function isBannerActiveToday(banner: CmsBanner, todayIst: string): boolean {
 async function fetchCmsBanners(): Promise<CmsBanner[]> {
     const { data, error } = await supabaseAdmin
         .from("banners")
-        .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority")
+        .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority, button_text")
         .is("deleted_at", null)
         .order("priority", { ascending: false })
         .order("created_at", { ascending: false });
@@ -141,6 +142,7 @@ async function fetchCmsBanners(): Promise<CmsBanner[]> {
         start_date: row.start_date ?? null,
         end_date: row.end_date ?? null,
         priority: row.priority ?? 0,
+        button_text: row.button_text ?? "",
     }));
 }
 

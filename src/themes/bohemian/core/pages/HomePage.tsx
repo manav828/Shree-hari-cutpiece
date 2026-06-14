@@ -21,7 +21,9 @@ import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/sit
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import JournalCarousel from "@/themes/bohemian/components/home/JournalCarousel";
 import ProductCarousel from "@/themes/bohemian/components/home/ProductCarousel";
+import BohemianHeroCarousel from "@/themes/bohemian/components/home/BohemianHeroCarousel";
 import { getThumbnailUrl } from "@/lib/imageOptimization";
+import { formatPrice } from "@/lib/utils";
 
 type JournalPost = {
     id: string;
@@ -150,7 +152,7 @@ const roomCards = [
 const newArrivals = [
   {
     title: "Arid Clay Vase",
-    price: "$88.00",
+    price: 88,
     tag: "Limited",
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuBE7n-xjJ0KT5jhua9ISVzx6avgS6zJZ8CDTg2pFMpJIdmgOSY_dg5yv5YRxLZH6VrrZEQSAqXGuGGtnB7YcR7sEuBpTirTSK3sEr5ffAHL3tHeuAq4hqEAdVqqanDdb2EX7eJ0eGFkY-ePkUpytWnNu9L2OafVY5ZtOLaxTH5tEB8D7-F1cQWXeJ8wQVbs9_hWazqFhbZl4FmJGuAiKAZSPkOPaji5ySu7cWvo9U6Td_v-l2lyV9TfMtcBt1ezznW-CRZ45IFxjNg",
@@ -158,21 +160,21 @@ const newArrivals = [
   },
   {
     title: "Dusk Glow Candle",
-    price: "$34.00",
+    price: 34,
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAU6KYGk0mGhSIzp9AieDxEfKb2FJ6hB3iRKg6JaQBIyzLcbLzxU5rvfucrdz4a8lJTVs6wmenbFDWGGYnKmF6ljlfxIOXBNMZMToAhDfnq_4gCoMgpXR1RhlsqLNIRGvyQN3sXjRVFpOXkbPM2136JjOq4KFboKkptV7J4FlJ4Im12xpSheKhFnLhutXGQLrOgANgAGh9zeAiRe5X1iq4Ga9nXxpwjhTE8t8B8XP9pOx2XfZePDLGm50Dfqss-7rO6dfAlzna9ZsE",
     alt: "Handcrafted beeswax candles in textured amber glass jars on a rustic wooden tray",
   },
   {
     title: "Seagrass Coven Basket",
-    price: "$110.00",
+    price: 110,
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuAAJPLjNZbaft28_YyZeWuIGgjNADIWXncBGWppgDIPNRXW-707oz_4v_5NfPcUl2uArriTUeJjVOoGNGQMyTQHRz4NylAF9smjBSpo-JipydMxgmC31CiQkC4dKwHaze2cb69iJfZE4EvYHtM_5TlUNMvytgM-zvcnW2HtqH0Ztg0ZWMUoZ3OH1TSs6g7YvEuks2dlX39CkOqQNey3zu9EDJpyaYKSI0ZfarsCxk3N7swPFRD_Jk72B7BruwQBXqrWsYUoUUMU76A",
     alt: "Natural woven seagrass storage baskets in various sizes with leather handles",
   },
   {
     title: "Plaster Muse Wall Sculpture",
-    price: "$165.00",
+    price: 165,
     image:
       "https://lh3.googleusercontent.com/aida-public/AB6AXuB5qKUxT83TaJjeQ3_CwnPtkpdP9JrviycoOt7JxZjzXKeSuZSB6xusNIl2sojEo_yROXyk6Qmy642M7uGH-CqSV-OaL4qJLPxCiXuL1xPpHNDPy5zOH8tdNdKIaGice7zbwIY1Rv3wwXrsDQfG4OZi2u544qO0Gs7NTUFUVN9N1UQHOlmSCvzt2ROPBZ9-JE-pfipLhKWVI6ZuTT1JNDZCiQmN_QV6b2S7OfHwIyYYcSdaMJHemMxbn-Xc18Zv7t24yCwkHQblUhQ",
     alt: "Minimalist abstract face wall sculpture made of white plaster on a warm beige wall",
@@ -287,19 +289,24 @@ export default async function BohemianHomePage() {
       }))
     : fallbackBlogs;
 
-  const heroBanner = heroBanners.find((banner) => banner.image_url?.trim());
-  const heroImage = siteConfig.bohemian_hero_desktop_image?.trim()
-    || heroBanner?.image_url?.trim()
-    || "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=2400&q=80";
-
-  const heroBadge = siteConfig.bohemian_hero_badge?.trim() || "TERRA & LOOM PRESENTS";
-  const heroHeadline = (siteConfig.bohemian_hero_headline?.trim() || heroBanner?.title?.trim() || "Embrace the Warmth.")
-    .replace(/\\n/g, "\n");
-  const heroDescription = siteConfig.bohemian_hero_description?.trim()
-    || heroBanner?.content_text?.trim()
-    || "Curating the finest bohemian treasures - from hand-tufted textiles to sun-baked ceramics - to transform your space into a sanctuary of natural beauty.";
-  const heroCtaLabel = siteConfig.bohemian_hero_cta1_label?.trim() || "Explore Collection";
-  const heroCtaUrl = siteConfig.bohemian_hero_cta1_url?.trim() || heroBanner?.link_url?.trim() || "/shop";
+  const finalHeroBanners = heroBanners.length > 0
+    ? heroBanners
+    : [
+        {
+          id: "default-hero-slide",
+          title: siteConfig.bohemian_hero_headline?.trim() || "Embrace the Warmth.",
+          content_text: siteConfig.bohemian_hero_description?.trim() || "Curating the finest bohemian treasures - from hand-tufted textiles to sun-baked ceramics - to transform your space into a sanctuary of natural beauty.",
+          image_url: siteConfig.bohemian_hero_desktop_image?.trim() || "https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?w=2400&q=80",
+          link_url: siteConfig.bohemian_hero_cta1_url?.trim() || "/shop",
+          placement: "homepage_hero",
+          bg_color: "#000000",
+          text_color: "#FFFFFF",
+          is_active: true,
+          start_date: null,
+          end_date: null,
+          priority: 100,
+        } as any,
+      ];
 
   // The Curated Archive Position Resolver
   const archiveTitle = siteConfig.bohemian_archive_title?.trim() || "The Curated Archive";
@@ -387,7 +394,7 @@ export default async function BohemianHomePage() {
 
       return {
         title: row.name,
-        price: typeof defaultVariant?.price === "number" ? `$${defaultVariant.price}.00` : "$0.00",
+        price: typeof defaultVariant?.price === "number" ? formatPrice(defaultVariant.price) : "₹0",
         tag: null,
         image: primaryImage,
         alt: row.short_description || row.name,
@@ -415,7 +422,7 @@ export default async function BohemianHomePage() {
 
           return {
             title: row.name,
-            price: typeof defaultVariant?.price === "number" ? `$${defaultVariant.price}.00` : (fallbackItem as { price?: string }).price || "$0.00",
+            price: typeof defaultVariant?.price === "number" ? formatPrice(defaultVariant.price) : (typeof fallbackItem.price === "number" ? formatPrice(fallbackItem.price) : fallbackItem.price || "₹0"),
             tag: (fallbackItem as { tag?: string }).tag || null,
             image: primaryImage,
             alt: row.short_description || row.name,
@@ -424,7 +431,7 @@ export default async function BohemianHomePage() {
         })
       : newArrivals.map((item) => ({
           title: item.title,
-          price: item.price,
+          price: typeof item.price === "number" ? formatPrice(item.price) : item.price,
           tag: item.tag || null,
           image: item.image,
           alt: item.alt,
@@ -439,44 +446,13 @@ export default async function BohemianHomePage() {
       <Navbar activePage="home" />
 
       <main>
-        <section className="w-full overflow-hidden">
-          <div className="relative h-[calc(100vh-72px)] min-h-[560px] w-full md:h-[calc(100vh-82px)]">
-            <Image
-              src={heroImage}
-              alt={heroBanner?.title?.trim() || "Bohemian living room with warm orange sofa and natural decor"}
-              fill
-              priority
-              sizes="100vw"
-              className="object-cover object-center"
-            />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#fcf9f4]/90 via-[#fcf9f4]/55 to-transparent" />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/15 via-transparent to-transparent" />
-
-            <div className={`relative z-10 flex h-full items-center ${BOHEMIAN_SITE_CONTAINER}`}>
-              <div className="max-w-[560px]">
-                <p className="mb-5 text-[10px] font-semibold uppercase tracking-[0.38em] text-[#6f6156]">
-                  {heroBadge}
-                </p>
-
-                <h1 className={`${newsreader.className} mb-6 whitespace-pre-line text-[62px] leading-[0.95] text-[#9f3f29] md:text-[82px]`}>
-                  {heroHeadline}
-                </h1>
-
-                <p className="mb-10 max-w-[520px] text-base leading-relaxed text-[#4f4741] md:text-[18px]">
-                  {heroDescription}
-                </p>
-
-                <Link
-                  href={heroCtaUrl}
-                  className="inline-flex items-center gap-3 rounded-lg bg-[#9f3f29] px-8 py-4 text-sm font-bold text-white shadow-sm transition-all hover:opacity-90"
-                >
-                  {heroCtaLabel}
-                  <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+        <BohemianHeroCarousel
+          banners={finalHeroBanners}
+          siteConfig={siteConfig}
+          headingClassName={newsreader.className}
+          bodyClassName={manrope.className}
+          containerClassName={BOHEMIAN_SITE_CONTAINER}
+        />
 
         <section className="bg-[#f6f3ee] py-12">
           <div className={`${BOHEMIAN_SITE_CONTAINER} grid grid-cols-2 gap-8 md:grid-cols-4`}>
@@ -484,7 +460,7 @@ export default async function BohemianHomePage() {
               <Truck className="h-8 w-8 text-[#9f3f29]" />
               <div>
                 <p className="text-sm font-bold">Free Shipping</p>
-                <p className="text-xs text-[#56423d]">On orders over $150</p>
+                <p className="text-xs text-[#56423d]">On orders over ₹5,000</p>
               </div>
             </div>
             <div className="flex items-center gap-4">

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase as supabaseClient } from "@/lib/supabase";
@@ -8,7 +8,7 @@ const supabase = supabaseClient as any;
 import { getThumbnailUrl } from "@/lib/imageOptimization";
 import {
     Plus, Search, SlidersHorizontal, Trash2, Pencil, ExternalLink,
-    Package, Loader2, ChevronLeft, ChevronRight
+    Package, Loader2, ChevronLeft, ChevronRight, ChevronDown
 } from "lucide-react";
 import { Input } from "@/components/admin/ui/Input";
 import { Select } from "@/components/admin/ui/Select";
@@ -80,6 +80,9 @@ export default function AdminProducts() {
     const [togglingId, setTogglingId] = useState<string | null>(null);
     const [page, setPage] = useState(1);
     const [limit, setLimit] = useState(25);
+    const [catSearch, setCatSearch] = useState("");
+    const [catOpen, setCatOpen] = useState(false);
+    const catDropdownRef = useRef<HTMLDivElement>(null);
 
     const fetchProducts = async () => {
         const executeFetch = async (retries = 3): Promise<any> => {
@@ -121,6 +124,14 @@ export default function AdminProducts() {
         supabase.from("categories").select("id, name").order("sort_order").then(({ data }: any) => {
             if (data) setCategories(data);
         });
+
+        const handleClickOutside = (event: MouseEvent) => {
+            if (catDropdownRef.current && !catDropdownRef.current.contains(event.target as Node)) {
+                setCatOpen(false);
+            }
+        };
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
     useEffect(() => {
@@ -130,6 +141,15 @@ export default function AdminProducts() {
     const toggleActive = async (id: string, current: boolean) => {
         setTogglingId(id);
         await supabase.from("products").update({ is_active: !current }).eq("id", id);
+        try {
+            await fetch("/api/admin/cache", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "clear" }),
+            });
+        } catch (cacheErr) {
+            console.error("Failed to clear storefront cache:", cacheErr);
+        }
         setProducts((p) => p.map((x) => (x.id === id ? { ...x, is_active: !current } : x)));
         setTogglingId(null);
     };
@@ -141,6 +161,15 @@ export default function AdminProducts() {
             await supabase.from("product_variants").delete().eq("product_id", id);
         }
         await supabase.from("products").delete().eq("id", id);
+        try {
+            await fetch("/api/admin/cache", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: "clear" }),
+            });
+        } catch (cacheErr) {
+            console.error("Failed to clear storefront cache:", cacheErr);
+        }
         setProducts((p) => p.filter((x) => x.id !== id));
         setDeleteId(null);
     };
@@ -220,10 +249,64 @@ export default function AdminProducts() {
 
             {showFilters && (
                 <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-white border border-gray-200 rounded-lg">
-                    <Select value={catFilter} onChange={(e) => setCatFilter(e.target.value)} className="bg-white">
-                        <option value="all">All Categories</option>
-                        {categories.map((c) => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </Select>
+                    {/* Searchable Category Filter */}
+                    <div className="relative" ref={catDropdownRef}>
+                        <button
+                            type="button"
+                            onClick={() => setCatOpen(!catOpen)}
+                            className="w-full text-left rounded-lg border border-gray-200 bg-white px-3 py-2 text-[13px] text-gray-700 shadow-sm focus:outline-none focus:ring-1 focus:ring-slate-400 flex items-center justify-between h-[38px]"
+                        >
+                            <span className="truncate">
+                                {catFilter === "all" ? "All Categories" : catFilter}
+                            </span>
+                            <ChevronDown className="h-4 w-4 text-gray-400 flex-shrink-0 ml-1" />
+                        </button>
+
+                        {catOpen && (
+                            <div className="absolute left-0 right-0 mt-1 max-h-60 overflow-y-auto rounded-lg border border-gray-200 bg-white p-2 shadow-lg z-50">
+                                <div className="relative mb-2">
+                                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
+                                    <input
+                                        type="text"
+                                        placeholder="Search categories..."
+                                        value={catSearch}
+                                        onChange={(e) => setCatSearch(e.target.value)}
+                                        className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md border border-gray-200 focus:outline-none focus:ring-1 focus:ring-slate-400 bg-white text-gray-700"
+                                    />
+                                </div>
+                                <div className="space-y-0.5">
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setCatFilter("all");
+                                            setCatOpen(false);
+                                            setCatSearch("");
+                                        }}
+                                        className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-gray-100 transition-colors ${catFilter === "all" ? "bg-gray-50 font-medium text-gray-900" : "text-gray-600"}`}
+                                    >
+                                        All Categories
+                                    </button>
+                                    {categories
+                                        .filter((c) => c.name.toLowerCase().includes(catSearch.toLowerCase()))
+                                        .map((c) => (
+                                            <button
+                                                key={c.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setCatFilter(c.name);
+                                                    setCatOpen(false);
+                                                    setCatSearch("");
+                                                }}
+                                                className={`w-full text-left px-2 py-1.5 text-xs rounded hover:bg-gray-100 transition-colors ${catFilter === c.name ? "bg-gray-50 font-medium text-gray-900" : "text-gray-600"}`}
+                                            >
+                                                {c.name}
+                                            </button>
+                                        ))
+                                    }
+                                </div>
+                            </div>
+                        )}
+                    </div>
                     <Select value={modeFilter} onChange={(e) => setModeFilter(e.target.value)} className="bg-white">
                         <option value="all">All Sell Modes</option>
                         <option value="meter">Meter / Miter (m)</option>

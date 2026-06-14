@@ -13,6 +13,7 @@ const themes: Record<string, {
     ProductPage: React.ComponentType<{ slug: string }>;
     BlogPage: React.ComponentType<BlogPageProps>;
     BlogDetailPage: React.ComponentType<BlogDetailPageProps>;
+    AboutPage: React.ComponentType;
 }> = {
     classic: {
         HomePage: dynamic(() => import("@/themes/classic/pages/HomePage")),
@@ -20,6 +21,7 @@ const themes: Record<string, {
         ProductPage: dynamic(() => import("@/themes/classic/pages/ProductPage")),
         BlogPage: dynamic(() => import("@/themes/classic/pages/BlogPage")),
         BlogDetailPage: dynamic(() => import("@/themes/classic/pages/BlogDetailPage")),
+        AboutPage: dynamic(() => import("@/themes/classic/pages/AboutPage")),
     },
     luxury: {
         HomePage: dynamic(() => import("@/themes/luxury/pages/HomePage")),
@@ -27,6 +29,7 @@ const themes: Record<string, {
         ProductPage: dynamic(() => import("@/themes/luxury/pages/ProductPage")),
         BlogPage: dynamic(() => import("@/themes/luxury/pages/BlogPage")),
         BlogDetailPage: dynamic(() => import("@/themes/luxury/pages/BlogDetailPage")),
+        AboutPage: dynamic(() => import("@/themes/luxury/pages/AboutPage")),
     },
     bohemian: {
         HomePage: dynamic(() => import("@/themes/bohemian/pages/HomePage")),
@@ -34,6 +37,7 @@ const themes: Record<string, {
         ProductPage: dynamic(() => import("@/themes/bohemian/pages/ProductPage")),
         BlogPage: dynamic(() => import("@/themes/bohemian/pages/BlogPage")),
         BlogDetailPage: dynamic(() => import("@/themes/bohemian/pages/BlogDetailPage")),
+        AboutPage: dynamic(() => import("@/themes/bohemian/pages/AboutPage")),
     },
 };
 

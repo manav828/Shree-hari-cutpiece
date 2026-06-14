@@ -44,6 +44,11 @@ export default function AdminSettings() {
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState("");
 
+    const [allowUserReviews, setAllowUserReviews] = useState<boolean>(true);
+    const [showProductReviews, setShowProductReviews] = useState<boolean>(true);
+    const [loadingReviews, setLoadingReviews] = useState<boolean>(true);
+    const [savingReviews, setSavingReviews] = useState<boolean>(false);
+
     useEffect(() => {
         let cancelled = false;
 
@@ -75,7 +80,25 @@ export default function AdminSettings() {
             }
         };
 
+        const fetchReviewsSetting = async () => {
+            try {
+                const res = await fetch("/api/admin/settings/reviews", { cache: "no-store" });
+                const payload = await res.json();
+                if (res.ok && !cancelled) {
+                    setShowProductReviews(payload.showProductReviews ?? true);
+                    setAllowUserReviews(payload.allowUserReviews ?? true);
+                }
+            } catch (error) {
+                console.error("Error fetching reviews setting:", error);
+            } finally {
+                if (!cancelled) {
+                    setLoadingReviews(false);
+                }
+            }
+        };
+
         fetchSettings();
+        fetchReviewsSetting();
 
         return () => {
             cancelled = true;
@@ -124,6 +147,55 @@ export default function AdminSettings() {
             alert("Error updating theme: " + e.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleToggleReviews = async (field: "showProductReviews" | "allowUserReviews", newValue: boolean) => {
+        const prevShow = showProductReviews;
+        const prevAllow = allowUserReviews;
+
+        if (field === "showProductReviews") {
+            setShowProductReviews(newValue);
+            // If turning OFF master, also disable user reviews
+            if (!newValue) setAllowUserReviews(false);
+        } else {
+            if (!showProductReviews) return; // guard: can't enable if master is off
+            setAllowUserReviews(newValue);
+        }
+
+        setSavingReviews(true);
+        try {
+            const body: Record<string, boolean> = {};
+            if (field === "showProductReviews") {
+                body.showProductReviews = newValue;
+                if (!newValue) body.allowUserReviews = false;
+            } else {
+                body.allowUserReviews = newValue;
+            }
+
+            const response = await fetch("/api/admin/settings/reviews", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+
+            if (!response.ok) {
+                const payload = await response.json();
+                throw new Error(payload.error || "Failed to update reviews setting.");
+            }
+
+            const labels: Record<string, string> = {
+                showProductReviews: `Reviews on storefront ${newValue ? "enabled" : "disabled"}.`,
+                allowUserReviews: `Customer review submissions ${newValue ? "enabled" : "disabled"}.`,
+            };
+            setToast(labels[field]);
+        } catch (e: any) {
+            console.error("Failed to update reviews setting", e);
+            setShowProductReviews(prevShow);
+            setAllowUserReviews(prevAllow);
+            alert("Error updating reviews setting: " + e.message);
+        } finally {
+            setSavingReviews(false);
         }
     };
 
@@ -199,6 +271,92 @@ export default function AdminSettings() {
                         )}
                     </div>
                     {/* END THEME SELECTOR */}
+
+                    {/* PRODUCT REVIEWS CONFIGURATION */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="mb-5">
+                            <h2 className="text-lg font-semibold text-gray-900">Product Reviews Configuration</h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Control if reviews are shown on your storefront and whether customers can submit new reviews.
+                            </p>
+                        </div>
+
+                        {loadingReviews ? (
+                            <div className="flex items-center justify-center p-6">
+                                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            <div className="space-y-3">
+                                {/* Toggle 1: Show reviews on storefront (master) */}
+                                <div className={`flex items-center justify-between p-4 rounded-lg border ${
+                                    showProductReviews ? "bg-gray-50 border-gray-200" : "bg-red-50/40 border-red-100"
+                                }`}>
+                                    <div className="flex-1 pr-4">
+                                        <h3 className="text-sm font-semibold text-gray-900">Show Reviews on Storefront</h3>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            {showProductReviews
+                                                ? "Reviews section is visible to customers on product pages."
+                                                : "Reviews are hidden from the storefront. All review features are disabled."}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={savingReviews}
+                                        onClick={() => handleToggleReviews("showProductReviews", !showProductReviews)}
+                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 ${
+                                            showProductReviews ? "bg-gray-900" : "bg-gray-200"
+                                        }`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                            showProductReviews ? "translate-x-5" : "translate-x-0"
+                                        }`} />
+                                    </button>
+                                </div>
+
+                                {/* Toggle 2: Allow user review submissions (sub-setting) */}
+                                <div className={`flex items-center justify-between p-4 rounded-lg border transition-all ${
+                                    !showProductReviews
+                                        ? "opacity-40 pointer-events-none bg-gray-50 border-gray-100"
+                                        : allowUserReviews
+                                            ? "bg-gray-50 border-gray-200"
+                                            : "bg-amber-50/40 border-amber-100"
+                                }`}>
+                                    <div className="flex-1 pr-4">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-sm font-semibold text-gray-900">Allow Customers to Write Reviews</h3>
+                                            {!showProductReviews && (
+                                                <span className="px-1.5 py-0.5 text-[10px] font-bold bg-gray-200 text-gray-500 rounded uppercase tracking-wide">Requires master ON</span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-0.5">
+                                            {allowUserReviews && showProductReviews
+                                                ? "Customers can submit reviews (up to 2 images & 1 video) on products they purchased."
+                                                : "Only admin-curated reviews will appear. Customers cannot submit new reviews."}
+                                        </p>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        disabled={savingReviews || !showProductReviews}
+                                        onClick={() => handleToggleReviews("allowUserReviews", !allowUserReviews)}
+                                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-60 disabled:cursor-not-allowed ${
+                                            allowUserReviews && showProductReviews ? "bg-gray-900" : "bg-gray-200"
+                                        }`}
+                                    >
+                                        <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                                            allowUserReviews && showProductReviews ? "translate-x-5" : "translate-x-0"
+                                        }`} />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {savingReviews && (
+                            <div className="mt-4 text-sm text-gray-500 flex items-center gap-2">
+                                <Loader2 className="h-4 w-4 animate-spin" /> Saving setting...
+                            </div>
+                        )}
+                    </div>
+                    {/* END PRODUCT REVIEWS CONFIGURATION */}
 
                     {/* NOTIFICATIONS & TEMPLATES CARD */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">

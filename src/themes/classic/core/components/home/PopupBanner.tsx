@@ -10,11 +10,12 @@ type Props = {
     linkUrl: string;
     bgColor: string;
     textColor: string;
+    buttonText?: string;
 };
 
 const STORAGE_KEY = "cms_popup_shown";
 
-export default function PopupBanner({ title, contentText, imageUrl, linkUrl, bgColor, textColor }: Props) {
+export default function PopupBanner({ title, contentText, imageUrl, linkUrl, bgColor, textColor, buttonText }: Props) {
     const [visible, setVisible] = useState(false);
 
     useEffect(() => {
@@ -50,7 +51,7 @@ export default function PopupBanner({ title, contentText, imageUrl, linkUrl, bgC
                     <p className="mt-2 text-sm opacity-90">{contentText}</p>
                     <div className="mt-4 flex items-center gap-2">
                         <Link href={linkUrl || "/shop"} className="px-3 py-2 rounded-md text-sm font-medium bg-black/20 hover:bg-black/30">
-                            View Offer
+                            {buttonText || "View Offer"}
                         </Link>
                         <button onClick={close} className="px-3 py-2 rounded-md text-sm font-medium bg-black/20 hover:bg-black/30">
                             Close

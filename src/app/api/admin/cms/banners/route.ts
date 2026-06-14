@@ -18,6 +18,7 @@ type BannerPayload = {
     start_date?: string | null;
     end_date?: string | null;
     priority?: number;
+    button_text?: string | null;
 };
 
 const VALID_PLACEMENTS: BannerPlacement[] = ["announcement_bar", "homepage_hero", "shop_top", "popup"];
@@ -71,7 +72,7 @@ export async function GET() {
     try {
         const { data, error } = await supabaseAdmin
             .from("banners")
-            .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority, deleted_at, created_at, updated_at")
+            .select("id, title, content_text, image_url, link_url, placement, bg_color, text_color, is_active, start_date, end_date, priority, button_text, deleted_at, created_at, updated_at")
             .is("deleted_at", null)
             .order("priority", { ascending: false })
             .order("created_at", { ascending: false });
@@ -188,6 +189,7 @@ export async function POST(req: NextRequest) {
                 start_date: payload.start_date || null,
                 end_date: payload.end_date || null,
                 priority: typeof payload.priority === "number" ? payload.priority : 0,
+                button_text: payload.button_text?.trim() || null,
             }));
 
             const { error } = await supabaseAdmin
@@ -257,6 +259,7 @@ export async function POST(req: NextRequest) {
                 start_date: payload.start_date || null,
                 end_date: payload.end_date || null,
                 priority: typeof payload.priority === "number" ? payload.priority : 0,
+                button_text: payload.button_text?.trim() || null,
             });
 
         if (error) throw error;
@@ -320,6 +323,7 @@ export async function PATCH(req: NextRequest) {
                 start_date: payload.start_date || null,
                 end_date: payload.end_date || null,
                 priority: typeof payload.priority === "number" ? payload.priority : 0,
+                button_text: payload.button_text?.trim() || null,
             })
             .eq("id", id)
             .is("deleted_at", null);

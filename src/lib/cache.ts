@@ -21,6 +21,9 @@ export const CACHE_TTL_SECONDS = 3600;
 // ─── Cache Enabled Check ─────────────────────────────────────────────────────
 // Always reads fresh from DB — never cached — so toggling works instantly.
 export async function getCacheEnabled(): Promise<boolean> {
+  if (process.env.NODE_ENV === "development") {
+    return false;
+  }
   try {
     const { data, error } = await supabaseAdmin
       .from("site_settings")

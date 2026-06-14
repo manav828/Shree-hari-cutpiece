@@ -8,7 +8,7 @@ import Container from "@/components/ui/Container";
 import CartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
 import BlogRenderer from "@/components/blog/BlogRenderer";
 import ShareButtons from "@/components/blog/ShareButtons";
-import ProductCard from "@/themes/bohemian/core/components/shop/ProductCard";
+import ProductCard from "@/themes/bohemian/components/shop/ProductCard";
 import { BlogDetailPageProps } from "@/types/blog";
 import { Cormorant_Garamond, Plus_Jakarta_Sans } from "next/font/google";
 import { ArrowLeft, ArrowRight, Calendar, Clock, Tag } from "lucide-react";

@@ -8,9 +8,8 @@ type BohemianNavbarProps = {
 };
 
 const navLinks = [
-	{ label: "Collections", href: "/shop", page: "shop" as const },
-	{ label: "New Arrivals", href: "/#new-arrivals" },
-	{ label: "Our Story", href: "/#our-story" },
+	{ label: "Shop", href: "/shop", page: "shop" as const },
+	{ label: "About", href: "/about" },
 	{ label: "Journal", href: "/blogs" },
 ];
 

@@ -15,6 +15,7 @@ export default async function PopupBannerGate() {
             linkUrl={banner.link_url}
             bgColor={banner.bg_color}
             textColor={banner.text_color}
+            buttonText={banner.button_text}
         />
     );
 }

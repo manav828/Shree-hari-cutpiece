@@ -551,6 +551,15 @@ export default function AddProductPage() {
             }
 
             await saveOptionGroups(product.id);
+            try {
+                await fetch("/api/admin/cache", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ action: "clear" }),
+                });
+            } catch (cacheErr) {
+                console.error("Failed to clear storefront cache:", cacheErr);
+            }
             router.push("/admin/products");
         } catch (e) { console.error(e); alert("Failed to save"); } finally { setSaving(false); }
     };

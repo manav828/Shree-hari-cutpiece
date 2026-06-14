@@ -14,6 +14,7 @@ import CartSidebar from "@/components/cart/CartSidebar";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
+import ProductReviews from "@/components/shop/ProductReviews";
 
 // Static reviews data
 const reviewsData = [
@@ -37,6 +38,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
   const [selectedOptions, setSelectedOptions] = useState<Record<string, string | string[] | number>>({});
   const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
+  const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (product?.id) {
+      fetch(`/api/shop/reviews?product_id=${product.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.reviews) {
+            setDynamicReviews(data.reviews);
+          }
+        })
+        .catch((err) => console.error("Error loading reviews summary:", err));
+    }
+  }, [product?.id]);
 
   useEffect(() => {
     async function fetchProduct() {
@@ -346,7 +361,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
     { id: "description", label: "Description" },
     { id: "details", label: "Specifications" },
     ...(faqItems.length > 0 ? [{ id: "faq", label: `FAQs (${faqItems.length})` }] : []),
-    { id: "reviews", label: `Reviews (${reviewsData.length})` },
+    { id: "reviews", label: `Reviews (${dynamicReviews.length})` },
   ];
 
   return (
@@ -457,13 +472,18 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 
               <div className="flex items-center gap-2 mb-6">
                 <div className="flex items-center gap-1">
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <svg key={star} className={`w-4 h-4 ${star <= averageRating ? "text-yellow-400" : "text-gray-300"}`} fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                  ))}
+                  {[1, 2, 3, 4, 5].map((star) => {
+                    const avgRating = dynamicReviews.length > 0
+                      ? dynamicReviews.reduce((sum, r) => sum + r.rating, 0) / dynamicReviews.length
+                      : 5;
+                    return (
+                      <svg key={star} className={`w-4 h-4 ${star <= Math.round(avgRating) ? "text-yellow-400" : "text-gray-300"}`} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                      </svg>
+                    );
+                  })}
                 </div>
-                <span className="text-text-secondary text-sm">({reviewsData.length} reviews)</span>
+                <span className="text-text-secondary text-sm">({dynamicReviews.length} review{dynamicReviews.length === 1 ? "" : "s"})</span>
               </div>
 
               <div className="flex items-center gap-4 mb-6">
@@ -693,32 +713,8 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                 </div>
               )}
               {activeTab === "reviews" && (
-                <div className="space-y-8">
-                  <div className="flex items-center gap-6 pb-8 border-b border-border">
-                    <div className="text-center">
-                      <p className="text-5xl font-serif text-foreground">{averageRating.toFixed(1)}</p>
-                      <div className="flex items-center gap-1 mt-2">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <svg key={star} className={`w-4 h-4 ${star <= averageRating ? "text-yellow-400" : "text-gray-300"}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                          </svg>
-                        ))}
-                      </div>
-                      <p className="text-text-secondary text-sm mt-1">{reviewsData.length} reviews</p>
-                    </div>
-                  </div>
-                  {reviewsData.map((review) => (
-                    <div key={review.id} className="pb-8 border-b border-border last:border-0">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center"><span className="font-medium text-accent">{review.name.charAt(0)}</span></div>
-                          <div><p className="font-medium text-foreground">{review.name}</p><p className="text-text-secondary text-sm">{review.date}</p></div>
-                        </div>
-                        {review.verified && <span className="text-xs text-accent bg-accent-light px-2 py-1 rounded">Verified Purchase</span>}
-                      </div>
-                      <p className="text-text-secondary">{review.comment}</p>
-                    </div>
-                  ))}
+                <div>
+                  <ProductReviews productId={product.id} productSlug={slug} theme="luxury" />
                 </div>
               )}
               {activeTab === "faq" && (

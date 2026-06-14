@@ -248,6 +248,7 @@ ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS is_active boolean NOT NULL D
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS start_date date;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS end_date date;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS priority integer NOT NULL DEFAULT 0;
+ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS button_text text;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS deleted_at timestamptz;
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 ALTER TABLE public.banners ADD COLUMN IF NOT EXISTS created_at timestamptz NOT NULL DEFAULT now();

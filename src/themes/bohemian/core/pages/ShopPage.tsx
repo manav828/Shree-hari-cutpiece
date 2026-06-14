@@ -234,27 +234,49 @@ const moreCategoryFallbacks: CategoryCard[] = [
   },
 ];
 
-function mapCmsCategoryToCard(cmsCategory: CmsCategory | undefined, fallback: CategoryCard): CategoryCard {
+function getProductCountForCategory(products: any[], categorySlug: string): number {
+  const normalizedSlug = categorySlug.trim().toLowerCase();
+  return products.filter((product) => {
+    const cats = Array.isArray(product.categories)
+      ? product.categories
+      : product.categories
+        ? [product.categories]
+        : [];
+    return cats.some(
+      (cat: any) => (cat?.slug ?? "").trim().toLowerCase() === normalizedSlug
+    );
+  }).length;
+}
+
+function mapCmsCategoryToCard(
+  cmsCategory: CmsCategory | undefined,
+  fallback: CategoryCard,
+  products: any[]
+): CategoryCard {
+  const slug = cmsCategory?.slug?.trim() || fallback.slug;
+  const count = getProductCountForCategory(products, slug);
+  const countLabel = count === 1 ? "1 item" : `${count} items`;
+
   return {
     id: cmsCategory?.id || fallback.id,
     name: cmsCategory?.name?.trim() || fallback.name,
-    slug: cmsCategory?.slug?.trim() || fallback.slug,
+    slug,
     description: cmsCategory?.description?.trim() || fallback.description,
     image: cmsCategory?.image?.trim() || fallback.image,
     alt: cmsCategory?.name?.trim() ? `${cmsCategory.name} collection` : fallback.alt,
-    countLabel: fallback.countLabel,
+    countLabel,
     filter_layout: cmsCategory?.filter_layout || fallback.filter_layout || "sidebar",
   };
 }
 
-function buildPrimaryCategories(categories: CmsCategory[]): CategoryCard[] {
+function buildPrimaryCategories(categories: CmsCategory[], products: any[]): CategoryCard[] {
   return primaryCategoryFallbacks.map((fallback) => {
     const dbCategory = categories.find((c) => c.slug === fallback.slug);
-    return mapCmsCategoryToCard(dbCategory, fallback);
+    return mapCmsCategoryToCard(dbCategory, fallback, products);
   });
 }
 
-function buildMoreCategories(categories: CmsCategory[]): CategoryCard[] {
+function buildMoreCategories(categories: CmsCategory[], products: any[]): CategoryCard[] {
   const primarySlugs = new Set(primaryCategoryFallbacks.map((f) => f.slug));
   
   const remainingBohemianCategories = categories.filter(
@@ -272,13 +294,17 @@ function buildMoreCategories(categories: CmsCategory[]): CategoryCard[] {
       name: category.name,
       description: category.description || fallback.description,
       image: category.image || fallback.image,
-    });
+    }, products);
   });
 
   const usedSlugs = new Set(cmsDrivenCards.map((c) => c.slug));
   const fallbackCards = moreCategoryFallbacks.filter((f) => !usedSlugs.has(f.slug));
 
-  return [...cmsDrivenCards, ...fallbackCards];
+  const mappedFallbackCards = fallbackCards.map((fallback) => {
+    return mapCmsCategoryToCard(undefined, fallback, products);
+  });
+
+  return [...cmsDrivenCards, ...mappedFallbackCards];
 }
 
 function normalizeValue(value: string | null | undefined): string {
@@ -348,10 +374,11 @@ function mapRowsToListingProducts(
 }
 
 export default async function BohemianShopPage({ searchParams }: ShopPageProps) {
-  const [allCategories, shopTopBanners, siteConfig] = await Promise.all([
+  const [allCategories, shopTopBanners, siteConfig, productRows] = await Promise.all([
     getActiveCmsCategories(),
     getActiveCmsBannersByPlacement("shop_top"),
     getSiteConfigMap(),
+    getAllActiveProducts(),
   ]);
 
   const classicSlugs = ["chiffon", "crepe", "cotton", "silk", "georgette", "rayon"];
@@ -362,14 +389,22 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
     : "";
   const initialCategory = requestedCategory || "all";
 
-  const primaryCards = buildPrimaryCategories(cmsCategories);
-  const moreCards = buildMoreCategories(cmsCategories);
+  const allCards = [
+    ...buildPrimaryCategories(cmsCategories, productRows),
+    ...buildMoreCategories(cmsCategories, productRows),
+  ];
+
+  const hasDbProducts = productRows && productRows.length > 0;
+
+  const activeCards = hasDbProducts
+    ? allCards.filter((card) => getProductCountForCategory(productRows, card.slug) > 0)
+    : allCards;
+
+  const primaryCards = activeCards.slice(0, 4);
+  const moreCards = activeCards.slice(4);
   const shopTopBanner = shopTopBanners[0];
 
-  const searchCategoryOptions = [
-    ...primaryCards,
-    ...moreCards,
-  ];
+  const searchCategoryOptions = activeCards;
 
   if (initialCategory !== "all") {
     const selectedCategoryCard = searchCategoryOptions.find(
@@ -380,17 +415,9 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
     const listingVariant = selectedCategoryCard?.filter_layout === "top" ? "loom" : "archive";
     const listingCategoryOptions = buildListingCategoryOptions(searchCategoryOptions);
 
-    const productRows = await getAllActiveProducts();
-
     const mappedProducts = mapRowsToListingProducts(productRows as unknown as ProductQueryRow[], selectedCategorySlug, selectedCategoryName);
 
-    const hasProductsForSelectedCategory = mappedProducts.some((product) => {
-      const productCategorySlug = normalizeValue(product.categorySlug);
-      const productCategoryName = normalizeValue(product.categoryName);
-      return productCategorySlug === selectedCategorySlug || productCategoryName === selectedCategorySlug;
-    });
-
-    const listingProducts = mappedProducts.length > 0 && hasProductsForSelectedCategory
+    const listingProducts = hasDbProducts
       ? mappedProducts
       : getBohemianFallbackProducts(selectedCategorySlug, selectedCategoryName, listingVariant);
 
@@ -472,9 +499,9 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
               <div className="relative">
                 <select className="w-full appearance-none rounded-lg bg-[#fcf9f4] px-4 py-3 text-sm text-[#56423d] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]">
                   <option>Price Range</option>
-                  <option>$0 - $100</option>
-                  <option>$100 - $500</option>
-                  <option>$500+</option>
+                  <option>₹0 - ₹1,000</option>
+                  <option>₹1,000 - ₹5,000</option>
+                  <option>₹5,000+</option>
                 </select>
                 <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#89726c]" />
               </div>
@@ -508,51 +535,53 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
           </div>
         </section>
 
-        <section className={`${BOHEMIAN_SITE_CONTAINER} pb-20`}>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-2 md:gap-5">
-            <Link
-              href={`/shop?category=${primaryCards[0].slug}`}
-              className="group relative min-h-[460px] overflow-hidden rounded-xl md:col-span-2 md:row-span-2"
-            >
-              <Image
-                src={primaryCards[0].image}
-                alt={primaryCards[0].alt}
-                fill
-                sizes="(max-width: 768px) 100vw, 50vw"
-                className="object-cover transition-transform duration-700 group-hover:scale-105"
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
-              <div className="absolute bottom-0 left-0 w-full p-7 text-white md:p-8">
-                <p className="text-xs uppercase tracking-[0.2em] text-white/75">{primaryCards[0].countLabel}</p>
-                <h2 className={`${newsreader.className} mt-1 text-4xl italic md:text-5xl`}>{primaryCards[0].name}</h2>
-                <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
-                  Explore <ArrowRight className="h-4 w-4" />
-                </span>
-              </div>
-            </Link>
-
-            {primaryCards.slice(1).map((card) => (
+        {primaryCards.length > 0 && (
+          <section className={`${BOHEMIAN_SITE_CONTAINER} pb-20`}>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-4 md:grid-rows-2 md:gap-5">
               <Link
-                key={`primary-${card.id}`}
-                href={`/shop?category=${card.slug}`}
-                className="group relative min-h-[220px] overflow-hidden rounded-xl"
+                href={`/shop?category=${primaryCards[0].slug}`}
+                className="group relative min-h-[460px] overflow-hidden rounded-xl md:col-span-2 md:row-span-2"
               >
                 <Image
-                  src={card.image}
-                  alt={card.alt}
+                  src={primaryCards[0].image}
+                  alt={primaryCards[0].alt}
                   fill
-                  sizes="(max-width: 768px) 100vw, 25vw"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
-                <div className="absolute bottom-0 left-0 p-6 text-white">
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-white/75">{card.countLabel}</p>
-                  <h3 className={`${newsreader.className} text-[30px] italic leading-none`}>{card.name}</h3>
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
+                <div className="absolute bottom-0 left-0 w-full p-7 text-white md:p-8">
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/75">{primaryCards[0].countLabel}</p>
+                  <h2 className={`${newsreader.className} mt-1 text-4xl italic md:text-5xl`}>{primaryCards[0].name}</h2>
+                  <span className="mt-4 inline-flex items-center gap-2 text-sm font-semibold">
+                    Explore <ArrowRight className="h-4 w-4" />
+                  </span>
                 </div>
               </Link>
-            ))}
-          </div>
-        </section>
+
+              {primaryCards.slice(1).map((card) => (
+                <Link
+                  key={`primary-${card.id}`}
+                  href={`/shop?category=${card.slug}`}
+                  className="group relative min-h-[220px] overflow-hidden rounded-xl"
+                >
+                  <Image
+                    src={card.image}
+                    alt={card.alt}
+                    fill
+                    sizes="(max-width: 768px) 100vw, 25vw"
+                    className="object-cover transition-transform duration-700 group-hover:scale-105"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                  <div className="absolute bottom-0 left-0 p-6 text-white">
+                    <p className="text-[10px] uppercase tracking-[0.2em] text-white/75">{card.countLabel}</p>
+                    <h3 className={`${newsreader.className} text-[30px] italic leading-none`}>{card.name}</h3>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
         <section className="bg-[#f0ede8] py-20">
           <div className={`${BOHEMIAN_SITE_CONTAINER} grid grid-cols-1 items-center gap-14 md:grid-cols-2`}>
@@ -614,16 +643,18 @@ export default async function BohemianShopPage({ searchParams }: ShopPageProps) 
           </div>
         </section>
 
-        <section className={`${BOHEMIAN_SITE_CONTAINER} pb-20`}>
-          <div className="mb-10 flex items-end justify-between gap-4">
-            <h3 className={`${newsreader.className} text-4xl text-[#1c1c19] md:text-[46px]`}>Explore More Collections</h3>
-            <Link href="/shop" className="hidden items-center gap-2 text-sm font-semibold text-[#9f3f29] md:inline-flex">
-              View More Collections
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-          </div>
-          <LazyCollectionGrid cards={moreCards} titleClassName={newsreader.className} />
-        </section>
+        {moreCards.length > 0 && (
+          <section className={`${BOHEMIAN_SITE_CONTAINER} pb-20`}>
+            <div className="mb-10 flex items-end justify-between gap-4">
+              <h3 className={`${newsreader.className} text-4xl text-[#1c1c19] md:text-[46px]`}>Explore More Collections</h3>
+              <Link href="/shop" className="hidden items-center gap-2 text-sm font-semibold text-[#9f3f29] md:inline-flex">
+                View More Collections
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+            <LazyCollectionGrid cards={moreCards} titleClassName={newsreader.className} />
+          </section>
+        )}
       </main>
 
       <Footer />
