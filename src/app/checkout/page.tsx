@@ -51,20 +51,43 @@ type CheckoutFormData = {
   notes: string;
 };
 
-const SHIPPING_THRESHOLD = 999;
-const SHIPPING_CHARGE = 99;
-const GST_RATE = 0.18;
-
-const indianStates = [
+const ALL_INDIAN_STATES = [
   "Andhra Pradesh",
-  "Delhi",
+  "Arunachal Pradesh",
+  "Assam",
+  "Bihar",
+  "Chhattisgarh",
+  "Goa",
   "Gujarat",
+  "Haryana",
+  "Himachal Pradesh",
+  "Jharkhand",
   "Karnataka",
+  "Kerala",
+  "Madhya Pradesh",
   "Maharashtra",
+  "Manipur",
+  "Meghalaya",
+  "Mizoram",
+  "Nagaland",
+  "Odisha",
+  "Punjab",
   "Rajasthan",
+  "Sikkim",
   "Tamil Nadu",
+  "Telangana",
+  "Tripura",
+  "Uttarakhand",
   "Uttar Pradesh",
   "West Bengal",
+  "Andaman and Nicobar Islands",
+  "Chandigarh",
+  "Dadra and Nagar Haveli and Daman and Diu",
+  "Delhi",
+  "Jammu and Kashmir",
+  "Ladakh",
+  "Lakshadweep",
+  "Puducherry"
 ];
 
 function formatItemMeta(item: CheckoutCartItem): string {
@@ -116,6 +139,97 @@ export default function CheckoutPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderReference, setOrderReference] = useState("");
 
+  const [shippingConfig, setShippingConfig] = useState<{
+    defaultFee: number;
+    freeThreshold: number;
+    codFee: number;
+    codAdvanceType: "none" | "flat" | "percent";
+    codAdvanceValue: number;
+    stateGroups: Array<{ id: string; name: string; states: string[]; charge: number }>;
+    taxMode: "none" | "add_extra" | "included";
+    taxRate: number;
+  }>({
+    defaultFee: 99,
+    freeThreshold: 999,
+    codFee: 0,
+    codAdvanceType: "none",
+    codAdvanceValue: 0,
+    stateGroups: [],
+    taxMode: "none",
+    taxRate: 0
+  });
+
+  const [liveShippingDetails, setLiveShippingDetails] = useState<{
+    rate: number;
+    estimatedDays: number;
+    codAvailable: boolean;
+    provider: string;
+    loading: boolean;
+    error: string;
+  } | null>(null);
+
+  useEffect(() => {
+    const pincode = formData.pincode.trim();
+    if (pincode.length !== 6 || !/^\d+$/.test(pincode)) {
+      setLiveShippingDetails(null);
+      return;
+    }
+
+    const calculateLiveRates = async () => {
+      setLiveShippingDetails(prev => ({
+        rate: prev?.rate ?? 99,
+        estimatedDays: prev?.estimatedDays ?? 5,
+        codAvailable: prev?.codAvailable ?? true,
+        provider: prev?.provider ?? "manual",
+        error: "",
+        loading: true
+      }));
+      try {
+        const res = await fetch("/api/checkout/shipping-rates", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            pincode,
+            state: formData.state,
+            weight: 0.5,
+            isCod: selectedGateway === "cod"
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setLiveShippingDetails({
+            rate: data.rate,
+            estimatedDays: data.estimatedDays,
+            codAvailable: data.codAvailable,
+            provider: data.provider,
+            loading: false,
+            error: data.error || ""
+          });
+
+          if (data.codAvailable === false && selectedGateway === "cod") {
+            setSelectedGateway("razorpay");
+            setSelectedPaymentSubOption("upi");
+          }
+        } else {
+          throw new Error(data.error || "Rates calculation failed");
+        }
+      } catch (err: any) {
+        console.error("Live shipping calculation error:", err);
+        setLiveShippingDetails({
+          rate: shippingConfig.defaultFee,
+          estimatedDays: 5,
+          codAvailable: true,
+          provider: "fallback",
+          loading: false,
+          error: "Unable to calculate live rates. Fallback applied."
+        });
+      }
+    };
+
+    const timer = setTimeout(calculateLiveRates, 600);
+    return () => clearTimeout(timer);
+  }, [formData.pincode, formData.state, selectedGateway, shippingConfig.defaultFee]);
+
   const currencyFormatter = useMemo(
     () =>
       new Intl.NumberFormat("en-IN", {
@@ -157,10 +271,92 @@ export default function CheckoutPage() {
     fetchPaymentMethods();
   }, []);
 
+  useEffect(() => {
+    const fetchRates = async () => {
+      try {
+        const res = await fetch("/api/checkout/shipping-rates");
+        if (!res.ok) throw new Error("Failed to load rates configuration");
+        const json = await res.json();
+        setShippingConfig(json);
+      } catch (err) {
+        console.error("Error loading shipping rates:", err);
+      }
+    };
+    fetchRates();
+  }, []);
+
   const subtotal = totalPrice;
-  const shippingAmount = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-  const gstAmount = Math.round(subtotal * GST_RATE);
-  const finalTotal = subtotal + shippingAmount + gstAmount;
+
+  const {
+    shippingAmount,
+    codSurcharge,
+    taxAmount,
+    finalTotal,
+    advanceAmount,
+    remainingAmount,
+    taxLabel
+  } = useMemo(() => {
+    // 1. Calculate shipping fee
+    let shippingFee = shippingConfig.defaultFee;
+    if (subtotal >= shippingConfig.freeThreshold) {
+      shippingFee = 0;
+    } else if (liveShippingDetails && liveShippingDetails.provider !== "fallback" && !liveShippingDetails.loading) {
+      shippingFee = liveShippingDetails.rate;
+    } else {
+      const stateName = formData.state || "Maharashtra";
+      const matchedGroup = shippingConfig.stateGroups.find((g) =>
+        g.states.some((s) => s.toLowerCase() === stateName.toLowerCase())
+      );
+      if (matchedGroup) {
+        shippingFee = matchedGroup.charge;
+      }
+    }
+
+    // 2. COD Surcharge
+    const isCod = selectedGateway === "cod";
+    const appliedCodFee = isCod ? shippingConfig.codFee : 0;
+
+    // 3. Tax calculation
+    let computedTax = 0;
+    let totalBeforeTax = subtotal + shippingFee + appliedCodFee;
+    let totalAmt = totalBeforeTax;
+
+    if (shippingConfig.taxMode === "add_extra") {
+      computedTax = Math.round(subtotal * (shippingConfig.taxRate / 100));
+      totalAmt = totalBeforeTax + computedTax;
+    } else if (shippingConfig.taxMode === "included") {
+      computedTax = Math.round(subtotal - (subtotal / (1 + shippingConfig.taxRate / 100)));
+    }
+
+    // 4. COD Advance Payment
+    let advAmt = 0;
+    if (isCod) {
+      if (shippingConfig.codAdvanceType === "flat") {
+        advAmt = Math.min(shippingConfig.codAdvanceValue, totalAmt);
+      } else if (shippingConfig.codAdvanceType === "percent") {
+        advAmt = Math.round((shippingConfig.codAdvanceValue / 100) * totalAmt);
+      }
+    }
+
+    const remAmt = totalAmt - advAmt;
+
+    let tLabel = "";
+    if (shippingConfig.taxMode === "add_extra") {
+      tLabel = `GST (${shippingConfig.taxRate}%)`;
+    } else if (shippingConfig.taxMode === "included") {
+      tLabel = `GST (${shippingConfig.taxRate}% Included)`;
+    }
+
+    return {
+      shippingAmount: shippingFee,
+      codSurcharge: appliedCodFee,
+      taxAmount: computedTax,
+      finalTotal: totalAmt,
+      advanceAmount: advAmt,
+      remainingAmount: remAmt,
+      taxLabel: tLabel
+    };
+  }, [subtotal, formData.state, selectedGateway, shippingConfig, liveShippingDetails]);
 
   const selectableOptions = useMemo(() => {
     const list: Array<{
@@ -200,7 +396,9 @@ export default function CheckoutPage() {
       );
     }
 
-    if (hasCod) {
+    const isCodSupported = !liveShippingDetails || liveShippingDetails.codAvailable !== false;
+
+    if (hasCod && isCodSupported) {
       list.push({
         gatewayId: "cod",
         label: "Cash on Delivery (COD)",
@@ -210,7 +408,7 @@ export default function CheckoutPage() {
     }
 
     return list;
-  }, [availableMethods]);
+  }, [availableMethods, liveShippingDetails]);
 
   function handleFieldChange(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     const { name, value } = event.target;
@@ -524,7 +722,7 @@ export default function CheckoutPage() {
                       onChange={handleFieldChange}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                     >
-                      {indianStates.map((state) => (
+                      {ALL_INDIAN_STATES.map((state) => (
                         <option key={state} value={state}>{state}</option>
                       ))}
                     </select>
@@ -646,15 +844,37 @@ export default function CheckoutPage() {
                     <span>Shipping</span>
                     <span className="text-[#1c1c19]">{shippingAmount === 0 ? "Free" : currencyFormatter.format(shippingAmount)}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span>GST (18%)</span>
-                    <span className="text-[#1c1c19]">{currencyFormatter.format(gstAmount)}</span>
-                  </div>
+                  {codSurcharge > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span>COD Surcharge</span>
+                      <span className="text-[#1c1c19]">{currencyFormatter.format(codSurcharge)}</span>
+                    </div>
+                  )}
+                  {taxLabel && taxAmount > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span>{taxLabel}</span>
+                      <span className="text-[#1c1c19]">{currencyFormatter.format(taxAmount)}</span>
+                    </div>
+                  )}
                 </div>
 
-                <div className="mt-5 flex items-center justify-between">
-                  <span className={`${bohemianHeadingFont.className} text-3xl text-[#1c1c19]`}>Total</span>
-                  <span className={`${bohemianHeadingFont.className} text-4xl text-[#9f3f29]`}>{currencyFormatter.format(finalTotal)}</span>
+                <div className="mt-5 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className={`${bohemianHeadingFont.className} text-3xl text-[#1c1c19]`}>Total</span>
+                    <span className={`${bohemianHeadingFont.className} text-4xl text-[#9f3f29]`}>{currencyFormatter.format(finalTotal)}</span>
+                  </div>
+                  {selectedGateway === "cod" && advanceAmount > 0 && (
+                    <div className="p-3 bg-amber-50 rounded-lg border border-amber-200 space-y-1.5 text-xs">
+                      <div className="flex items-center justify-between text-[#9f3f29] font-bold">
+                        <span>Pay Online in Advance:</span>
+                        <span>{currencyFormatter.format(advanceAmount)}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-[#7a6f68] font-medium">
+                        <span>Cash on Delivery (Remaining):</span>
+                        <span>{currencyFormatter.format(remainingAmount)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {!user ? (
@@ -675,6 +895,8 @@ export default function CheckoutPage() {
                         <Loader2 className="h-4 w-4 animate-spin" />
                         {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
                       </span>
+                    ) : selectedGateway === "cod" && advanceAmount > 0 ? (
+                      "Pay Advance & Place Order"
                     ) : selectedGateway === "cod" ? (
                       "Place Order (Cash on Delivery)"
                     ) : (

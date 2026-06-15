@@ -18,1566 +18,737 @@ export type DocMode = "handbook" | "technical";
 
 const HANDBOOK_SECTIONS: Section[] = [
     {
-        id: "start",
-        title: "Getting Started",
-        subtitle: "How to begin each shift and avoid missing important work.",
-        routeHints: ["/admin/login", "/admin/orders", "/admin/customers", "/admin/coupons"],
+        id: "dashboard",
+        title: "Dashboard Overview",
+        subtitle: "Monitor real-time sales activity, processing volumes, customer registrations, and inventory alerts.",
+        routeHints: ["/admin"],
         whatThisDoes: [
-            "Gives admin team a fixed daily routine.",
-            "Reduces missed orders and missed customer follow-ups.",
-            "Makes shift handover consistent.",
+            "Displays a high-level performance snapshot: Total Sales (INR value of paid orders), Active Orders (orders in pending, processing, or shipped states), Total catalog Products, and Total registered Customer Profiles.",
+            "Surfaces a prioritized operations table listing the 8 most recent orders with quick access to invoice and status updates.",
+            "Generates warnings in the Low Stock Alerts panel for up to 10 product variants whose remaining inventory is under 20 units.",
+            "Executes automated database check routines and displays warning panels if Row Level Security (RLS) is disabled for any core tables."
         ],
         tasks: [
             {
-                title: "Start of day checklist",
+                title: "Daily Store Operations & Prioritization Workflow",
                 steps: [
-                    "Open admin login and sign in.",
-                    "Open Orders first and filter pending or newly paid orders.",
-                    "Open Customers and review new signups or blocked accounts.",
-                    "Open Coupons and verify active campaigns and expiry timelines.",
-                    "Write a quick shift-start note in your team log.",
-                ],
-            },
-            {
-                title: "End of day checklist",
-                steps: [
-                    "Make sure no critical pending orders are left unreviewed.",
-                    "Confirm customer support actions are noted in customer timelines.",
-                    "Verify no accidental product status changes happened.",
-                    "Deactivate expired coupons if required.",
-                    "Log out and share shift summary with manager.",
-                ],
-            },
+                    "Sign in to the Admin Panel and access the main Dashboard page at `/admin`.",
+                    "Review the **Active Orders** summary card to see the packaging queue volume for the day.",
+                    "Verify the **Total Sales** overview and evaluate customer acquisition trend metrics.",
+                    "Scroll down to the **Recent Orders** list and click any customer's name to view their complete profile and purchase history.",
+                    "Analyze the **Low Stock Alerts** table to determine which fabric options or color variants are running low (under 20 remaining). Click 'Restock' on any low item to jump directly to the stock replenishment form.",
+                    "Check the bottom warning section to verify database health. If the 'RLS Warning' banner appears indicating disabled table security, immediately notify the technical administrator.",
+                    "[Screenshot Placeholder: Admin Dashboard Overview - Recent Orders & Low Stock Tables]"
+                ]
+            }
         ],
         howItWorks: [
-            "Admin access currently uses a localStorage flag after login.",
-            "All module pages are in sidebar and share one admin layout shell.",
-            "Operational truth should come from Orders, Customers, Products, and Coupons pages.",
+            "Directly queries database counts and aggregates inside server-side actions.",
+            "Executes parallel database counts on products and profiles to minimize page loading times.",
+            "Fires stock alert flags when individual variant stock levels drop below the threshold limit.",
+            "Queries the Supabase RPC routine 'get_disabled_rls_tables' to list tables that lack RLS protection."
         ],
         tips: [
-            "Always start with Orders before doing catalog edits.",
-            "Avoid doing campaign changes and price changes at the exact same time.",
+            "Check the Low Stock Alerts panel first thing in the morning to prevent stockouts on popular fabric categories.",
+            "Admin statistics only count orders with 'paid' payment status to reflect actual cleared revenue, while charts include all non-cancelled orders.",
+            "Make sure variant SKUs are properly configured so low stock alerts link to the correct catalog item."
+        ]
+    },
+    {
+        id: "products",
+        title: "Products & Catalog",
+        subtitle: "Create catalog items, define variant pricing, upload photos, curate reviews, and configure the Fabric Calculator.",
+        routeHints: ["/admin/products", "/admin/products/categories", "/admin/products/stock", "/admin/products/reviews"],
+        whatThisDoes: [
+            "Stores the core product catalog details including titles, care notes, featured flags, and selling modes (meters vs pieces).",
+            "Manages distinct color variants with SKU codes, price adjustments, original prices (for discount tags), and inventory stock limits for multiple variants per product.",
+            "Powers the storefront **Fabric Calculator** modal that helps customers estimate fabric needs based on clothing types, standard sizes, and width presets.",
+            "Provides review curation controls to manage visibility settings, create curated reviews, and upload customer photo/video assets."
         ],
+        tasks: [
+            {
+                title: "Creating a Fabric Product with Color Variants",
+                steps: [
+                    "Navigate to the Products sidebar menu and click **Create New Product**.",
+                    "Fill in the Title, Category, slug, description, and select the selling mode: **Meters**.",
+                    "Scroll down to the **Color Variants** card and click **Add Variant**.",
+                    "Enter the color name, click the **Color Swatch** picker to define the hex color circle displayed on the storefront, and set the SKU, Selling Price, and initial Stock.",
+                    "Set the **Original Price** to a value higher than the Selling Price to display an automatic discount tag on the storefront.",
+                    "Upload variant photos directly into the variant image manager, choose the primary photo, and save changes.",
+                    "[Screenshot Placeholder: Admin Product Creator - Color Variant Hex Swatch Picker & Media Uploader]"
+                ]
+            },
+            {
+                title: "Managing Customer Review Visibility and Curation",
+                steps: [
+                    "Go to the Reviews moderation queue at `/admin/products/reviews`.",
+                    "Identify reviews and click the **Visibility Switch** to approve or hide them from the product details page (PDP).",
+                    "To curate a new review, click **Add Review**, search and select the target product, enter a customer name, select the star rating (1 to 5), and input the comment text.",
+                    "Upload review images or videos to showcase customer satisfaction, then click Save.",
+                    "[Screenshot Placeholder: Reviews Moderation Queue - Curated Review Creation Dialog]"
+                ]
+            }
+        ],
+        howItWorks: [
+            "Stores details in 'products', 'product_variants', 'variant_images', 'product_option_groups', and 'product_option_values' tables.",
+            "Theme-level customizations are resolved by custom Webpack compiler settings that check the 'src/themes/changes/' folder before loading default layouts.",
+            "Fabric Calculator uses base preset lengths (e.g. Salwar Suit = 2.5m) and multiplies them by size modifiers (e.g. XL = 1.2x) and width modifiers (e.g. Narrow 36\" = 1.25x).",
+            "Estimates are rounded up to the nearest 0.5-meter interval to ensure customers buy sufficient fabric lengths: `Math.max(0.5, Math.ceil(rawMeters * 2) / 2)`."
+        ],
+        tips: [
+            "Double-check your color variant hex codes so storefront circles accurately match fabric shades.",
+            "All product and review media uploads are saved in public storage buckets ('product-images' and 'blog-media'). Make sure file sizes are under 1MB to optimize performance."
+        ]
     },
     {
         id: "orders",
-        title: "Orders Management",
-        subtitle: "How to process, track, print, and close orders correctly.",
+        title: "Orders & Fulfillment",
+        subtitle: "Review customer checkouts, update status transitions, enter courier tracking, and download PDF invoices.",
         routeHints: ["/admin/orders", "/admin/orders/[id]", "/admin/orders/[id]/print"],
         whatThisDoes: [
-            "Shows all orders with filters and status badges.",
-            "Allows status updates, tracking updates, and internal notes.",
-            "Provides printable invoice/label view.",
+            "Aggregates customer checkout transactions including totals, coupon codes, notes, and payment statuses.",
+            "Controls order status transitions from Pending to Confirmed to Processing to Ready to Ship to Shipped to Delivered.",
+            "Logs detailed order status history records for admin auditing.",
+            "Generates print-ready PDF invoices on the fly using a custom, high-fidelity A4 layout compiler."
         ],
         tasks: [
             {
-                title: "Process a new order",
+                title: "Processing and Shipping a Customer Order",
                 steps: [
-                    "Go to Orders and filter by pending status.",
-                    "Open order detail and confirm customer address and phone.",
-                    "Check payment status before moving to processing.",
-                    "Update status sequentially: pending to confirmed to processing to packed to shipped.",
-                    "Add a short admin note for any unusual case.",
-                ],
-            },
-            {
-                title: "Ship and add tracking",
-                steps: [
-                    "Open order detail page.",
-                    "Add or update tracking URL in order actions panel.",
-                    "Set status to shipped.",
-                    "Use print page if invoice/label hardcopy is required.",
-                ],
-            },
+                    "Go to the Orders list page and locate a new **Pending** order.",
+                    "Click the order row to open the complete details screen.",
+                    "Inspect the order items, delivery address, and notes.",
+                    "Click the status dropdown, update the order status to **Processing**, and prepare the physical package.",
+                    "Once packaged, select the status **Shipped**, enter the courier service tracking link, and save details.",
+                    "Click **Download Invoice** to save and print the PDF invoice. Place this invoice inside the shipping box.",
+                    "[Screenshot Placeholder: Order Details - Status Transition Dropdown and Download Invoice Button]"
+                ]
+            }
         ],
         howItWorks: [
-            "Orders list and summary cards are loaded from lib query helpers.",
-            "Order detail combines order, items, addresses, and status history.",
-            "Status, tracking, and notes updates are done through server actions and revalidated pages.",
+            "Links records across 'public.orders', 'public.order_items', 'public.order_addresses', and 'public.order_status_history'.",
+            "Order status validation uses customizable values stored in the 'order_custom_statuses' table.",
+            "The invoice PDF is built on-demand using jsPDF, mapping brand colors (#9f3f29 terracotta, #faf8f5 beige) and drawing transaction blocks.",
+            "Invoice text is wrapped dynamically using 'doc.splitTextToSize' and layout coordinates adjust for variable heights."
         ],
         tips: [
-            "Never mark shipped before tracking is set if courier pickup is pending.",
-            "Use notes for audit trail so next admin can continue smoothly.",
-        ],
+            "Always enter the complete courier tracking URL (including 'https://') so customers can click it directly in their shipment notification emails.",
+            "Verify payment confirmation matches details in your Razorpay dashboard before changing status to Shipped."
+        ]
     },
     {
         id: "customers",
-        title: "Customers and Support",
-        subtitle: "How to review customer history, update status, and manage addresses.",
+        title: "Customers & Accounts",
+        subtitle: "Review shopper history, track lifetime value, edit default addresses, and handle soft account deletion.",
         routeHints: ["/admin/customers", "/admin/customers/[id]"],
         whatThisDoes: [
-            "Shows customer list with advanced filtering and CSV export.",
-            "Provides customer detail view with order history and interaction logs.",
-            "Supports notes, account status updates, and address CRUD.",
+            "Maintains shopper profiles with order frequencies, lifetime value (LTV) summaries, and contact details.",
+            "Logs customer timeline interactions to track account milestones.",
+            "Supports adding internal administrative notes to profiles for customer service records.",
+            "Provides an automated, GDPR-compliant soft account deletion engine that scrubs PII while preserving accounting records."
         ],
         tasks: [
             {
-                title: "Find and analyze customer",
+                title: "Reviewing Lifetime Value and Customer Notes",
                 steps: [
-                    "Use search and default filters first for fast narrowing.",
-                    "Enable extra filters from Add More Filters if needed.",
-                    "Open customer detail before changing any status.",
-                ],
+                    "Open the Customers directory and search for a customer name or email.",
+                    "Click the profile to view order history, total spent, and registered shipping addresses.",
+                    "Scroll to the **Internal Notes** box, type any customer service summaries, and click Save Note.",
+                    "[Screenshot Placeholder: Customer Directory - Lifetime Value Dashboard and Search Filters]"
+                ]
             },
             {
-                title: "Support actions",
+                title: "Executing a GDPR/Privacy Soft-Deletion Request",
                 steps: [
-                    "Add factual note in timeline.",
-                    "Apply status only with clear reason.",
-                    "Update addresses and defaults when delivery issues are found.",
-                ],
-            },
+                    "Locate the customer's profile details screen.",
+                    "Confirm the deletion request and click **Soft Delete Account**.",
+                    "Verify that their name updates to 'Deleted User', email is scrubbed, addresses are deactivated, and login is disabled.",
+                    "[Screenshot Placeholder: Customer Detail Page - Privacy Actions and Anonymize Dialog]"
+                ]
+            }
         ],
         howItWorks: [
-            "Customer list and export endpoints share filter logic.",
-            "Customer detail endpoint merges profile, orders, addresses, and interactions.",
-            "Status, note, and address actions write interaction logs for audit trail.",
+            "Customer directories query the aggregated database view 'admin_customer_summary' to load metrics efficiently.",
+            "Deactivated addresses are marked as 'is_deleted = true' to prevent database constraint failures on historical order rows.",
+            "Soft-deletion overrides values in 'user_profiles' and updates Supabase Auth users using auth admin keys, deactivating login credentials."
         ],
         tips: [
-            "For risky actions (blocked/suspended), leave a precise note first.",
-            "Use CSV export only after confirming filter state.",
-        ],
+            "Always use soft deletion instead of database hard deletion to keep accounting reports accurate.",
+            "Ensure the database check constraint on 'user_profiles.account_status' contains the 'deleted' status to prevent query failures."
+        ]
     },
     {
         id: "coupons",
-        title: "Coupons and Campaigns",
-        subtitle: "How to create discount campaigns and publish them safely.",
+        title: "Coupons & Discounts",
+        subtitle: "Launch promotion campaigns, set cart eligibility limits, and restrict codes to selected users.",
         routeHints: ["/admin/coupons", "/admin/coupons/new", "/admin/coupons/[id]"],
         whatThisDoes: [
-            "Creates and updates coupon rules and status.",
-            "Supports percentage and fixed discounts.",
-            "Shows analytics for redemptions and influenced revenue.",
+            "Generates promotional codes supporting flat discount values or percentage-based deductions.",
+            "Configures minimum purchase subtotal limits, maximum caps, validity dates, and usage limits.",
+            "Restricts specific coupons to a custom list of registered customer accounts.",
+            "Tracks redemption counts, discounts applied, and overall influenced sales revenue."
         ],
         tasks: [
             {
-                title: "Create campaign",
+                title: "Creating a VIP Customer Coupon",
                 steps: [
-                    "Set code, value, eligibility, and campaign window.",
-                    "Set placement and destination URL.",
-                    "Test with checkout before announcing publicly.",
-                ],
-            },
+                    "Go to the Coupons section and click **Create Coupon**.",
+                    "Enter a code (e.g., VIP20), name, and set the type to **Percentage** with a value of 20.",
+                    "Define a minimum purchase subtotal (e.g., ₹2000) and a maximum discount cap (e.g., ₹500).",
+                    "Toggle the **User Specific** switch to active.",
+                    "Search and select the customer profiles that are allowed to redeem this coupon.",
+                    "Click Save to launch the campaign.",
+                    "[Screenshot Placeholder: Coupon Creator - User-Targeted Account Lookup]"
+                ]
+            }
         ],
         howItWorks: [
-            "Coupon analytics computes influenced revenue from redemption order IDs and orders table totals.",
-            "Assignments to specific users are stored separately and updated in edit flow.",
+            "Stores details in 'public.coupons', 'public.coupon_user_assignments', and 'public.coupon_redemptions'.",
+            "Redemptions use a Postgres database function 'public.redeem_coupon_atomic' with lock control to prevent race conditions during sales.",
+            "Validator logic checks code constraints, validity dates, and user IDs during checkout processes."
         ],
         tips: [
-            "Use clear campaign naming and avoid overlapping coupon intent.",
-        ],
+            "Create coupon codes in uppercase characters (e.g., SUMMER10) to make them easier for users to type.",
+            "Use the maximum completed orders constraint set to 0 to target first-time buyers only."
+        ]
     },
     {
-        id: "cms-overview",
-        title: "CMS Content and Banners Overview",
-        subtitle: "How to use Content and Banners module end to end in daily operations.",
-        routeHints: ["/admin/cms", "/admin/cms (Hero)", "/admin/cms (Description)", "/admin/cms (Store Info)", "/admin/cms (Categories)", "/admin/cms (Banners)"],
+        id: "content-management",
+        title: "Content Management (CMS)",
+        subtitle: "Manage hero slideshows, popup banners, category display sorting, and schedule blog articles.",
+        routeHints: ["/admin/blog", "/admin/notifications-templates", "/admin/cms"],
         whatThisDoes: [
-            "Centralizes homepage copy, media, category cards, and campaign banners.",
-            "Lets admin publish UI changes without code deployments for most content updates.",
-            "Supports operational campaign scheduling using start date, end date, and active toggles.",
+            "Controls storefront slideshows, popup announcement blocks, and notification bars.",
+            "Sets category sort sequences and display filters.",
+            "Provides a visual blog editor supporting tag classifications, related product lists, and draft revisions.",
+            "Implements a scheduled publishing validation routine that runs cover photo checks, safety checks, and image alt text checks."
         ],
         tasks: [
             {
-                title: "Daily CMS publishing workflow",
+                title: "Updating Homepage Slide Priority & Placements",
                 steps: [
-                    "Open Content and Banners from sidebar.",
-                    "Check Hero tab first and verify copy, CTA labels, and layout mode are correct for current campaign.",
-                    "Open Categories tab and confirm active category list and order matches merchandising plan.",
-                    "Open Banners tab and verify announcement, hero, popup, and shop_top placement states.",
-                    "After any change, click Save (or Save Changes in modal), then verify on storefront home and shop pages.",
-                    "Record completed content changes in team handover notes with timestamp and campaign reference.",
-                ],
+                    "Go to CMS -> Banners and choose the Homepage Hero section.",
+                    "Upload slide images (ensure file sizes are under 300KB for performance).",
+                    "Define redirect URLs and enter **Priority Numbers** (higher values show first in the slide order).",
+                    "Click Save Changes to push updates to the storefront.",
+                    "[Screenshot Placeholder: CMS Banners - Priority Ordering and Upload Panel]"
+                ]
             },
             {
-                title: "Safe change sequence",
+                title: "Scheduling a Blog Post with Alt Text",
                 steps: [
-                    "Change one area at a time (Hero, then Categories, then Banners).",
-                    "Save and verify each area before moving to the next tab.",
-                    "If unsaved changes prompt appears while switching tabs, review and save first instead of discarding.",
-                    "For seasonal campaigns, activate new banners only after validating mobile and desktop storefront views.",
-                ],
-            },
+                    "Go to CMS -> Blog and click **Create Post**.",
+                    "Write content sections and upload a cover photo.",
+                    "Add descriptive text in the **SEO Image Alt Text** field to support search engine indexing.",
+                    "Set the status dropdown to **Scheduled** and pick a future publish date and time.",
+                    "Click Save. The scheduler will publish the article automatically at the target time.",
+                    "[Screenshot Placeholder: CMS Blog Editor - Schedule Timestamp and Alt Text Requirement]"
+                ]
+            }
         ],
         howItWorks: [
-            "CMS tab content is loaded from API routes backed by Supabase tables and storage.",
-            "Site config text and URL fields are upserted by key-value semantics.",
-            "Image uploads store to cms-assets bucket and save generated public URLs in database.",
+            "CMS configs are stored in 'public.banners', 'public.blog_posts', 'public.blog_categories', and 'public.blog_slug_redirects'.",
+            "Scheduled blog publishing runs via a POST webhook `/api/admin/blogs/scheduler` called by a background cron job.",
+            "The validator checks that scheduled posts have titles, slugs, cover images, alt text, and approved custom code.",
+            "Successfully saving cms categories or banners calls Next.js revalidate tag APIs to refresh cached static layouts."
         ],
         tips: [
-            "Do not combine many campaign edits in one publish window when high traffic is expected.",
-            "Always validate visual output after cache refresh window for accurate QA.",
-        ],
+            "Always include keyword-rich alt text on blog images to improve Google SEO ranking.",
+            "Toggle the custom code acknowledgement button if your blog post contains custom HTML elements or scripts."
+        ]
     },
     {
-        id: "cms-categories",
-        title: "CMS Categories Detailed Usage",
-        subtitle: "Step-by-step guide for create, edit, reorder, activate, and soft-delete category cards.",
-        routeHints: ["/admin/cms (Categories)", "/api/admin/cms/categories", "src/components/admin/cms/CategoriesManager.tsx"],
+        id: "documentation",
+        title: "Documentation & Search",
+        subtitle: "Browse handbook guides, search tasks, and toggle developer debug modes.",
+        routeHints: ["/admin/documentation"],
         whatThisDoes: [
-            "Controls category cards used by homepage and shop filtering journeys.",
-            "Provides slug-driven URLs for category-based navigation.",
-            "Maintains display order through sort_order swap actions.",
+            "Gathers operations manuals, step-by-step guides, and developer notes.",
+            "Indexes guides and tasks for search terms.",
+            "Highlights matching keywords inside search results templates.",
+            "Exposes developer configurations and cache control utilities."
         ],
         tasks: [
             {
-                title: "Create a category with image",
+                title: "Searching Documentation and Enabling Developer Mode",
                 steps: [
-                    "Open Categories tab and click Add Category.",
-                    "Type category name; confirm slug auto-generation or edit slug manually.",
-                    "Add description for contextual merchandising copy.",
-                    "Upload image from local machine or paste image URL.",
-                    "Keep Active on storefront checked unless preparing hidden draft.",
-                    "Click Create Category and verify category appears in list with thumbnail and slug.",
-                ],
-            },
-            {
-                title: "Reorder and edit a category",
-                steps: [
-                    "Use move up and move down controls on row actions to adjust order.",
-                    "Click edit icon to open row details in form panel.",
-                    "Update name, slug, description, image, or active state.",
-                    "Click Save Changes and verify order and metadata in list refresh.",
-                    "Open storefront to confirm card position and click-through URL are correct.",
-                ],
-            },
-            {
-                title: "Soft-delete a category safely",
-                steps: [
-                    "Click delete icon on category row.",
-                    "Confirm soft-delete prompt only when you are sure the card must be hidden.",
-                    "Verify row disappears from active list after refresh.",
-                    "Check homepage category section to ensure intended replacement cards are visible.",
-                ],
-            },
+                    "Navigate to the **Documentation** section.",
+                    "Type keywords (e.g. 'refund' or 'Shiprocket') in the search bar to locate guides.",
+                    "Review matching tasks and tips with query words highlighted.",
+                    "Toggle **Developer Mode** in the sidebar to view detailed database schemas and route files.",
+                    "[Screenshot Placeholder: Admin Documentation - Search Highlight and Developer Toggle]"
+                ]
+            }
         ],
         howItWorks: [
-            "Slug validation enforces lowercase letters, numbers, and hyphens only.",
-            "Create and edit both enforce uniqueness checks for active non-deleted rows.",
-            "Soft delete updates deleted_at timestamp and keeps row for audit and historical trace.",
+            "Renders details dynamically using the structured static array defined in 'docsData.ts'.",
+            "Keyword search escapes special characters and builds a dynamic regular expression to split matching texts.",
+            "Splits are wrapped in HTML 'mark' tags to highlight matches in the UI.",
+            "Saves developer mode preference in browser local storage."
         ],
         tips: [
-            "Keep slugs stable after public campaigns start to avoid broken historical links.",
-            "Use consistent naming conventions across categories for cleaner filtering UX.",
-        ],
+            "Turn Developer Mode ON to see related database tables and code files for each admin section.",
+            "Search queries are case-insensitive and match keywords inside tasks, descriptions, and tips."
+        ]
     },
     {
-        id: "cms-banners",
-        title: "CMS Banners and Hero Set Detailed Usage",
-        subtitle: "In-depth guide for placements, grouped hero rows, bulk upload, and save-time image removal.",
-        routeHints: ["/admin/cms (Banners)", "/api/admin/cms/banners", "src/components/admin/cms/BannersManager.tsx", "src/lib/cms.ts"],
+        id: "reports",
+        title: "Reports & Sales Analytics",
+        subtitle: "Review revenue statistics, checkout volumes, payment channels, and download CSV reports.",
+        routeHints: ["/admin/reports"],
         whatThisDoes: [
-            "Manages announcement_bar, homepage_hero, shop_top, and popup placements.",
-            "Shows homepage hero as one grouped row even when multiple hero records exist.",
-            "Supports single and bulk image workflows for hero campaigns.",
-            "Supports schedule windows, priorities, and quick active toggles.",
+            "Aggregates sales metrics (Gross sales, returns/refunds, net sales, and average order value).",
+            "Draws visualizations (Composed area/line charts, bar charts, donut charts).",
+            "Provides date range presets (Today, Week, Month, Year, Custom).",
+            "Formats and streams CSV spreadsheet downloads of transaction data."
         ],
         tasks: [
             {
-                title: "Create normal placement banner (announcement, shop_top, popup)",
+                title: "Analyzing and Exporting Sales Reports",
                 steps: [
-                    "Open Banners tab and click Create Banner.",
-                    "Enter title and select placement except homepage_hero.",
-                    "Enter content text and link URL.",
-                    "Upload image or paste image URL.",
-                    "Set colors, dates, priority, and active state.",
-                    "Click Create Banner and verify status badge in list.",
-                ],
-            },
-            {
-                title: "Create homepage hero set with multiple images",
-                steps: [
-                    "Create Banner and set placement to homepage_hero.",
-                    "Select banner width mode (Normal Banner Width or Full Width Banner).",
-                    "Set title prefix, content text, link URL, colors, dates, and base priority.",
-                    "Select multiple files in one upload field.",
-                    "Click Upload and Create All to create all hero rows in one flow.",
-                    "Verify grouped Homepage Hero Banners row shows updated image count.",
-                ],
-            },
-            {
-                title: "Edit hero group with save-gated remove",
-                steps: [
-                    "Click edit on grouped Homepage Hero Banners row.",
-                    "Use x on thumbnail to mark specific existing hero images for removal.",
-                    "Optionally add new files; in edit mode first selected file replaces primary edited row and remaining files create additional hero rows.",
-                    "Review pending removal note in modal.",
-                    "Click Save Changes to apply removals and any new uploads together.",
-                    "Use Cancel if you want to discard removal marks and leave DB unchanged.",
-                ],
-            },
-            {
-                title: "Quick campaign control actions",
-                steps: [
-                    "Use row toggle for a single non-hero banner.",
-                    "Use grouped toggle on Homepage Hero Banners row to enable or disable all hero rows.",
-                    "Use row soft delete for single banner retirement.",
-                    "Use placement soft delete only for complete placement cleanup.",
-                ],
-            },
+                    "Open the Reports page at `/admin/reports`.",
+                    "Select a report tab from the sidebar menu.",
+                    "Set target date ranges using the calendar picker.",
+                    "Click **Export CSV** to download the spreadsheet data.",
+                    "[Screenshot Placeholder: Sales Reports - Date Preset Filter and CSV Export Trigger]"
+                ]
+            }
         ],
         howItWorks: [
-            "Banner list is priority sorted and hero placement is transformed into a grouped synthetic row.",
-            "Status badge computes Active, Scheduled, Expired, or Inactive using active flag and date window.",
-            "Hero image removals are queued in local state and only persisted during Save Changes.",
-            "Hero layout mode writes to site_config key hero_banner_layout.",
+            "Fetches orders and order items grouped by date ranges, categories, states, or payment channels.",
+            "Composed charts show Area charts (Net Sales) and Line charts (Order counts) together.",
+            "Donut charts are configured with inner and outer radii and padding angles to display category ratios.",
+            "CSV exporter parses row values, escapes double quotes, wraps strings containing commas, and triggers browser downloads."
         ],
         tips: [
-            "For large hero campaigns, upload all slides first and verify sequence using priority values.",
-            "Avoid placement soft delete if only one or two banners need retirement.",
-        ],
+            "Filter reports to show paid and delivered statuses to review actual net profits, excluding unpaid and cancelled orders.",
+            "Ensure order dates are indexed in the database to maintain fast report generation speeds."
+        ]
     },
     {
-        id: "blog-builder-prd-v2",
-        title: "Blog Builder PRD v2 Planning and Tracker",
-        subtitle: "Detailed implementation plan, requirement checklist, and documentation update gate for the blog module.",
-        routeHints: [
-            "/admin/documentation",
-            "docs/blog/blog_builder_prd_v2_requirements_checklist.md",
-            "docs/trackers/blog_builder_prd_v2_implementation_tracker.md",
-            "docs/blog/blog_builder_admin_api_contract_v1.md",
-            "docs/blog/blog_builder_db_schema.md",
-            "docs/blog/blog_builder_admin_list_ux.md",
-            "docs/blog/blog_builder_admin_editor_ux.md",
-            "docs/blog/blog_builder_section_library.md",
-            "docs/shree_hari_blog_prd_v2.docx",
-        ],
+        id: "payments",
+        title: "Payments Gateways & COD",
+        subtitle: "Configure online gateways, set COD fees, and verify signatures.",
+        routeHints: ["/admin/payments"],
         whatThisDoes: [
-            "Provides a complete requirement checklist derived from the PRD.",
-            "Defines phased implementation milestones across data, APIs, admin UX, public UX, SEO, and analytics.",
-            "Keeps admin APIs theme-agnostic so any storefront theme can integrate without backend rewrites.",
-            "Enforces a documentation-first completion gate after each delivered functionality.",
+            "Manages credentials for online payment gateways (Razorpay).",
+            "Sets Cash on Delivery (COD) transaction fees.",
+            "Supports partial advance payment rules for cash on delivery checkouts.",
+            "Validates gateway webhooks using cryptographical signature checks."
         ],
         tasks: [
             {
-                title: "Use the requirement checklist before implementation",
+                title: "Configuring Payment Gateways & COD Fees",
                 steps: [
-                    "Open blog_builder_prd_v2_requirements_checklist.md and confirm the target requirement group.",
-                    "Break work into one milestone from the implementation tracker.",
-                    "Implement only the selected milestone scope and validate against PRD acceptance points.",
-                    "Mark checklist items progressively as the implementation is verified.",
-                ],
-            },
-            {
-                title: "Track current implementation baseline",
-                steps: [
-                    "Verify initial schema scaffold exists at db/migrations/supabase_blog_builder_v2_migration.sql.",
-                    "Verify shared blog domain types exist at src/types/blogs.ts.",
-                    "Verify API contract exists at docs/blog/blog_builder_admin_api_contract_v1.md.",
-                    "Review DB schema doc at docs/blog/blog_builder_db_schema.md for table and relationship coverage.",
-                    "Verify admin blog APIs exist under src/app/api/admin/blogs and include list, detail, quick-edit, bulk, categories, and tags routes.",
-                    "Verify revision APIs exist at src/app/api/admin/blogs/[id]/revisions/route.ts for list, compare, and restore actions.",
-                    "Verify preview token API exists at src/app/api/admin/blogs/[id]/preview/route.ts with 48-hour default validity.",
-                    "Verify validation API exists at src/app/api/admin/blogs/[id]/validate/route.ts for publish readiness checks.",
-                    "Verify scheduler API exists at src/app/api/admin/blogs/scheduler/route.ts for scheduled publish execution.",
-                    "Verify media APIs exist at src/app/api/admin/blogs/media/route.ts for upload, list, and delete workflows.",
-                    "Verify analytics API exists at src/app/api/admin/blogs/analytics/route.ts for summary cards and charts.",
-                    "Use these baseline artifacts as the source for subsequent API and UI integration tasks.",
-                    "Update this documentation section whenever a new milestone artifact is introduced.",
-                ],
-            },
-            {
-                title: "Update documentation after each completed functionality",
-                steps: [
-                    "After finishing a feature, update the corresponding guidance on /admin/documentation in the same session.",
-                    "Update docs/trackers/blog_builder_prd_v2_implementation_tracker.md status and changelog immediately.",
-                    "Do not mark task done until both implementation and documentation updates are completed.",
-                    "Include route-level notes, operator steps, and edge-case behavior in documentation updates.",
-                ],
-            },
+                    "Go to Payment Settings.",
+                    "Enter the Razorpay Key ID and Key Secret.",
+                    "Enable Cash on Delivery and define the COD fee (e.g. ₹50).",
+                    "Click Save to push credentials to the secure settings table.",
+                    "[Screenshot Placeholder: Payment Settings - API Credentials and COD Configuration]"
+                ]
+            }
         ],
         howItWorks: [
-            "The checklist captures PRD coverage and prevents requirement drift.",
-            "The implementation tracker enforces milestone order and dependency clarity.",
-            "Implementation started with schema and type foundations so APIs and UI can integrate against one model.",
-            "Theme-agnostic API contracts isolate data behavior from storefront styling, so new themes only need renderer adapters.",
-            "Revision snapshots are now persisted on create and update, and restore operations also create a reversible revision entry.",
-            "Time-limited preview tokens decouple admin review workflows from theme rendering internals.",
-            "Validation and scheduler APIs enforce publish readiness while keeping theme-specific rendering out of the admin backend.",
-            "Analytics APIs return theme-agnostic metrics so each theme can render cards and charts independently.",
-            "The documentation gate turns /admin/documentation into a live operational source of truth.",
+            "Webhook endpoint '/api/payments/razorpay/verify' checks signature parameters.",
+            "Calculates expected signatures using 'crypto.createHmac('sha256', secret)' with order ID and payment ID.",
+            "COD checkout handler '/api/checkout/place-order' calculates advance amounts and generates Razorpay sessions for partial payments."
         ],
         tips: [
-            "Treat documentation updates as part of feature completion, not as a post-release task.",
-            "Do not store theme IDs or theme-coupled CSS assumptions inside blog content payloads.",
-            "Keep scheduler secrets in server env variables and never expose them to client bundles.",
-            "Close milestone work in small vertical slices to keep docs and behavior in sync.",
-        ],
+            "Ensure that Razorpay webhook URLs are configured in your Razorpay dashboard.",
+            "Review transaction signatures in the payments panel if you notice payment mismatches."
+        ]
     },
     {
-        id: "blog-builder-admin",
-        title: "Blog Builder Operations",
-        subtitle: "How to create, edit, preview, and publish blog posts safely in the admin editor.",
-        routeHints: [
-            "/admin/blog",
-            "/admin/blog/new",
-            "/admin/blog/[id]",
-            "src/components/admin/blog/BlogEditor.tsx",
-            "docs/blog/blog_builder_admin_editor_ux.md",
-        ],
+        id: "shipping",
+        title: "Shipping & Fulfillment Providers",
+        subtitle: "Select delivery partners, set flat rates, and configure COD partial payment criteria.",
+        routeHints: ["/admin/shipping"],
         whatThisDoes: [
-            "Creates theme-agnostic blog content in visual or code mode.",
-            "Supports custom code blocks with publish safety acknowledgment.",
-            "Provides validation, preview, and revisions for safe publishing.",
+            "Integrates with Delhivery and Shiprocket delivery APIs.",
+            "Enables grouping India's 36 states and UTs into custom delivery zones with flat charges.",
+            "Configures free shipping threshold limits.",
+            "Determines shipping totals dynamically at checkout."
         ],
         tasks: [
             {
-                title: "Create a visual post",
+                title: "Setting Up Custom State Groups and Fees",
                 steps: [
-                    "Open /admin/blog and click Create Post.",
-                    "Fill title, summary, cover media, category, tags, and author.",
-                    "Add sections from the library and reorder as needed.",
-                    "Use Preview to verify layout summary and section warnings.",
-                    "Save draft before leaving the page.",
-                ],
-            },
-            {
-                title: "Use custom code blocks safely",
-                steps: [
-                    "Add Custom Code section from the library.",
-                    "Paste HTML, CSS, and JS as needed (leave empty fields blank).",
-                    "Review warnings for empty custom code blocks.",
-                    "Acknowledge custom JS risks before save and publish if JS is present.",
-                    "Publish only after validation errors are resolved.",
-                ],
-            },
-            {
-                title: "Switch to full code mode",
-                steps: [
-                    "Click Code to enter full page HTML/CSS/JS mode.",
-                    "Enter HTML (required) and optional CSS/JS.",
-                    "Check the code-only lock if you want to prevent returning to visual mode.",
-                    "Acknowledge custom JS risks before save and publish.",
-                    "Publish or schedule once validation passes.",
-                ],
-            },
-            {
-                title: "Rollback a bad publish",
-                steps: [
-                    "Open the post and click Revisions in the top bar.",
-                    "Select the last known-good revision snapshot.",
-                    "Restore the revision and review the editor state.",
-                    "Run validation again and republish when ready.",
-                ],
-            },
+                    "Open Shipping Settings.",
+                    "Click **Add State Group**.",
+                    "Provide a group name (e.g. South Zone) and enter a flat fee.",
+                    "Check target states (previously allocated states will be disabled) and click Add Group.",
+                    "Click Save at the bottom of the page.",
+                    "[Screenshot Placeholder: Shipping Settings - State Allocation Map and Zone Config]"
+                ]
+            }
         ],
         howItWorks: [
-            "Visual mode stores sections in a theme-agnostic builder_layout JSON.",
-            "Custom code blocks are stored in builder_layout with HTML/CSS/JS content fields.",
-            "Code mode lock disables switching back to visual mode for the post.",
-            "Publish validation enforces required metadata and custom JS acknowledgment.",
-            "Syntax validation checks for unbalanced HTML tags and JS/CSS delimiters.",
-            "Custom JS acknowledgment is required before saving when JS is present.",
-            "Preview uses time-limited tokens for safe stakeholder review.",
-            "Revisions are stored on create and update to support rollback.",
+            "State mappings are saved in 'site_settings.shipping_state_groups' JSONB: `[{ id: string, name: string, states: string[], charge: number }]`.",
+            "Checkout calculator in 'src/lib/shipping/rates.ts' matches state groups case-insensitively.",
+            "If discounted subtotal matches 'shipping_free_threshold', the shipping fee resolves to 0."
         ],
         tips: [
-            "Keep custom JS minimal and well-scoped to reduce support risk.",
-            "Use revisions to roll back if a publish introduces layout issues.",
-            "Avoid embedding theme-specific CSS assumptions inside content.",
-        ],
+            "Ensure all states are mapped to prevent shipping fee calculations from falling back to default rates.",
+            "Ensure Delhivery/Shiprocket API keys are masked with placeholders in settings views."
+        ]
     },
     {
-        id: "blog-media-library",
-        title: "Blog Media Library",
-        subtitle: "Upload, search, and reuse blog images with alt text governance.",
-        routeHints: [
-            "/admin/blog",
-            "docs/blog/blog_builder_media_library.md",
-            "src/app/api/admin/blogs/media/route.ts",
-        ],
+        id: "settings",
+        title: "Settings & System Cache",
+        subtitle: "Select storefront themes, configure custom order statuses, and manage system cache.",
+        routeHints: ["/admin/settings"],
         whatThisDoes: [
-            "Centralizes reusable images for cover and OG metadata.",
-            "Enforces alt text updates before publish workflows.",
-            "Blocks deletion of assets used by published posts.",
+            "Saves layout preferences, site contact information, and active themes.",
+            "Manages custom order status records and label colors.",
+            "Exposes manual cache bust buttons to purge page-level cached files."
         ],
         tasks: [
             {
-                title: "Upload a new image",
+                title: "Creating Custom Order Status Badges & Purging Cache",
                 steps: [
-                    "Open media picker from Cover or OG image fields.",
-                    "Upload JPG, PNG, or WebP and add alt text.",
-                    "Confirm the image appears in the library grid.",
-                ],
-            },
-            {
-                title: "Select media for a post",
-                steps: [
-                    "Open the media picker from Cover or OG image fields.",
-                    "Use search or date filters to find the asset.",
-                    "Click Use to attach the media to the post.",
-                ],
-            },
-            {
-                title: "Update alt text",
-                steps: [
-                    "Locate the asset in the media grid.",
-                    "Edit the alt text field and click save.",
-                    "Re-run publish validation if errors were blocked by alt text.",
-                ],
-            },
+                    "Go to **Settings** and locate **Custom Order Statuses**.",
+                    "Click **Add Status**, enter a label name, choose a badge color, and save.",
+                    "Scroll to cache settings and click **Clear Site Cache** to sync changes.",
+                    "[Screenshot Placeholder: Settings Panel - Custom Status Registry and Cache Bust Trigger]"
+                ]
+            }
         ],
         howItWorks: [
-            "Uploads store the original image plus thumbnail, medium, and large variants.",
-            "Media search supports filename and alt text matching.",
-            "Deletion is blocked when media is referenced by published posts.",
+            "Stores settings inside the 'public.site_settings' table.",
+            "Manual cache clearing calls Next.js 'revalidateTag' for: 'products', 'cms_banners', 'cms_categories', 'site_config', and 'blog_posts'.",
+            "Dev environments skip caching entirely."
         ],
         tips: [
-            "Always write descriptive alt text for accessibility and SEO.",
-            "Prefer reusing existing assets to keep media governance consistent.",
-        ],
-    },
-    {
-        id: "blog-seo-multilingual",
-        title: "Blog SEO & Multilingual",
-        subtitle: "Configure metadata, validate slugs, and link language variants.",
-        routeHints: [
-            "/admin/blog",
-            "docs/blog/blog_builder_seo_multilingual.md",
-            "src/components/admin/blog/BlogEditor.tsx",
-        ],
-        whatThisDoes: [
-            "Adds SEO metadata controls and publish-time validation.",
-            "Tracks redirect history when published slugs change.",
-            "Links multilingual variants and emits hreflang alternates.",
-        ],
-        tasks: [
-            {
-                title: "Complete SEO metadata",
-                steps: [
-                    "Open the SEO panel and fill meta title/description.",
-                    "Set canonical, robots, Twitter, and OG values as needed.",
-                    "Confirm counters are within recommended limits.",
-                ],
-            },
-            {
-                title: "Link a language variant",
-                steps: [
-                    "Use the Language Variants selector to link to an existing post.",
-                    "Verify the variant group ID persists after save.",
-                    "Publish both variants and confirm the language switcher appears.",
-                ],
-            },
-            {
-                title: "Verify SEO output",
-                steps: [
-                    "Open the public post and inspect page metadata.",
-                    "Confirm hreflang alternates appear for linked variants.",
-                    "Check sitemap entries for published posts.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Slug uniqueness is validated on save and publish.",
-            "OG fields fall back to meta title/description when empty.",
-            "Sitemap entries are generated from published posts only.",
-        ],
-        tips: [
-            "Keep meta titles under 60 characters for best display.",
-            "Use canonical URLs when a post is duplicated across languages.",
-        ],
-    },
-    {
-        id: "blog-scheduling",
-        title: "Blog Scheduling & Publish Lifecycle",
-        subtitle: "Schedule posts, track publish outcomes, and manage rollback behavior.",
-        routeHints: [
-            "/admin/blog",
-            "docs/blog/blog_builder_scheduling.md",
-            "src/app/api/admin/blogs/scheduler/route.ts",
-        ],
-        whatThisDoes: [
-            "Uses IST input for schedule times with UTC storage.",
-            "Publishes scheduled posts after validation checks.",
-            "Records scheduler results for in-app visibility.",
-        ],
-        tasks: [
-            {
-                title: "Schedule a post",
-                steps: [
-                    "Set status to Scheduled and choose an IST datetime.",
-                    "Save the post and confirm scheduled_for is stored.",
-                    "Wait for the scheduler to publish at the target time.",
-                ],
-            },
-            {
-                title: "Review scheduler results",
-                steps: [
-                    "Open Blog Management and review Scheduler Updates.",
-                    "Open any failed post to fix validation errors.",
-                    "Reschedule once errors are resolved.",
-                ],
-            },
-            {
-                title: "Unpublish safely",
-                steps: [
-                    "Confirm redirects exist before unpublishing a slug.",
-                    "Unpublish the post from the list or editor.",
-                    "Verify 410 response for old URLs without redirects.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Scheduler runs publish validation and reverts to draft on failure.",
-            "Publish results are stored in blog_publish_notifications.",
-            "Unpublished slugs return 410 when no redirect is present.",
-        ],
-        tips: [
-            "Run the scheduler at least every 2 minutes to meet SLA targets.",
-            "Check Scheduler Updates after big publish windows.",
-        ],
-    },
-    {
-        id: "blog-public-rendering",
-        title: "Blog Public Experience",
-        subtitle: "Verify public rendering, share actions, and SEO output.",
-        routeHints: [
-            "/blogs",
-            "docs/blog/blog_builder_public_rendering.md",
-            "src/app/blogs/[slug]/page.tsx",
-        ],
-        whatThisDoes: [
-            "Documents public list and detail rendering behavior.",
-            "Highlights related posts/products and share actions.",
-            "Provides SEO verification checklist.",
-        ],
-        tasks: [
-            {
-                title: "Verify public pages",
-                steps: [
-                    "Open /blogs and confirm published posts list.",
-                    "Open a detail page and confirm builder rendering.",
-                    "Check related posts and products sections.",
-                ],
-            },
-            {
-                title: "Verify share actions",
-                steps: [
-                    "Test WhatsApp and Facebook share links.",
-                    "Copy link for Instagram and confirm clipboard update.",
-                    "Use native share on mobile where available.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Public pages only render published posts.",
-            "Full code mode outputs HTML/CSS/JS blocks directly.",
-            "Share URLs use canonical routes by default.",
-        ],
-        tips: [
-            "Run SEO verification from browser view-source.",
-            "Keep related products updated for commerce impact.",
-        ],
-    },
-    {
-        id: "blog-analytics",
-        title: "Blog Analytics",
-        subtitle: "Review blog performance, conversions, and content health.",
-        routeHints: [
-            "/admin/blog/analytics",
-            "docs/blog/blog_builder_analytics.md",
-            "src/app/api/admin/blogs/analytics/route.ts",
-        ],
-        whatThisDoes: [
-            "Tracks views, conversion clicks, and content health flags.",
-            "Highlights top posts by CTR and referrer sources.",
-            "Summarizes device split and engagement signals.",
-        ],
-        tasks: [
-            {
-                title: "Review performance",
-                steps: [
-                    "Open Blog Analytics and select a time range.",
-                    "Scan summary cards for views and click-throughs.",
-                    "Review top CTR posts for promotion.",
-                ],
-            },
-            {
-                title: "Investigate health flags",
-                steps: [
-                    "Check low-traffic and SEO incomplete counts.",
-                    "Open flagged posts from the blog list.",
-                    "Fix missing metadata or related products.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Analytics events power summary cards and trend charts.",
-            "CTR is calculated using product clicks divided by views.",
-            "Health flags only evaluate published posts.",
-        ],
-        tips: [
-            "Use short ranges to spot recent campaign impact.",
-            "Update SEO fields to clear incomplete flags.",
-        ],
-    },
-    {
-        id: "blog-qa-release",
-        title: "Blog QA & Release",
-        subtitle: "Execute QA test cases and release readiness checks.",
-        routeHints: [
-            "docs/blog/blog_builder_qa_test_cases.md",
-            "docs/blog/blog_builder_release_checklist.md",
-        ],
-        whatThisDoes: [
-            "Provides executable QA test cases for admin and public flows.",
-            "Defines release checklist and known limits.",
-            "Standardizes pre-launch verification.",
-        ],
-        tasks: [
-            {
-                title: "Run QA test cases",
-                steps: [
-                    "Execute admin editor and media library checks.",
-                    "Validate scheduling, redirects, and public rendering.",
-                    "Document failures for remediation.",
-                ],
-            },
-            {
-                title: "Complete release checklist",
-                steps: [
-                    "Verify migration and storage prerequisites.",
-                    "Confirm SEO validation and sitemap outputs.",
-                    "Sign off on scheduler behavior and analytics.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "QA cases map to PRD acceptance criteria.",
-            "Release checklist consolidates pre-launch safeguards.",
-        ],
-        tips: [
-            "Re-run QA after any schema or API changes.",
-            "Record known limits for support handoff.",
-        ],
-    },
-];
-
-const TECH_SECTIONS_MIRRORED: Section[] = [
-    {
-        id: "start",
-        title: "Getting Started - Technical Deep Dive",
-        subtitle: "System-level behavior behind admin access, layout shell, and daily operational entry points.",
-        routeHints: ["/admin/login", "src/app/admin/layout.tsx", "Auth context and local session behavior"],
-        whatThisDoes: [
-            "Explains how admin shell and route access patterns initialize.",
-            "Clarifies why certain modules should be reviewed first from a data freshness perspective.",
-            "Documents handover-critical checks to reduce operational drift.",
-        ],
-        tasks: [
-            {
-                title: "Technical startup checks",
-                steps: [
-                    "Open admin login and authenticate to establish session context.",
-                    "Load dashboard shell and confirm sidebar routes render without hydration issues.",
-                    "Open Orders and Customers to verify core operational APIs return responses.",
-                    "Check browser console for auth or API errors before starting content operations.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Admin area is routed through a shared layout that controls navigation consistency.",
-            "Operational pages depend on API reachability and current role/session state.",
-            "Shift readiness should be validated at route and data layers, not UI text alone.",
-        ],
-        tips: [
-            "If one core module fails to load, diagnose auth and API first before retrying workflows.",
-            "Start with high-impact modules to catch breakage early in the shift.",
-        ],
-    },
-    {
-        id: "orders",
-        title: "Orders Management - Technical Deep Dive",
-        subtitle: "Data flow, mutation behavior, and validation points for order lifecycle operations.",
-        routeHints: ["/admin/orders", "/admin/orders/[id]", "src/app/actions/order.ts", "src/lib/orders.ts"],
-        whatThisDoes: [
-            "Explains order state transitions and consistency expectations.",
-            "Documents tracking and note update pathways.",
-            "Clarifies print-view dependencies for shipping operations.",
-        ],
-        tasks: [
-            {
-                title: "Status transition integrity flow",
-                steps: [
-                    "Load order detail and validate current payment and fulfillment context.",
-                    "Apply status updates in correct sequence to avoid workflow regressions.",
-                    "Persist tracking data before or with shipped state when courier handoff is complete.",
-                    "Re-open updated order to confirm persisted state and timeline records.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Order list reads aggregate and summary data from server-side helpers.",
-            "Detail view joins header, items, addresses, and status history for complete operations.",
-            "Write actions revalidate relevant views to keep list and detail in sync.",
-        ],
-        tips: [
-            "Never skip intermediate states in bulk unless business logic explicitly supports it.",
-            "Tracking links should be validated for correct courier format before publish.",
-        ],
-    },
-    {
-        id: "customers",
-        title: "Customers and Support - Technical Deep Dive",
-        subtitle: "Query semantics, profile write behavior, and audit logging for support workflows.",
-        routeHints: ["/admin/customers", "GET /api/admin/customers", "GET /api/admin/customers/[id]", "customer interaction logs"],
-        whatThisDoes: [
-            "Documents how customer filters and exports stay logically aligned.",
-            "Explains profile and status updates with interaction-side effects.",
-            "Covers address operations and support traceability requirements.",
-        ],
-        tasks: [
-            {
-                title: "Support update technical flow",
-                steps: [
-                    "Locate customer via filter set and open detail API-backed page.",
-                    "Apply status or note mutation and confirm successful response payload.",
-                    "Reload detail timeline to verify interaction log was written.",
-                    "For address changes, confirm default address invariants remain valid.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "List and export should share equivalent filtering semantics to avoid reporting drift.",
-            "Customer detail combines profile, orders, addresses, and interactions in one payload.",
-            "Writes prioritize auditability through interaction metadata.",
-        ],
-        tips: [
-            "Always verify post-mutation timeline entries before closing support ticket.",
-            "Prefer API-level derived values over client-only calculations.",
-        ],
-    },
-    {
-        id: "coupons",
-        title: "Coupons and Campaigns - Technical Deep Dive",
-        subtitle: "Campaign configuration behavior, assignment handling, and influenced revenue interpretation.",
-        routeHints: ["/admin/coupons", "coupon create and edit APIs", "coupon analytics reads"],
-        whatThisDoes: [
-            "Explains technical implications of coupon windowing and eligibility.",
-            "Documents assignment persistence for targeted campaigns.",
-            "Clarifies analytics interpretation based on redemption-linked orders.",
-        ],
-        tasks: [
-            {
-                title: "Technical campaign publish flow",
-                steps: [
-                    "Create or edit coupon with deterministic code, window, and discount configuration.",
-                    "Validate assignment scope and ensure no conflicting campaign logic exists.",
-                    "Run controlled checkout verification in staging-like flow.",
-                    "Verify redemption and influenced-revenue metrics after initial usage.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Campaign behavior is governed by coupon rules, date windows, and assignment scope.",
-            "Analytics derive influenced revenue using redemption references and order totals.",
-            "Edit flow updates assignment records as part of campaign maintenance.",
-        ],
-        tips: [
-            "Keep campaign code naming deterministic for easier analytics reconciliation.",
-            "Avoid overlapping high-priority coupons targeting same audience segment.",
-        ],
-    },
-    {
-        id: "blog-builder-admin",
-        title: "Blog Builder Operations - Technical Deep Dive",
-        subtitle: "Data flow, validation, and persistence for visual and code modes.",
-        routeHints: [
-            "/admin/blog",
-            "src/components/admin/blog/BlogEditor.tsx",
-            "src/app/api/admin/blogs/[id]/route.ts",
-            "src/app/api/admin/blogs/[id]/validate/route.ts",
-            "src/lib/blogValidation.ts",
-            "src/types/blogs.ts",
-        ],
-        whatThisDoes: [
-            "Maps editor UI state to blog payload fields for visual and code modes.",
-            "Explains publish validation for metadata, alt text, and JS acknowledgment.",
-            "Documents code mode lock and custom code storage behavior.",
-        ],
-        tasks: [
-            {
-                title: "Save and autosave payload flow",
-                steps: [
-                    "Load blog post and hydrate editor state from API payload.",
-                    "Update state on form inputs and section builder operations.",
-                    "Save posts with editor_mode, builder_layout, and full_page fields.",
-                    "Trigger autosave when title is present to keep drafts synced.",
-                ],
-            },
-            {
-                title: "Publish validation pipeline",
-                steps: [
-                    "Call validate route before publish or schedule actions.",
-                    "Enforce required metadata and cover image requirements.",
-                    "Validate builder_layout image alt text and custom code summary.",
-                    "Require custom JS acknowledgment when JS is present.",
-                ],
-            },
-            {
-                title: "Code mode lock behavior",
-                steps: [
-                    "Persist code_mode_locked flag on save.",
-                    "Disable switching back to visual mode when locked.",
-                    "Keep code-only content in full_page_html/css/js fields.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Blog posts store editor_mode with either builder_layout JSON or full_page HTML/CSS/JS fields.",
-            "Custom code blocks are stored inside builder_layout under type custom_code.",
-            "Validation runs in blogValidation and returns errors and warnings for publish gating.",
-            "Custom JS acknowledgment is required for full code mode and visual custom code blocks.",
-            "Custom JS acknowledgment is required before saving when JS is present.",
-            "Syntax validation flags unbalanced HTML tags and JS/CSS delimiters.",
-            "Preview tokens are generated by the preview API with a 48-hour default.",
-            "Revision snapshots persist on create and update for rollback workflows.",
-        ],
-        tips: [
-            "Add syntax validation and sanitization before exposing custom code on the storefront.",
-            "Keep custom JS acknowledgment gating in the publish pipeline.",
-            "Preserve theme-agnostic payloads so storefront themes can render independently.",
-        ],
-    },
-    {
-        id: "blog-media-library",
-        title: "Blog Media Library - Technical Deep Dive",
-        subtitle: "Upload pipeline, variant generation, and deletion safeguards.",
-        routeHints: [
-            "src/app/api/admin/blogs/media/route.ts",
-            "blog_media_library table",
-            "supabase storage bucket blog-media",
-        ],
-        whatThisDoes: [
-            "Documents media upload validation and size limits.",
-            "Explains variant generation and metadata capture.",
-            "Covers deletion guards for published post usage.",
-        ],
-        tasks: [
-            {
-                title: "Media upload pipeline",
-                steps: [
-                    "Validate file size and MIME type constraints.",
-                    "Upload original file and generate size variants.",
-                    "Persist metadata and variant paths in blog_media_library.",
-                ],
-            },
-            {
-                title: "Safe delete flow",
-                steps: [
-                    "Check if media is referenced by published posts.",
-                    "Block delete when usage exists.",
-                    "Remove original and variant files when delete is allowed.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Variants store storage paths and public URLs for thumbnail, medium, and large sizes.",
-            "Media metadata stores width, height, and alt text for validation checks.",
-            "Date filters operate on created_at for operational reporting.",
-        ],
-        tips: [
-            "Use storage lifecycle policies if media retention needs to be enforced.",
-            "Keep MIME restrictions aligned with storefront rendering support.",
-        ],
-    },
-    {
-        id: "blog-seo-multilingual",
-        title: "Blog SEO & Multilingual - Technical Deep Dive",
-        subtitle: "Metadata emission, hreflang alternates, and sitemap generation.",
-        routeHints: [
-            "src/app/blogs/[slug]/page.tsx",
-            "src/app/sitemap.ts",
-            "docs/blog/blog_builder_seo_multilingual.md",
-        ],
-        whatThisDoes: [
-            "Maps SEO fields to public metadata and open graph output.",
-            "Generates hreflang alternates for linked variants.",
-            "Builds the blog sitemap from published posts only.",
-        ],
-        tasks: [
-            {
-                title: "Metadata pipeline",
-                steps: [
-                    "Load the published post record and media assets.",
-                    "Apply OG fallback logic to meta and cover data.",
-                    "Emit robots and canonical values in metadata.",
-                ],
-            },
-            {
-                title: "Hreflang alternates",
-                steps: [
-                    "Fetch all published variants by variant_group_id.",
-                    "Map languages to the correct public route path.",
-                    "Expose alternates in metadata and switcher UI.",
-                ],
-            },
-            {
-                title: "Sitemap generation",
-                steps: [
-                    "Query published posts with slug and language.",
-                    "Build canonical URLs using the site base URL.",
-                    "Return sitemap entries with last modified timestamps.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Variant linkage uses a shared variant_group_id across languages.",
-            "Sitemap routes include /blogs and /hi/blogs entries.",
-            "Redirect pages keep /blog paths compatible with legacy links.",
-        ],
-        tips: [
-            "Keep metadataBase aligned with NEXT_PUBLIC_SITE_URL.",
-            "Ensure canonical URLs are absolute when overriding defaults.",
-        ],
-    },
-    {
-        id: "blog-scheduling",
-        title: "Blog Scheduling & Publish Lifecycle - Technical Deep Dive",
-        subtitle: "Scheduler execution, notifications, and rollback behavior.",
-        routeHints: [
-            "src/app/api/admin/blogs/scheduler/route.ts",
-            "src/app/api/admin/blogs/notifications/route.ts",
-            "blog_publish_notifications table",
-        ],
-        whatThisDoes: [
-            "Executes scheduled publishes with validation gating.",
-            "Writes scheduler outcomes to notification storage.",
-            "Supports rollback to draft when validation fails.",
-        ],
-        tasks: [
-            {
-                title: "Scheduled publish flow",
-                steps: [
-                    "Query scheduled posts due for publish.",
-                    "Run publish validation and gate failures.",
-                    "Publish and write revisions for successful posts.",
-                ],
-            },
-            {
-                title: "Notification feed",
-                steps: [
-                    "Insert notification row for each scheduler result.",
-                    "Expose notifications via admin API.",
-                    "Render results in admin list UI.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Scheduler validates cover, SEO, and code requirements.",
-            "Failure results revert status to draft and log errors.",
-            "Success results set published_at and log a publish notification.",
-        ],
-        tips: [
-            "Use the scheduler secret in automated jobs.",
-            "Monitor failed schedules and fix validation errors quickly.",
-        ],
-    },
-    {
-        id: "blog-public-rendering",
-        title: "Blog Public Experience - Technical Deep Dive",
-        subtitle: "Server rendering, share helpers, and SEO output mapping.",
-        routeHints: [
-            "src/app/blogs/page.tsx",
-            "src/app/blogs/[slug]/page.tsx",
-            "src/components/blog/ShareButtons.tsx",
-        ],
-        whatThisDoes: [
-            "Maps blog content to public list and detail pages.",
-            "Documents share button behavior and native share fallback.",
-            "Explains related posts/products rendering.",
-        ],
-        tasks: [
-            {
-                title: "Public rendering flow",
-                steps: [
-                    "Query published posts and build list cards.",
-                    "Load detail page data with builder layout or code mode.",
-                    "Render related posts/products from linkage tables.",
-                ],
-            },
-            {
-                title: "Share actions",
-                steps: [
-                    "Use canonical URL for share targets.",
-                    "Fallback to clipboard copy for Instagram.",
-                    "Expose native share on supported devices.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Share buttons are client-side to access clipboard and Web Share API.",
-            "Product cards reuse existing product component patterns.",
-            "Related posts/products order respects stored sort order.",
-        ],
-        tips: [
-            "Keep share URLs consistent with canonical metadata.",
-            "Verify related products have active inventory.",
-        ],
-    },
-    {
-        id: "blog-analytics",
-        title: "Blog Analytics - Technical Deep Dive",
-        subtitle: "Metric computation, events pipeline, and dashboard composition.",
-        routeHints: [
-            "src/app/admin/blog/analytics/page.tsx",
-            "src/app/api/admin/blogs/analytics/route.ts",
-            "blog_analytics_events table",
-        ],
-        whatThisDoes: [
-            "Defines aggregation logic for views, clicks, and CTR.",
-            "Documents referrer and device bucket rules.",
-            "Explains content health calculations.",
-        ],
-        tasks: [
-            {
-                title: "Aggregate analytics",
-                steps: [
-                    "Query events within the selected range.",
-                    "Compute per-post counters and totals.",
-                    "Bucket referrers and devices for charts.",
-                ],
-            },
-            {
-                title: "Dashboard delivery",
-                steps: [
-                    "Expose summary, series, and CTR ranking in API.",
-                    "Render dashboard cards and tables in the UI.",
-                    "Call out unavailable metrics when missing.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Events are stored in blog_analytics_events with type and referrer.",
-            "Top posts by CTR derive from product clicks divided by views.",
-            "Low-traffic flags inspect 30-day page view totals.",
-        ],
-        tips: [
-            "Keep event instrumentation consistent across builder sections.",
-            "Backfill analytics events before relying on trends.",
-        ],
-    },
-    {
-        id: "blog-qa-release",
-        title: "Blog QA & Release - Technical Deep Dive",
-        subtitle: "Test coverage mapping and release readiness instrumentation.",
-        routeHints: [
-            "docs/blog/blog_builder_qa_test_cases.md",
-            "docs/blog/blog_builder_release_checklist.md",
-        ],
-        whatThisDoes: [
-            "Maps acceptance criteria to QA checks.",
-            "Provides a standardized release gate.",
-            "Captures known limits for technical handoff.",
-        ],
-        tasks: [
-            {
-                title: "Validate acceptance coverage",
-                steps: [
-                    "Review PRD acceptance criteria alignment.",
-                    "Confirm QA cases cover scheduling, SEO, and media.",
-                    "Update cases when scope changes.",
-                ],
-            },
-            {
-                title: "Release readiness",
-                steps: [
-                    "Confirm migration and storage prerequisites.",
-                    "Verify scheduler secret and automation.",
-                    "Capture known limits before handoff.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "QA cases double as regression checks.",
-            "Release checklist reduces launch risk across teams.",
-        ],
-        tips: [
-            "Track QA execution timestamps for audit trails.",
-            "Include analytics backfill status in release notes.",
-        ],
-    },
-    {
-        id: "cms-overview",
-        title: "CMS Content and Banners Overview - Technical Deep Dive",
-        subtitle: "Architecture and state management behavior across Hero, Description, Store Info, Categories, and Banners tabs.",
-        routeHints: ["/admin/cms", "src/app/admin/cms/page.tsx", "/api/admin/cms/site-config"],
-        whatThisDoes: [
-            "Explains CMS tab composition and per-tab save behavior.",
-            "Documents dirty-state checks and upload pathways.",
-            "Provides technical publish sequence for reliable updates.",
-        ],
-        tasks: [
-            {
-                title: "CMS technical publish sequence",
-                steps: [
-                    "Load site config map from API and initialize tab fields.",
-                    "Apply edits in one tab and persist via JSON updates or multipart upload.",
-                    "Respect unsaved-change prompt before tab navigation.",
-                    "Validate storefront render after cache window to confirm successful publish.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "CMS main page orchestrates field groups and delegates categories and banners to dedicated managers.",
-            "Text-like site settings upsert by key; images upload to storage then persist URL.",
-            "State reset and message channels provide explicit success and failure feedback.",
-        ],
-        tips: [
-            "Publish in small batches to isolate failures quickly.",
-            "When troubleshooting, inspect API payload and response before UI assumptions.",
-        ],
-    },
-    {
-        id: "cms-categories",
-        title: "CMS Categories Detailed Usage - Technical Deep Dive",
-        subtitle: "Validation, reorder mechanics, and soft-delete behavior for category entities.",
-        routeHints: ["/admin/cms (Categories)", "POST/PATCH /api/admin/cms/categories", "src/components/admin/cms/CategoriesManager.tsx"],
-        whatThisDoes: [
-            "Documents category entity constraints and write paths.",
-            "Explains sort_order swap logic during reorder operations.",
-            "Clarifies storefront visibility rules for active and non-deleted rows.",
-        ],
-        tasks: [
-            {
-                title: "Category technical mutation flow",
-                steps: [
-                    "Create payload with normalized slug and validated fields.",
-                    "Run uniqueness checks against non-deleted categories.",
-                    "For reorder action, swap sort_order of source and target rows.",
-                    "For soft-delete, set deleted_at and verify removal from active list queries.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Slugify and validation guard route-safe values.",
-            "GET query filters out deleted rows and orders by sort_order ascending.",
-            "Image uploads write to cms-assets and return public URL for draft binding.",
-        ],
-        tips: [
-            "Treat reorder operations as data mutations requiring post-action verification.",
-            "Keep slug changes minimal after launch to preserve URL consistency.",
-        ],
-    },
-    {
-        id: "cms-banners",
-        title: "CMS Banners and Hero Set Detailed Usage - Technical Deep Dive",
-        subtitle: "Placement-level APIs, grouped hero rendering, and save-gated hero image removal internals.",
-        routeHints: ["/admin/cms (Banners)", "POST/PATCH /api/admin/cms/banners", "src/components/admin/cms/BannersManager.tsx", "src/lib/cms.ts"],
-        whatThisDoes: [
-            "Explains banner action model including bulk-upload and bulk-create.",
-            "Documents grouped homepage hero UI model and placement-level controls.",
-            "Details save-time hero removal sequencing and layout-mode persistence.",
-        ],
-        tasks: [
-            {
-                title: "Hero group technical save flow",
-                steps: [
-                    "Load banners and build grouped homepage_hero synthetic row for UI.",
-                    "Track pending hero removals locally when thumbnail x is clicked.",
-                    "On save, optionally upload new files, create extra rows, and patch primary row.",
-                    "Apply queued soft-delete calls for pending removals.",
-                    "Persist hero_banner_layout to site_config and reload list for final consistency.",
-                ],
-            },
-            {
-                title: "Storefront resolution flow",
-                steps: [
-                    "Read banners by placement through cached cms helpers.",
-                    "Filter by active flag and date window using IST semantics.",
-                    "For homepage_hero with one-or-less active result, apply fallback to all uploaded hero images.",
-                    "Render carousel mode based on hero_banner_layout value.",
-                ],
-            },
-        ],
-        howItWorks: [
-            "Banner APIs support action discriminator for bulk and placement operations.",
-            "Grouped hero row is a UI transformation over normalized banner rows.",
-            "Hero removals are intentionally deferred until save to prevent accidental immediate data loss.",
-        ],
-        tips: [
-            "After major hero edits, validate both admin grouped row count and storefront slide count.",
-            "Use placement-level actions carefully because they affect all banners in that placement.",
-        ],
-    },
+            "Always clear the cache after changing custom statuses to update them in order lists.",
+            "Select unique color badges for custom statuses to help staff scan order queues."
+        ]
+    }
 ];
 
 const TECH_SECTIONS: Section[] = [
     {
-        id: "tech-architecture",
-        title: "Architecture and Boundaries",
-        subtitle: "What is implemented in UI, API, and data layer for customer module.",
-        routeHints: [
-            "src/app/admin/customers/page.tsx",
-            "src/app/admin/customers/[id]/page.tsx",
-            "src/app/api/admin/customers/*",
-        ],
+        id: "dashboard",
+        title: "Dashboard Architecture & Metrics",
+        subtitle: "Database views, parallel query aggregation actions, and UI widgets binding.",
+        routeHints: ["src/app/actions/dashboardStats.ts", "src/app/admin/page.tsx"],
         whatThisDoes: [
-            "Defines clear separation between list UI, detail UI, and API routes.",
-            "Provides contract layer for customer list, export, detail, notes, interactions, and addresses.",
-            "Connects admin workflows with account-side APIs for export and delete request compliance flows.",
+            "Uses Next.js server actions to run aggregate database count and summation calculations.",
+            "Executes parallel queries on orders, products, and variants to decrease load times.",
+            "Binds real data feeds to Recent Orders lists and Low Stock Alerts tables.",
+            "Queries disabled RLS tables via Postgres RPC get_disabled_rls_tables."
         ],
         tasks: [
             {
-                title: "Understand request flow",
+                title: "Extend dashboard stats query",
                 steps: [
-                    "UI builds query params and requests admin APIs.",
-                    "API applies validated filters on admin summary view.",
-                    "UI receives normalized response and renders list/table.",
-                ],
-            },
+                    "Open `src/app/actions/dashboardStats.ts`.",
+                    "Add database query blocks to fetch new analytical metrics from Supabase.",
+                    "Update the `DashboardMetricsResponse` interface to include the new fields.",
+                    "Save and check the admin home screen to verify the new widgets bind without errors."
+                ]
+            }
         ],
         howItWorks: [
-            "Read model: admin_customer_summary view for list speed and stable shape.",
-            "Detail model: joins from profiles, orders, addresses, interactions.",
-            "Write model: profile upsert plus interaction logging side-effects.",
+            "Count queries count rows: `const { count } = await supabaseAdmin.from('products').select('*', { count: 'exact', head: true })`.",
+            "Low stock checks query product variants where stock < 20: `.select('id, color_name, stock, sku, products(name)').lt('stock', 20)`.",
+            "Main admin page uses React hooks to fetch data on component mount, displaying loading animations until resolved."
         ],
         tips: [
-            "For future changes, keep list API shape stable because export and table both depend on it.",
-        ],
+            "Keep dashboard queries simple; avoid complex joins to maintain fast home screen rendering times."
+        ]
     },
     {
-        id: "tech-filters",
-        title: "Filters, Query Semantics, and Export Parity",
-        subtitle: "Technical behavior for filters and how CSV export mirrors list results.",
-        routeHints: [
-            "GET /api/admin/customers",
-            "GET /api/admin/customers/export",
-            "src/components/admin/customers/CustomersFilters.tsx",
-        ],
+        id: "products",
+        title: "Products & Custom Overrides System",
+        subtitle: "Supabase schema mappings, custom Webpack resolver, and Fabric Calculator formulas.",
+        routeHints: ["src/themes/changes/", "src/components/FabricCalculator.tsx", "next.config.mjs"],
         whatThisDoes: [
-            "Applies optional query filters only when selected or filled.",
-            "Sanitizes search values before OR ilike conditions.",
-            "Guarantees export endpoint uses same filter set as list endpoint.",
+            "Resolves imports to themes changes/ overrides folder at compilation time.",
+            "Powers the Fabric Calculator preset ratios and sizing multipliers.",
+            "Maintains variant SKUs, color swatches, and price discount calculations."
         ],
         tasks: [
             {
-                title: "Add a new filter safely",
+                title: "Integrate a custom fabric preset",
                 steps: [
-                    "Add filter state in customers page.",
-                    "Add UI control in CustomersFilters component.",
-                    "Append param in list and export query builders.",
-                    "Implement same condition in both APIs.",
-                ],
-            },
+                    "Open `src/components/FabricCalculator.tsx`.",
+                    "Add custom preset entries (e.g. Saree, Lehenga Choli) in the presets array.",
+                    "Modify base meter lengths and width modifiers.",
+                    "Verify the calculator modal on the product details page updates properly."
+                ]
+            }
         ],
         howItWorks: [
-            "Order count uses range buckets mapped to explicit numeric conditions.",
-            "Date filters convert to full-day ranges using T00:00:00 and T23:59:59.",
-            "When optional filters are unchecked, related values are cleared in UI state.",
+            "Product attributes use schemas: 'public.products' (name, slug, care_instructions, sell_mode), 'public.product_variants' (color_name, color_hex, price, stock, sku, is_default).",
+            "Fabric Calculator uses formulas: `rawMeters = basePreset * widthFactor * sizeFactor`.",
+            "Rounding helper `Math.ceil(rawMeters * 2) / 2` rounds values up to the nearest 0.5m."
         ],
         tips: [
-            "Always test list and export parity after adding or changing any filter.",
-        ],
+            "Updating product variants automatically purges products cache via revalidateTag('products')."
+        ]
     },
     {
-        id: "tech-detail",
-        title: "Customer Detail Aggregation",
-        subtitle: "How detailed data is assembled and which derived values are computed.",
-        routeHints: ["GET /api/admin/customers/[id]"],
+        id: "orders",
+        title: "Orders Data Flow & Invoice Generator",
+        subtitle: "Order mutations actions, status history tracking, and client-side PDF compilation.",
+        routeHints: ["src/app/actions/order.ts", "src/utils/invoice/InvoiceGenerator.ts"],
         whatThisDoes: [
-            "Fetches summary, profile, orders, addresses, interactions in parallel.",
-            "Aggregates order item lines and units counts by order.",
-            "Returns derived metrics like average order value and repeat approximation.",
+            "Controls order mutations via server actions.",
+            "Compiles client-side PDF invoices using jsPDF.",
+            "Logs status transitions for checkout auditing."
         ],
         tasks: [
             {
-                title: "Debug missing detail data",
+                title: "Modify invoice design",
                 steps: [
-                    "Verify customer exists in admin_customer_summary.",
-                    "Verify profile row in user_profiles and order rows for user id.",
-                    "Check address soft delete flags and interaction rows.",
-                ],
-            },
+                    "Open `src/utils/invoice/InvoiceGenerator.ts`.",
+                    "Locate coordinate definitions (X/Y margins) for the header, item grid, and totals.",
+                    "Adjust font size variables, canvas border colors, or logo dimensions.",
+                    "Click Download Invoice on the order detail page to verify the new PDF layout."
+                ]
+            }
         ],
         howItWorks: [
-            "Orders are enriched with shipping city, state, and pincode snapshots.",
-            "Profile preferences are normalized with defaults when absent.",
-            "Detail response is shaped for single-request page rendering.",
+            "Orders are stored in: 'public.orders' (order_number, status, payment_status, total_amount), 'public.order_items' (quantity_or_meters, price_per_unit, total_price, selling_mode), 'public.order_addresses' (type, full_name, phone, address details).",
+            "Fulfillment actions run within order server actions and save logs to 'public.order_status_history'.",
+            "PDF builder uses jsPDF to compile A4 documents on the fly, auto-wrapping long address text."
         ],
         tips: [
-            "Keep derived metric math in API, not UI, for consistency across clients.",
-        ],
+            "Page height is checked at Y=240. If exceeded, the compiler calls 'addPage' to prevent text clipping."
+        ]
     },
     {
-        id: "tech-writes",
-        title: "Write Paths, Side Effects, and Logging",
-        subtitle: "Non-visual behavior triggered by status, notes, and address operations.",
-        routeHints: [
-            "PATCH /api/admin/customers/[id]",
-            "POST /api/admin/customers/[id]/notes",
-            "*/addresses (POST/PATCH/DELETE)",
-        ],
+        id: "customers",
+        title: "Customers Schema & Anonymization Engine",
+        subtitle: "Summary database views, address default clearing queries, and profile scrubbing logic.",
+        routeHints: ["src/app/api/account/delete-request/route.ts", "admin_customer_summary view"],
         whatThisDoes: [
-            "Performs profile upsert for missing records.",
-            "Writes interaction log entries automatically for key actions.",
-            "Maintains single default shipping and billing by clearing existing defaults first.",
+            "Queries the customer summary database view for high-speed admin listing.",
+            "Manages customer address directories and handles default address flags.",
+            "Executes profile scrubbing logic to anonymize personal records on request."
         ],
         tasks: [
             {
-                title: "Trace a status change",
+                title: "Inspect customer soft-deletion API",
                 steps: [
-                    "Status update request reaches PATCH customer endpoint.",
-                    "Profile upsert writes new account_status.",
-                    "Interaction log records status_changed event.",
-                    "UI refresh loads updated timeline and badge.",
-                ],
-            },
-            {
-                title: "Trace address delete",
-                steps: [
-                    "Delete endpoint soft-deletes row (is_deleted=true).",
-                    "Default flags are unset.",
-                    "Interaction log records address delete event metadata.",
-                ],
-            },
+                    "Open `src/app/api/account/delete-request/route.ts`.",
+                    "Verify the database updates: user profile name is overwritten with 'Deleted User', phone is scrubbed, and address references are cleared.",
+                    "Ensure the Supabase Auth Admin API is called to randomize the password and change the email address."
+                ]
+            }
         ],
         howItWorks: [
-            "Address operations call a default-clearing helper before setting new default.",
-            "No hard delete occurs in address delete path.",
-            "Event metadata in logs helps audit action source.",
+            "Customer metrics are loaded from the view 'admin_customer_summary' which counts orders and spent totals.",
+            "User address default updates clear existing default shipping and default billing flags before setting new default records.",
+            "Soft delete anonymizes user email to 'deleted-${userId}@ecomshrihari.local' and assigns the role 'deleted' in metadata."
         ],
         tips: [
-            "When debugging support issues, inspect interaction logs before code changes.",
-        ],
+            "Do not perform database hard deletions of users, as it breaks historical orders reporting."
+        ]
     },
     {
-        id: "tech-compliance",
-        title: "Account-Side APIs and Compliance Support",
-        subtitle: "Implemented non-admin endpoints that support customer operations.",
-        routeHints: [
-            "/api/account/profile",
-            "/api/account/preferences",
-            "/api/account/addresses",
-            "/api/account/export",
-            "/api/account/delete-request",
-        ],
+        id: "coupons",
+        title: "Coupons Validators & Revenue Aggregators",
+        subtitle: "Coupon eligibility checks, assignments mapping, and influenced revenue query formulas.",
+        routeHints: ["src/lib/coupons.ts", "public.redeem_coupon_atomic"],
         whatThisDoes: [
-            "Supports self-service customer profile and preferences.",
-            "Provides account data export and delete request capture.",
-            "Gives support and admin process a technical base for compliance requests.",
+            "Validates discount eligibility constraints (minimum cart total, usage counts).",
+            "Checks user-specific assignment mappings.",
+            "Calculates campaign influenced sales aggregates."
         ],
         tasks: [
             {
-                title: "Handle customer data request",
+                title: "Add coupon eligibility constraint",
                 steps: [
-                    "Customer triggers export request from account profile.",
-                    "Export endpoint prepares account-related data payload or response.",
-                    "Support team validates and communicates expected timeline.",
-                ],
-            },
-            {
-                title: "Handle delete request",
-                steps: [
-                    "Customer submits delete request from account profile section.",
-                    "Request is persisted for admin follow-up.",
-                    "Support applies policy workflow before destructive actions.",
-                ],
-            },
+                    "Open `src/lib/coupons.ts`.",
+                    "Add custom constraints inside the `evaluateCouponEligibility` helper.",
+                    "Save and run checkout validations using test coupon codes."
+                ]
+            }
         ],
         howItWorks: [
-            "Compliance endpoints are separate from admin-customer endpoints but related operationally.",
-            "Delete request endpoint is a logging and intake stage, not immediate hard delete.",
+            "Coupon schemas: 'public.coupons' (discount_type, discount_value, max_completed_orders_for_eligibility, specific_user_only), 'public.coupon_user_assignments' (coupon_id, user_id), 'public.coupon_redemptions' (discount_amount, redeemed_at).",
+            "Redemptions use the database function 'redeem_coupon_atomic' to lock the coupon row during transaction execution."
         ],
         tips: [
-            "Document every compliance request with case ID and timestamps.",
-        ],
+            "Edit coupon settings routes to call `revalidateTag('site_config')` to update storefront caches."
+        ]
     },
     {
-        id: "cms-tech-api",
-        title: "CMS API Contracts and Validation",
-        subtitle: "Detailed behavior of site config, categories, and banners APIs.",
-        routeHints: [
-            "GET/POST /api/admin/cms/site-config",
-            "GET/POST/PATCH /api/admin/cms/categories",
-            "GET/POST/PATCH /api/admin/cms/banners",
-        ],
+        id: "content-management",
+        title: "CMS Schema & Blog Lifecycle Webhook",
+        subtitle: "Grouped banners rendering logic, blog media variants, and scheduler publication cron.",
+        routeHints: ["src/app/api/admin/blogs/scheduler/route.ts", "cms_banners table"],
         whatThisDoes: [
-            "Defines strict payload validation and action-based branching for CMS mutations.",
-            "Supports multipart media upload and JSON upsert and insert operations.",
-            "Implements soft-delete as default destructive behavior for content safety.",
+            "Renders slider banner listings sorted by priority configurations.",
+            "Controls category visibility and ordering details.",
+            "Manages the blog editor, tags, related products, and scheduled articles."
         ],
         tasks: [
             {
-                title: "Site config mutation flow",
+                title: "Verify scheduled publication execution",
                 steps: [
-                    "For image updates, send multipart form-data with file plus key and group metadata.",
-                    "Upload to cms-assets, get public URL, and upsert site_config by key.",
-                    "For text and url updates, send JSON updates array and run validation before upsert.",
-                    "Reject invalid required fields or malformed URL-like values with 400 status.",
-                ],
-            },
-            {
-                title: "Categories and banners action flow",
-                steps: [
-                    "Categories POST action handles create, reorder, and soft-delete.",
-                    "Banners POST action handles single-upload, bulk-upload, bulk-create, soft-delete, and soft-delete-placement.",
-                    "Banners PATCH handles single row update and placement-wide active state updates.",
-                    "All routes return explicit success or error payloads consumed by admin UI message state.",
-                ],
-            },
+                    "Open `src/app/api/admin/blogs/scheduler/route.ts`.",
+                    "Ensure scheduler authorization checks are correctly configured.",
+                    "Verify the query pulls articles where scheduled date is less than or equal to the current time."
+                ]
+            }
         ],
         howItWorks: [
-            "Banner color validation requires strict #RRGGBB format for background and text colors.",
-            "Banner link accepts relative paths and absolute http or https URLs.",
-            "Date validation rejects end_date values earlier than start_date.",
-            "Category slug validation and uniqueness checks prevent routing conflicts.",
+            "Banners are stored in 'public.banners' (title, placement, priority, start_date, end_date).",
+            "Blog posts use 'public.blog_posts' (cover_media_id, scheduled_for, status, full_page_html).",
+            "Scheduler webhook checks image alt text, updates status to 'published', and records success messages in 'blog_publish_notifications'."
         ],
         tips: [
-            "Keep API error messages user-readable because they are directly shown in admin notices.",
-            "Prefer additive actions and soft-delete for operational recovery.",
-        ],
+            "Scheduled blog publishing requires checking image alt text attributes. Make sure cover images contain alt text before saving."
+        ]
     },
     {
-        id: "cms-tech-storefront",
-        title: "CMS to Storefront Read Pipeline",
-        subtitle: "How CMS records are filtered, cached, and rendered in classic theme components.",
-        routeHints: [
-            "src/lib/cms.ts",
-            "src/themes/classic/pages/HomePage.tsx",
-            "src/themes/classic/components/home/HeroBannerCarousel.tsx",
-            "src/themes/classic/components/home/OfferBanner.tsx",
-            "src/themes/classic/components/home/PopupBannerGate.tsx",
-            "src/themes/classic/components/shop/ShopTopBanner.tsx",
-        ],
+        id: "documentation",
+        title: "Documentation Engine & Regex Highlighting",
+        subtitle: "Static path generation parameters, regex search parsers, and view settings storage.",
+        routeHints: ["src/app/admin/documentation/page.tsx", "src/app/admin/documentation/docsData.ts"],
         whatThisDoes: [
-            "Loads CMS data with unstable_cache and short revalidation.",
-            "Applies active and date-window filtering to banner placements.",
-            "Provides fallback behavior for hero and categories when data is sparse.",
+            "Provides the database models and types for the documentation engine.",
+            "Indexes guide texts and highlights search matches.",
+            "Saves user preferences (Developer Mode toggle)."
         ],
         tasks: [
             {
-                title: "Banner placement resolution",
+                title: "Register a documentation section",
                 steps: [
-                    "Load non-deleted banners sorted by priority then created_at.",
-                    "Filter by requested placement and active status for current IST date.",
-                    "For homepage_hero when active result count is one or less, return all hero images to preserve slider UX.",
-                    "Render placement-specific UI component in theme page and component layer.",
-                ],
-            },
-            {
-                title: "Hero layout resolution",
-                steps: [
-                    "Read hero_banner_layout from site_config map.",
-                    "Default to contained mode unless value equals full_width.",
-                    "Pass layout mode prop to HeroBannerCarousel.",
-                    "Apply corresponding size classes and container rules in carousel.",
-                ],
-            },
+                    "Open `src/app/admin/documentation/docsData.ts`.",
+                    "Add new documentation objects to the handbook and technical arrays.",
+                    "Run a local server build to ensure static routing parameters compile cleanly."
+                ]
+            }
         ],
         howItWorks: [
-            "Site config, categories, and banners each have independent cache keys with revalidate 30 seconds.",
-            "Date computation for active banners uses IST date string behavior.",
-            "If no hero banners are returned, home page falls back to static Hero component.",
+            "Static detail pages `/admin/documentation/handbook/[sectionId]` query keys in `docsData.ts` to build routing endpoints.",
+            "Search utility escapes special characters, compiles case-insensitive RegExp rules, and highlights matches."
         ],
         tips: [
-            "When debugging stale content, validate both cache window and browser hard refresh.",
-            "Validate remote image domain allowlist when new storage endpoints are introduced.",
-        ],
+            "Documentation files use typescript interfaces. Verify new sections match 'Section' type specifications."
+        ]
     },
+    {
+        id: "reports",
+        title: "Reports SQL Aggregations & CSV Streams",
+        subtitle: "Analytics aggregate queries, date boundary parameters parser, and data streams.",
+        routeHints: ["src/app/admin/reports/page.tsx"],
+        whatThisDoes: [
+            "Aggregates sales performance metrics from the database.",
+            "Prepares series data maps for chart rendering.",
+            "Assembles CSV strings and handles download events."
+        ],
+        tasks: [
+            {
+                title: "Inspect CSV export columns mapping",
+                steps: [
+                    "Open `src/app/admin/reports/page.tsx`.",
+                    "Locate `handleExport` and verify column definitions for each tab.",
+                    "Confirm cells with special characters (commas, newlines) are enclosed in double quotes."
+                ]
+            }
+        ],
+        howItWorks: [
+            "Recharts components consume pre-aggregated state datasets.",
+            "Composed chart overlays Area (revenue) and Line (orders) utilizing distinct scale domains.",
+            "CSV compiler wraps content in a Blob with type 'text/csv;charset=utf-8;' and click triggers browser downloads."
+        ],
+        tips: [
+            "Ensure order dates are indexed in the database to maintain fast report generation speeds."
+        ]
+    },
+    {
+        id: "payments",
+        title: "Payments Interceptors & COD Verify Handlers",
+        subtitle: "Razorpay signature verify, checkout interceptors, and partial payments logic.",
+        routeHints: ["src/payments/razorpay/api/verify-payment.ts", "src/payments/cod/api/place-order.ts"],
+        whatThisDoes: [
+            "Validates transaction signature authenticity.",
+            "Processes COD checkouts and handles partial advance payments."
+        ],
+        tasks: [
+            {
+                title: "Inspect verification logic",
+                steps: [
+                    "Open `src/payments/razorpay/api/verify-payment.ts`.",
+                    "Verify the signature validation helper creates a SHA256 HMAC hash using the merchant secret.",
+                    "Confirm the generated hash matches the Razorpay signature header value."
+                ]
+            }
+        ],
+        howItWorks: [
+            "Razorpay verification hashes the order ID and payment ID: `crypto.createHmac('sha256', secret).update(orderId + '|' + paymentId).digest('hex')`.",
+            "COD handler creates partial payment orders on Razorpay for COD checkouts if configured."
+        ],
+        tips: [
+            "Always fetch payment keys from Supabase settings or environment variables, and never hardcode them."
+        ]
+    },
+    {
+        id: "shipping",
+        title: "Shipping Zone Parsers & Checkout Rates Utility",
+        subtitle: "State zone config parser, checkout rates formulas, and Razorpay COD checkout orders.",
+        routeHints: ["src/lib/shipping/rates.ts", "/api/checkout/shipping-rates"],
+        whatThisDoes: [
+            "Computes shipping charges based on state groups rules.",
+            "Exposes rate API endpoints.",
+            "Calculates taxes and COD advance payment requirements."
+        ],
+        tasks: [
+            {
+                title: "Test rates calculation formulas",
+                steps: [
+                    "Open `src/lib/shipping/rates.ts`.",
+                    "Verify `calculateCheckoutDetails` correctly resolves shipping default fee, state group matches, and taxes.",
+                    "Verify the advance payment calculation for percentage or flat rate COD advances."
+                ]
+            }
+        ],
+        howItWorks: [
+            "State groups details are parsed from site settings JSONB fields.",
+            "Shipping fee resolves to 0 if subtotal matches the free threshold.",
+            "Taxes are calculated based on subtotal: added extra or included in price."
+        ],
+        tips: [
+            "Ensure that state groups cover all states and Union Territories to prevent checkout errors."
+        ]
+    },
+    {
+        id: "settings",
+        title: "Settings Database Keys & Cache Invalidator",
+        subtitle: "Theme select variables, custom statuses schemas, and Next.js revalidation tags.",
+        routeHints: ["src/app/actions/customStatus.ts", "src/app/api/admin/settings/route.ts"],
+        whatThisDoes: [
+            "Stores settings key-value configurations.",
+            "Manages custom order status codes and label colors.",
+            "Handles manual and automatic Next.js cache revalidations."
+        ],
+        tasks: [
+            {
+                title: "Verify custom status database write",
+                steps: [
+                    "Open `src/app/actions/customStatus.ts`.",
+                    "Ensure status creation operations successfully write to the database.",
+                    "Verify revalidation routines run to sync new statuses."
+                ]
+            }
+        ],
+        howItWorks: [
+            "System settings are stored in 'public.site_settings' (key, value, updated_at).",
+            "Cache busting triggers 'revalidateTag(tag)' for: products, cms_banners, cms_categories, site_config, and blog_posts.",
+            "Dev environments skip caching entirely."
+        ],
+        tips: [
+            "Clear settings cache after editing custom status badges to update them in dropdowns."
+        ]
+    }
 ];
 
 export const handbookSections = HANDBOOK_SECTIONS;
-export const technicalSections = [...TECH_SECTIONS_MIRRORED, ...TECH_SECTIONS];
+export const technicalSections = TECH_SECTIONS;
 
 export function getSectionsByMode(mode: DocMode): Section[] {
     return mode === "handbook" ? handbookSections : technicalSections;

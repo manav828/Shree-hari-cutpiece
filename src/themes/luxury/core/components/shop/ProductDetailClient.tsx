@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Scissors } from "lucide-react";
 import Image from "next/image";
 import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Link from "next/link";
@@ -15,6 +15,7 @@ import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
 import ProductReviews from "@/components/shop/ProductReviews";
+import FabricCalculator from "@/components/FabricCalculator";
 
 // Static reviews data
 const reviewsData = [
@@ -33,6 +34,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [meters, setMeters] = useState(1);
+  const [showCalculator, setShowCalculator] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews" | "faq">("description");
   const [activeMedia, setActiveMedia] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
@@ -634,6 +636,15 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                   </div>
                   <span className="text-text-secondary">Total: <strong className="text-foreground">{formatPrice((selectedVariant?.price || 0) * meters)}</strong></span>
                 </div>
+                {product.sell_mode === "meter" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCalculator(true)}
+                    className="mt-3 text-xs font-semibold text-accent flex items-center gap-1.5 hover:underline"
+                  >
+                    <Scissors className="w-3.5 h-3.5" /> Fabric Requirement Calculator
+                  </button>
+                )}
               </div>
 
               <button
@@ -761,6 +772,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
           )}
         </Container>
       </main>
+      {showCalculator && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <FabricCalculator
+              isModal
+              onClose={() => setShowCalculator(false)}
+              onApply={(calcMeters) => {
+                setMeters(calcMeters);
+                setShowCalculator(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
       <Footer />
     </>
   );

@@ -112,25 +112,47 @@ export default function DefaultCartFullPage() {
                           </div>
 
                           <div className="flex items-end justify-between sm:flex-col sm:items-end">
-                            <div className="inline-flex items-center overflow-hidden rounded-md border border-border bg-background">
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, item.meters - 1)}
-                                className="flex h-8 w-8 items-center justify-center text-text-secondary transition-colors hover:bg-background-secondary hover:text-foreground"
-                                aria-label={`Decrease quantity for ${item.name}`}
-                              >
-                                <Minus className="h-4 w-4" />
-                              </button>
-                              <span className="w-10 text-center text-sm font-semibold text-foreground">{item.meters}</span>
-                              <button
-                                type="button"
-                                onClick={() => updateQuantity(item.id, item.meters + 1)}
-                                className="flex h-8 w-8 items-center justify-center text-text-secondary transition-colors hover:bg-background-secondary hover:text-foreground"
-                                aria-label={`Increase quantity for ${item.name}`}
-                              >
-                                <Plus className="h-4 w-4" />
-                              </button>
-                            </div>
+                            {(() => {
+                              const isMeter = item.selling_mode === "meter";
+                              const step = isMeter ? 0.5 : 1;
+                              const minVal = isMeter ? 0.5 : 1;
+                              const isMin = item.meters <= minVal;
+                              return (
+                                <div className="inline-flex items-center overflow-hidden rounded-md border border-border bg-background">
+                                  <button
+                                    type="button"
+                                    disabled={isMin}
+                                    onClick={() => {
+                                      if (!isMin) {
+                                        const nextVal = parseFloat((item.meters - step).toFixed(1));
+                                        updateQuantity(item.id, Math.max(minVal, nextVal));
+                                      }
+                                    }}
+                                    className={`flex h-8 w-8 items-center justify-center text-text-secondary transition-colors hover:bg-background-secondary hover:text-foreground ${
+                                      isMin ? "opacity-30 cursor-not-allowed hover:bg-transparent" : ""
+                                    }`}
+                                    aria-label={`Decrease quantity for ${item.name}`}
+                                  >
+                                    <Minus className="h-4 w-4" />
+                                  </button>
+                                  <span className="w-12 text-center text-sm font-semibold text-foreground">
+                                    {item.meters.toFixed(isMeter ? 1 : 0).replace(/\.0$/, "")}
+                                    {isMeter ? "m" : ""}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const nextVal = parseFloat((item.meters + step).toFixed(1));
+                                      updateQuantity(item.id, nextVal);
+                                    }}
+                                    className="flex h-8 w-8 items-center justify-center text-text-secondary transition-colors hover:bg-background-secondary hover:text-foreground"
+                                    aria-label={`Increase quantity for ${item.name}`}
+                                  >
+                                    <Plus className="h-4 w-4" />
+                                  </button>
+                                </div>
+                              );
+                            })()}
                             <p className="mt-3 text-lg font-semibold text-foreground">{formatPrice(item.price * item.meters)}</p>
                           </div>
                         </div>

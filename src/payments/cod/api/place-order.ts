@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
 import { triggerOrderNotification } from "@/lib/notifications";
+import { calculateCheckoutDetails, getShippingRatesConfig } from "@/lib/shipping/rates";
 
 type CheckoutItem = {
     id: string;
@@ -65,6 +66,61 @@ function buildDeliveryAddress(formData: CheckoutFormData): string {
     return segments.join(", ");
 }
 
+async function getRazorpayConfig(): Promise<{ keyId: string; keySecret: string }> {
+    const { data } = await supabaseAdmin
+        .from("site_settings")
+        .select("key, value")
+        .in("key", ["payment_razorpay_key_id", "payment_razorpay_key_secret"]);
+
+    const settingsMap: Record<string, string> = (data ?? []).reduce<Record<string, string>>((acc, row) => {
+        let val = row.value;
+        if (typeof val === "string") {
+            try {
+                val = JSON.parse(val);
+            } catch {}
+        }
+        acc[row.key] = String(val ?? "");
+        return acc;
+    }, {});
+
+    return {
+        keyId: settingsMap["payment_razorpay_key_id"] || process.env.RAZORPAY_KEY_ID || "",
+        keySecret: settingsMap["payment_razorpay_key_secret"] || process.env.RAZORPAY_KEY_SECRET || "",
+    };
+}
+
+async function createRazorpayOrder(
+    amountPaise: number, 
+    receipt: string, 
+    keyId: string, 
+    keySecret: string
+): Promise<string> {
+    if (!keyId || !keySecret) {
+        throw new Error("Razorpay credentials are not configured.");
+    }
+
+    const authHeader = Buffer.from(`${keyId}:${keySecret}`).toString("base64");
+    const response = await fetch("https://api.razorpay.com/v1/orders", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Basic ${authHeader}`,
+        },
+        body: JSON.stringify({
+            amount: amountPaise,
+            currency: "INR",
+            receipt,
+        }),
+    });
+
+    const json = await response.json();
+    if (!response.ok || !json.id) {
+        throw new Error(json?.error?.description || "Unable to create Razorpay order for COD advance.");
+    }
+
+    return json.id;
+}
+
 export default async function handlePlaceOrder(req: NextRequest) {
     try {
         const token = getAuthToken(req);
@@ -122,7 +178,6 @@ export default async function handlePlaceOrder(req: NextRequest) {
             return NextResponse.json({ error: "Invalid cart total." }, { status: 400 });
         }
 
-        const shippingAmount = subtotal >= 999 ? 0 : 99;
         let coupon: Coupon | null = null;
         let discountAmount = 0;
 
@@ -177,13 +232,44 @@ export default async function handlePlaceOrder(req: NextRequest) {
             }
         }
 
-        const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
-        const totalAmount = discountedSubtotal + shippingAmount;
+        const shippingConfig = await getShippingRatesConfig();
+        const details = calculateCheckoutDetails(subtotal, discountAmount, formData.state, "cod", shippingConfig);
 
         const order_number = generateOrderNumber();
+
+        let razorpayOrderId = null;
+        let razorpayKeyId = "";
+
+        if (details.advanceAmount > 0) {
+            const rzpConfig = await getRazorpayConfig();
+            if (!rzpConfig.keyId || !rzpConfig.keySecret) {
+                return NextResponse.json({ error: "Razorpay credentials are not configured for COD advance payment." }, { status: 400 });
+            }
+            razorpayKeyId = rzpConfig.keyId;
+            razorpayOrderId = await createRazorpayOrder(
+                Math.round(details.advanceAmount * 105.18 - details.advanceAmount * 5.18), // Safe integer paise conversion
+                order_number,
+                rzpConfig.keyId,
+                rzpConfig.keySecret
+            );
+            // Wait, standard conversion is simply details.advanceAmount * 100
+            razorpayOrderId = await createRazorpayOrder(
+                Math.round(details.advanceAmount * 100),
+                order_number,
+                rzpConfig.keyId,
+                rzpConfig.keySecret
+            );
+        }
+
+        const noteAdvanceInfo = details.advanceAmount > 0 
+            ? `COD Advance Required: INR ${details.advanceAmount} (Remaining INR ${details.remainingAmount} to pay on delivery)` 
+            : "";
+
         const orderNotes = [
             formData.notes || "",
             coupon ? `Coupon ${coupon.code} applied (discount ₹${discountAmount.toFixed(2)})` : "",
+            details.taxAmount > 0 ? `Tax (${shippingConfig.taxMode === "add_extra" ? "" : "Included "}${shippingConfig.taxRate}%): INR ${details.taxAmount}` : "",
+            noteAdvanceInfo
         ].filter(Boolean).join(" | ");
 
         const { data: orderData, error: orderError } = await supabaseAdmin
@@ -196,13 +282,14 @@ export default async function handlePlaceOrder(req: NextRequest) {
                 payment_method: "cod",
                 subtotal,
                 discount_amount: discountAmount,
-                shipping_amount: shippingAmount,
-                total_amount: totalAmount,
+                shipping_amount: details.shippingFee,
+                total_amount: details.totalAmount,
                 coupon_id: coupon?.id ?? null,
                 coupon_code: coupon?.code ?? null,
                 notes: orderNotes,
                 delivery_address: buildDeliveryAddress(formData),
                 contact_phone: normalizePhone(formData.phone),
+                razorpay_order_id: razorpayOrderId,
             })
             .select("id, order_number")
             .single();
@@ -284,25 +371,36 @@ export default async function handlePlaceOrder(req: NextRequest) {
                 order_id: orderData.id,
                 from_status: null,
                 to_status: "pending",
-                note: "Order placed by customer via Cash on Delivery",
+                note: details.advanceAmount > 0 
+                    ? "Order placed awaiting partial COD advance payment via Razorpay"
+                    : "Order placed by customer via Cash on Delivery",
             });
 
         if (statusHistoryError) {
             throw new Error("Failed to save order status history");
         }
 
-        // Fire order confirmation notifications in background
-        triggerOrderNotification(orderData.id, "confirmation").catch(err => {
-            console.error("[place-order] Background notification dispatch error:", err);
-        });
+        // Fire order confirmation notifications only if no advance payment is required
+        if (details.advanceAmount === 0) {
+            triggerOrderNotification(orderData.id, "confirmation").catch(err => {
+                console.error("[place-order] Background notification dispatch error:", err);
+            });
+        }
 
         return NextResponse.json({
             success: true,
             orderId: orderData.id,
             orderNumber: orderData.order_number,
+            requiresAdvance: details.advanceAmount > 0,
+            razorpayOrderId: razorpayOrderId,
+            amount: Math.round(details.advanceAmount * 100),
+            currency: "INR",
+            keyId: razorpayKeyId,
+            internalOrderId: orderData.id,
         });
     } catch (err: unknown) {
         const message = err instanceof Error ? err.message : "Failed to place order";
         return NextResponse.json({ error: message }, { status: 500 });
     }
 }
+

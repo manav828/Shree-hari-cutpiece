@@ -44,10 +44,65 @@ async function isUnpublished(slug: string, language: string) {
     return Array.isArray(data) && data.length > 0;
 }
 
+async function getUserIdFromToken(token: string) {
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return null;
+    try {
+        const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+            headers: {
+                apikey: SUPABASE_SERVICE_ROLE_KEY,
+                Authorization: `Bearer ${token}`,
+            },
+            cache: "no-store",
+        });
+        if (!res.ok) return null;
+        const user = await res.json();
+        return user?.id || null;
+    } catch {
+        return null;
+    }
+}
+
+async function checkAdminRole(userId: string) {
+    const params = new URLSearchParams({
+        select: "role",
+        id: `eq.${userId}`,
+    });
+    const data = await fetchSupabase("user_profiles", params);
+    if (!Array.isArray(data) || data.length === 0) return false;
+    return data[0].role === "admin";
+}
+
 export async function middleware(req: NextRequest) {
     if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) return NextResponse.next();
 
     const { pathname } = req.nextUrl;
+
+    // Admin Access Security Check
+    if (pathname === "/admin/login") {
+        const token = req.cookies.get("shreehari_admin_session")?.value;
+        if (token) {
+            const userId = await getUserIdFromToken(token);
+            if (userId && await checkAdminRole(userId)) {
+                return NextResponse.redirect(new URL("/admin", req.url));
+            }
+        }
+        return NextResponse.next();
+    }
+
+    if (pathname.startsWith("/admin")) {
+        const token = req.cookies.get("shreehari_admin_session")?.value;
+        if (!token) {
+            return NextResponse.redirect(new URL("/admin/login", req.url));
+        }
+        const userId = await getUserIdFromToken(token);
+        if (!userId || !(await checkAdminRole(userId))) {
+            const response = NextResponse.redirect(new URL("/admin/login", req.url));
+            response.cookies.delete("shreehari_admin_session");
+            return response;
+        }
+        return NextResponse.next();
+    }
+
     if (pathname.startsWith("/blog-gone") || pathname.startsWith("/hi/blog-gone")) return NextResponse.next();
 
     const segments = pathname.split("/").filter(Boolean);
@@ -86,5 +141,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/blogs/:path*", "/hi/blogs/:path*"],
+    matcher: ["/blogs/:path*", "/hi/blogs/:path*", "/admin/:path*"],
 };

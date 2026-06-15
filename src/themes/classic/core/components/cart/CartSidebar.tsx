@@ -6,10 +6,26 @@ import Link from "next/link";
 import { useEffect, useRef } from "react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
+import { useUpsellProducts } from "@/hooks/useUpsellProducts";
 
 export default function CartSidebar() {
-  const { items, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
+  const { items, addToCart, removeFromCart, updateQuantity, totalPrice, isCartOpen, setIsCartOpen } = useCart();
+  const { products: upsellProducts, loading: upsellLoading } = useUpsellProducts(2);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+
+  function handleUpsellQuickAdd(product: any) {
+    addToCart({
+      id: product.id,
+      product_id: product.id,
+      name: product.name,
+      slug: product.slug,
+      price: product.price,
+      image: product.image,
+      meters: product.selling_mode === "meter" ? 1.0 : 1,
+      selling_mode: product.selling_mode,
+      analytics_source: "classic_quick_cart_upsell",
+    });
+  }
 
   useEffect(() => {
     if (!isCartOpen) {
@@ -110,25 +126,47 @@ export default function CartSidebar() {
                       {formatPrice(item.price)} / {item.selling_mode === "piece" ? "pc" : "meter"}
                     </p>
                     <div className="flex items-center gap-3">
-                      <div className="flex items-center border border-border">
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.meters - 1)}
-                          className="px-3 py-1 hover:bg-background-secondary transition-colors"
-                          aria-label={`Decrease quantity for ${item.name}`}
-                        >
-                          -
-                        </button>
-                        <span className="px-3 py-1 min-w-[40px] text-center">
-                          {item.meters}{item.selling_mode === "piece" ? "pc" : "m"}
-                        </span>
-                        <button 
-                          onClick={() => updateQuantity(item.id, item.meters + 1)}
-                          className="px-3 py-1 hover:bg-background-secondary transition-colors"
-                          aria-label={`Increase quantity for ${item.name}`}
-                        >
-                          +
-                        </button>
-                      </div>
+                      {(() => {
+                        const isMeter = item.selling_mode === "meter";
+                        const step = isMeter ? 0.5 : 1;
+                        const minVal = isMeter ? 0.5 : 1;
+                        const isMin = item.meters <= minVal;
+                        return (
+                          <div className="flex items-center border border-border">
+                            <button 
+                              type="button"
+                              disabled={isMin}
+                              onClick={() => {
+                                if (!isMin) {
+                                  const nextVal = parseFloat((item.meters - step).toFixed(1));
+                                  updateQuantity(item.id, Math.max(minVal, nextVal));
+                                }
+                              }}
+                              className={`px-3 py-1 hover:bg-background-secondary transition-colors ${
+                                isMin ? "opacity-30 cursor-not-allowed hover:bg-transparent" : ""
+                              }`}
+                              aria-label={`Decrease quantity for ${item.name}`}
+                            >
+                              -
+                            </button>
+                            <span className="px-3 py-1 min-w-[40px] text-center text-sm">
+                              {item.meters.toFixed(isMeter ? 1 : 0).replace(/\.0$/, "")}
+                              {isMeter ? "m" : "pc"}
+                            </span>
+                            <button 
+                              type="button"
+                              onClick={() => {
+                                const nextVal = parseFloat((item.meters + step).toFixed(1));
+                                updateQuantity(item.id, nextVal);
+                              }}
+                              className="px-3 py-1 hover:bg-background-secondary transition-colors"
+                              aria-label={`Increase quantity for ${item.name}`}
+                            >
+                              +
+                            </button>
+                          </div>
+                        );
+                      })()}
                       <button 
                         onClick={() => removeFromCart(item.id)}
                         className="text-text-secondary hover:text-accent transition-colors"
@@ -145,6 +183,40 @@ export default function CartSidebar() {
                   </div>
                 </div>
               ))}
+              
+              {/* Upsell Section */}
+              {!upsellLoading && upsellProducts.length > 0 && (
+                <div className="border-t border-border pt-6 mt-8">
+                  <h4 className="font-serif text-lg text-foreground mb-4">Complete Your Collection</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    {upsellProducts.map((upsell) => (
+                      <div key={upsell.id} className="group">
+                        <div className="aspect-[3/4] relative overflow-hidden bg-background-secondary mb-2 border border-border/50">
+                          <Image
+                            src={getThumbnailUrl(upsell.image)}
+                            alt={upsell.name}
+                            fill
+                            className="object-cover transition-transform duration-500 group-hover:scale-102"
+                          />
+                        </div>
+                        <h5 className="font-medium text-sm text-foreground mb-1 line-clamp-1">
+                          {upsell.name}
+                        </h5>
+                        <p className="text-text-secondary text-xs mb-2">
+                          {formatPrice(upsell.price)}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() => handleUpsellQuickAdd(upsell)}
+                          className="w-full py-1.5 border border-foreground hover:bg-foreground hover:text-white transition-colors duration-300 text-xs tracking-wider uppercase font-medium"
+                        >
+                          Quick Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

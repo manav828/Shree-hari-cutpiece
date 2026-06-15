@@ -146,25 +146,47 @@ export default function BohemianCartFullPageClient() {
                         </div>
 
                         <div className="flex items-end justify-between md:flex-col md:items-end">
-                          <div className="inline-flex items-center overflow-hidden rounded-md bg-[#f0ede8]">
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, item.meters - 1)}
-                              className="flex h-8 w-8 items-center justify-center text-[#6f645d] transition-colors hover:bg-[#e6dfd7] hover:text-[#9f3f29]"
-                              aria-label={`Decrease quantity for ${item.name}`}
-                            >
-                              <Minus className="h-4 w-4" />
-                            </button>
-                            <span className="w-10 text-center text-sm font-semibold text-[#1c1c19]">{item.meters}</span>
-                            <button
-                              type="button"
-                              onClick={() => updateQuantity(item.id, item.meters + 1)}
-                              className="flex h-8 w-8 items-center justify-center text-[#6f645d] transition-colors hover:bg-[#e6dfd7] hover:text-[#9f3f29]"
-                              aria-label={`Increase quantity for ${item.name}`}
-                            >
-                              <Plus className="h-4 w-4" />
-                            </button>
-                          </div>
+                          {(() => {
+                            const isMeter = item.selling_mode === "meter";
+                            const step = isMeter ? 0.5 : 1;
+                            const minVal = isMeter ? 0.5 : 1;
+                            const isMin = item.meters <= minVal;
+                            return (
+                              <div className="inline-flex items-center overflow-hidden rounded-md bg-[#f0ede8]">
+                                <button
+                                  type="button"
+                                  disabled={isMin}
+                                  onClick={() => {
+                                    if (!isMin) {
+                                      const nextVal = parseFloat((item.meters - step).toFixed(1));
+                                      updateQuantity(item.id, Math.max(minVal, nextVal));
+                                    }
+                                  }}
+                                  className={`flex h-8 w-8 items-center justify-center text-[#6f645d] transition-colors hover:bg-[#e6dfd7] hover:text-[#9f3f29] ${
+                                    isMin ? "opacity-30 cursor-not-allowed hover:bg-transparent hover:text-[#6f645d]" : ""
+                                  }`}
+                                  aria-label={`Decrease quantity for ${item.name}`}
+                                >
+                                  <Minus className="h-4 w-4" />
+                                </button>
+                                <span className="w-12 text-center text-sm font-semibold text-[#1c1c19]">
+                                  {item.meters.toFixed(isMeter ? 1 : 0).replace(/\.0$/, "")}
+                                  {isMeter ? "m" : ""}
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const nextVal = parseFloat((item.meters + step).toFixed(1));
+                                    updateQuantity(item.id, nextVal);
+                                  }}
+                                  className="flex h-8 w-8 items-center justify-center text-[#6f645d] transition-colors hover:bg-[#e6dfd7] hover:text-[#9f3f29]"
+                                  aria-label={`Increase quantity for ${item.name}`}
+                                >
+                                  <Plus className="h-4 w-4" />
+                                </button>
+                              </div>
+                            );
+                          })()}
                           <p className={`${bohemianHeadingFont.className} mt-3 text-[34px] leading-none text-[#9f3f29] md:mt-4`}>
                             {formatPrice(item.price * item.meters)}
                           </p>

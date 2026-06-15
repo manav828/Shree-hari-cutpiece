@@ -14,6 +14,7 @@ import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import { getWhatsAppUrl } from "@/lib/brand";
 import { trackWhatsAppClick } from "@/lib/tracking";
+import { generateInvoicePDF } from "@/utils/invoice/InvoiceGenerator";
 
 /* ─── Status Configurations ─── */
 const orderStatusConfig: Record<Order["status"], { label: string; color: string; dot: string }> = {
@@ -132,10 +133,13 @@ function OrderTimeline({ currentStatus }: { currentStatus: Order["status"] }) {
                                 className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 border-2 ${isDone
                                     ? "bg-accent border-accent text-white"
                                     : "bg-white border-border text-text-secondary"
-                                    } ${isCurrent ? "ring-4 ring-accent/20" : ""}`}
+                                    } ${isCurrent ? "ring-4 ring-accent/30 scale-110 shadow-lg relative" : ""}`}
                             >
+                                {isCurrent && (
+                                    <span className="absolute inset-0 rounded-full bg-accent/20 animate-ping" />
+                                )}
                                 {isDone ? (
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-4 h-4 z-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
                                     </svg>
                                 ) : (
@@ -162,6 +166,7 @@ export default function OrderDetailPage() {
     const [order, setOrder] = useState<Order | null>(null);
     const [reorderedAll, setReorderedAll] = useState(false);
     const [reorderedItems, setReorderedItems] = useState<Set<string>>(new Set());
+    const [copiedTracking, setCopiedTracking] = useState(false);
 
     useEffect(() => {
         if (!isLoading && !user) {
@@ -280,6 +285,16 @@ export default function OrderDetailPage() {
     const orderStatus = orderStatusConfig[order.status];
     const paymentStatus = paymentStatusConfig[order.paymentStatus];
 
+    let derivedTrackingNumber = "SH-9283749";
+    if (order.trackingUrl) {
+        try {
+            const url = new URL(order.trackingUrl);
+            derivedTrackingNumber = url.searchParams.get("tracking") || url.searchParams.get("id") || url.pathname.split("/").pop() || order.trackingUrl;
+        } catch {
+            derivedTrackingNumber = order.trackingUrl.split("/").pop() || order.trackingUrl;
+        }
+    }
+
     return (
         <>
             <Navbar />
@@ -313,13 +328,24 @@ export default function OrderDetailPage() {
                                 })}
                             </p>
                         </div>
-                        <div className="flex flex-wrap gap-2">
-                            <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${orderStatus.color}`}>
-                                {orderStatus.label}
-                            </span>
-                            <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${paymentStatus.color}`}>
-                                {paymentStatus.label}
-                            </span>
+                        <div className="flex flex-col sm:items-end gap-3">
+                            <div className="flex flex-wrap gap-2">
+                                <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${orderStatus.color}`}>
+                                    {orderStatus.label}
+                                </span>
+                                <span className={`text-xs px-3 py-1.5 rounded-full border font-medium ${paymentStatus.color}`}>
+                                    {paymentStatus.label}
+                                </span>
+                            </div>
+                            <button
+                                onClick={() => generateInvoicePDF(order)}
+                                className="inline-flex items-center justify-center gap-2 border border-accent text-accent hover:bg-accent hover:text-white transition-all text-xs font-semibold uppercase tracking-wider px-4 py-2 rounded-lg"
+                            >
+                                <svg className="w-4.5 h-4.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                </svg>
+                                Download Invoice
+                            </button>
                         </div>
                     </div>
 
@@ -343,7 +369,27 @@ export default function OrderDetailPage() {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-medium text-foreground mb-1">Your package is on the way!</p>
-                                            <p className="text-text-secondary text-xs mb-3">Click below to track your shipment in real time.</p>
+                                            <p className="text-text-secondary text-xs mb-3">Track your shipment in real time using the link below.</p>
+                                            
+                                            <div className="flex items-center gap-2 mb-4 bg-white/80 border border-border px-3 py-2 rounded-lg w-fit">
+                                                <span className="text-xs text-text-secondary">Tracking No:</span>
+                                                <code className="text-xs font-mono font-semibold text-foreground select-all">{derivedTrackingNumber}</code>
+                                                <button
+                                                    onClick={() => {
+                                                        navigator.clipboard.writeText(derivedTrackingNumber);
+                                                        setCopiedTracking(true);
+                                                        setTimeout(() => setCopiedTracking(false), 2000);
+                                                    }}
+                                                    className="text-[10px] text-accent font-semibold uppercase hover:underline ml-2 flex items-center gap-1"
+                                                >
+                                                    {copiedTracking ? (
+                                                        <span className="text-green-600 font-medium">Copied!</span>
+                                                    ) : (
+                                                        <span>Copy</span>
+                                                    )}
+                                                </button>
+                                            </div>
+
                                             <a
                                                 href={order.trackingUrl}
                                                 target="_blank"

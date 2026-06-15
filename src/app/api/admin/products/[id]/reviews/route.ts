@@ -134,6 +134,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
 // PATCH: Update specific fields of a review (e.g. toggle visibility)
 export async function PATCH(req: NextRequest) {
     try {
+        const body = await req.json();
         const { reviewId, isVisible, rating, commentText, userName, productId } = body;
 
         if (!reviewId) {

@@ -153,6 +153,9 @@ export default function AccountProfilePage() {
     };
 
     const requestDeleteAccount = async () => {
+        if (!window.confirm("Are you absolutely sure you want to permanently delete your account? This action cannot be undone.")) {
+            return;
+        }
         setActionLoading("delete");
         setError("");
         setSuccess("");
@@ -169,12 +172,23 @@ export default function AccountProfilePage() {
                 body: JSON.stringify({ reason: deleteReason }),
             });
             const json = await res.json();
-            if (!res.ok) throw new Error(json.error || "Failed to submit delete request");
+            if (!res.ok) throw new Error(json.error || "Failed to delete account");
 
             setDeleteReason("");
-            setSuccess("Delete request submitted. Our support team will contact you shortly.");
+            setSuccess("Your account has been successfully deleted. Signing you out...");
+            
+            // Sign out client session
+            await supabase.auth.signOut();
+            
+            // Clear localStorage and cookies
+            localStorage.clear();
+            
+            // Redirect to home page
+            setTimeout(() => {
+                window.location.href = "/?deleted=true";
+            }, 2000);
         } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Failed to submit delete request");
+            setError(err instanceof Error ? err.message : "Failed to delete account");
         } finally {
             setActionLoading("");
         }
@@ -261,11 +275,12 @@ export default function AccountProfilePage() {
                                         </div>
 
                                         <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-2">
-                                            <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Delete Account Request</p>
+                                            <p className="text-xs font-semibold text-red-700 uppercase tracking-wide">Permanently Delete Account</p>
+                                            <p className="text-xs text-red-600">This will anonymize your profile info and delete all addresses. Your order history will remain anonymously for accounting purposes.</p>
                                             <textarea
                                                 value={deleteReason}
                                                 onChange={(e) => setDeleteReason(e.target.value)}
-                                                placeholder="Optional reason for deletion request"
+                                                placeholder="Optional reason for deletion"
                                                 className="w-full min-h-[72px] px-3 py-2 rounded-md border border-red-200 bg-white text-sm"
                                             />
                                             <button
@@ -274,7 +289,7 @@ export default function AccountProfilePage() {
                                                 disabled={actionLoading === "delete"}
                                                 className="px-3 py-2 rounded-md bg-red-600 text-white text-sm font-medium disabled:opacity-60"
                                             >
-                                                {actionLoading === "delete" ? "Submitting..." : "Request Account Deletion"}
+                                                {actionLoading === "delete" ? "Deleting..." : "Permanently Delete My Account"}
                                             </button>
                                         </div>
                                     </div>
@@ -284,6 +299,7 @@ export default function AccountProfilePage() {
                     </div>
                 </Container>
             </main>
+
             <Footer />
         </>
     );

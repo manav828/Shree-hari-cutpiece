@@ -1,9 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { Loader2 } from "lucide-react";
+import { Loader2, Scissors } from "lucide-react";
 import Image from "next/image";
 import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Link from "next/link";
@@ -12,6 +12,7 @@ import Footer from "@/components/layout/Footer";
 import Container from "@/components/ui/Container";
 import CartSidebar from "@/components/cart/CartSidebar";
 import { formatPrice } from "@/lib/utils";
+import FabricCalculator from "@/components/FabricCalculator";
 import { useCart } from "@/context/CartContext";
 import { supabase } from "@/lib/supabase";
 import { getWhatsAppUrl } from "@/lib/brand";
@@ -80,6 +81,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
   const [loading, setLoading] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [meters, setMeters] = useState(1);
+  const [showCalculator, setShowCalculator] = useState(false);
   const [activeTab, setActiveTab] = useState<"description" | "details" | "reviews" | "faq">("description");
   const [activeMedia, setActiveMedia] = useState(0);
   const [selectedVariant, setSelectedVariant] = useState<any>(null);
@@ -852,6 +854,14 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
                       ))}
                     </div>
 
+                    <button
+                      type="button"
+                      onClick={() => setShowCalculator(true)}
+                      className="text-xs font-semibold text-accent flex items-center gap-1.5 hover:underline mt-1"
+                    >
+                      <Scissors className="w-3.5 h-3.5" /> Fabric Requirement Calculator
+                    </button>
+
                     <div className="space-y-2">
                       <p className="text-xs tracking-[0.14em] uppercase text-text-secondary">Quick meter guide</p>
                       {meterGuideRows.map((row) => (
@@ -1044,6 +1054,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
           </section>
         </Container>
       </main>
+      {showCalculator && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+            <FabricCalculator
+              isModal
+              onClose={() => setShowCalculator(false)}
+              onApply={(calcMeters) => {
+                updateQuantity(calcMeters);
+                setShowCalculator(false);
+              }}
+            />
+          </div>
+        </div>
+      )}
       <Footer />
     </>
   );

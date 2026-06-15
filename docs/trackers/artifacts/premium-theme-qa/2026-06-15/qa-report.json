@@ -1,0 +1,196 @@
+{
+  "generatedAt": "2026-06-15T16:17:11.438Z",
+  "baseUrl": "http://localhost:3000",
+  "routeSummary": {
+    "total": 24,
+    "passed": 24,
+    "failed": 0
+  },
+  "routeChecks": [
+    {
+      "viewport": "desktop-1440",
+      "route": "/",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__home.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/shop",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__shop.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/about",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__about.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/contact",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__contact.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/hi/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__hi-blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/shipping-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__shipping-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/returns-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__returns-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/privacy-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__privacy-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/terms-of-service",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__terms-of-service.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/login",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__login.png",
+      "ok": true
+    },
+    {
+      "viewport": "desktop-1440",
+      "route": "/signup",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/desktop-1440__signup.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__home.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/shop",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__shop.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/about",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__about.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/contact",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__contact.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/hi/blogs",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__hi-blogs.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/shipping-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__shipping-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/returns-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__returns-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/privacy-policy",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__privacy-policy.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/terms-of-service",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__terms-of-service.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/login",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__login.png",
+      "ok": true
+    },
+    {
+      "viewport": "mobile-390",
+      "route": "/signup",
+      "status": 200,
+      "screenshot": "docs/trackers/artifacts/premium-theme-qa/2026-06-15/screenshots/mobile-390__signup.png",
+      "ok": true
+    }
+  ],
+  "analyticsReport": {
+    "baseUrl": "http://localhost:3000",
+    "checks": {
+      "view_item": false,
+      "add_to_cart": false,
+      "filter_use": false,
+      "whatsapp_click": false
+    },
+    "events": [],
+    "notes": [
+      "PLP Add to Cart button not found",
+      "PLP sort select not found",
+      "No PDP link found from PLP grid",
+      "PDP Add to Cart button not found",
+      "PDP WhatsApp CTA not found"
+    ]
+  }
+}

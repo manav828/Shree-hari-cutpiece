@@ -1,0 +1,376 @@
+<!-- converted from shree_hari_blog_prd_v2.docx -->
+
+
+
+
+
+# 1. Overview & Goals
+
+Shree Hari Cutpiece requires a fully featured blog management system embedded within its ecommerce admin panel. The blog serves as a primary organic marketing channel — enabling the admin team to publish fabric guides, styling tips, product spotlights, seasonal content, and SEO-driven articles that connect customers to products.
+
+This PRD defines all functional requirements for the Admin Blog Builder and the public-facing blog pages. It covers content modelling, a visual drag-and-drop builder, a custom code editor, SEO tools, revision history, scheduling, analytics, and a media library.
+
+## 1.1 Primary Goals
+- Allow the Super Admin to build rich blog pages using drag-and-drop sections without writing code.
+- Allow the Super Admin to insert custom HTML/CSS/JS code blocks when standard sections are insufficient.
+- Ensure every published blog post is fully SEO-optimised with admin-controlled metadata.
+- Support draft, preview, schedule, publish, unpublish, and rollback workflows.
+- Provide a centralised media library so product and fabric images can be reused across posts.
+- Embed shoppable product and collection blocks so blogs drive direct product page visits.
+- Offer a built-in analytics dashboard so the admin can measure content performance and conversions.
+- Support multilingual posts (Hindi and English at minimum) to serve a broad Indian customer base.
+
+## 1.2 Non-Goals (Out of Scope)
+- Technical architecture, infrastructure, or security implementation details.
+- Monetisation, ads, or third-party embed contracts.
+- Automatic AI content generation.
+- Multi-role access control (Editor, Viewer) — only Super Admin exists in v1.
+- Native comment system — explicitly out of scope; see Section 12 for policy.
+
+# 2. User Roles & Access
+
+In v1, only one role exists: Super Admin. All blog functions are gated behind Super Admin authentication. There is no Editor or Viewer role. Future versions may introduce a multi-role system; this PRD does not define those roles.
+
+
+
+# 3. Blog Content Model
+
+Each blog post is a structured record consisting of the following fields:
+
+
+# 4. Builder Modes
+
+The blog editor offers three modes. The admin can switch between them depending on the complexity of the post.
+
+## 4.1 Visual Builder Mode
+The Visual Builder is the default mode. It provides a canvas of stacked sections that the admin can configure without writing code.
+- Admin can add sections from the Section Library (see Section 5) onto the canvas.
+- Admin can drag sections to reorder them.
+- Admin can duplicate any section.
+- Admin can delete any section (with confirmation prompt).
+- Admin can edit section content inline — text, images, button labels, links.
+- Admin can collapse/expand sections in the canvas for easier navigation of long posts.
+- Admin can preview the full page at desktop (1280px) and mobile (375px) viewport sizes.
+- Builder state is auto-saved as a draft every 60 seconds.
+
+## 4.2 Custom Code Section (Inline Block)
+Within the Visual Builder, the admin can insert a Custom Code block as one of the sections.
+- The block accepts HTML, CSS, and JS scoped to that section.
+- The admin must explicitly confirm a toggle checkbox before saving custom JS (security acknowledgement).
+- Admin can toggle the block's visibility (show/hide) without deleting it — useful for A/B testing or seasonal banners.
+- Admin can preview the rendered output of the custom code block within the page preview.
+- Invalid HTML/CSS/JS shows a syntax warning. Publish is blocked; draft save is allowed.
+
+## 4.3 Full Page Code Mode
+For advanced posts or landing-style blogs, the admin can take full control of the page output.
+- Admin can switch the entire post to Full Page Code Mode (HTML/CSS/JS).
+- The editor must provide syntax highlighting for HTML, CSS, and JS.
+- The editor must show inline validation warnings for invalid markup.
+- Admin can switch back to Visual Builder mode if the code is compatible, or stay in code-only mode.
+- Once locked to code-only mode by saving incompatible content, Visual Builder mode is disabled for that post.
+- Full Page Code Mode is only available to Super Admin.
+
+
+# 5. Pre-Made Section Library
+
+The following section types are available in the Visual Builder. All sections support background colour customisation, padding (top/bottom), and show/hide toggle.
+
+## 5.1 General Content Sections
+
+## 5.2 Ecommerce-Specific Sections
+These sections are unique to Shree Hari Cutpiece and connect blog content directly to the product catalogue.
+
+# 6. Media Library
+
+A centralised media library serves as the single source for all images used in blog posts. This prevents duplicate uploads and keeps asset management clean.
+
+## 6.1 Core Requirements
+- Admin can upload images in JPG, PNG, and WebP formats.
+- Max upload size: 10 MB per file (configurable by developer).
+- On upload, the system auto-generates compressed/resized variants: thumbnail (200px), medium (800px), large (1600px).
+- Admin can view all uploaded images in a grid view with search and filter by date uploaded.
+- Admin can delete images (system warns if image is in use in a published post).
+- Admin can edit the alt text of any media item at any time.
+
+## 6.2 Alt Text Requirements
+- Every image inserted into a blog post must have an alt text field.
+- Alt text is required before a post can be published (validation rule).
+- Alt text from the media library auto-fills when an image is inserted but admin can override it per instance.
+
+
+# 7. Revision History
+
+- Every manual save and every auto-save creates a revision snapshot.
+- Revisions store the full content (builder layout or HTML), all metadata, and SEO fields at the time of save.
+- Admin can view a chronological list of all revisions for a post, labelled with date/time and save type (auto/manual/publish).
+- Admin can preview any revision in a read-only view before restoring.
+- Admin can restore any revision — restoring creates a new revision (the restore action itself is reversible).
+- Admin can compare any two revisions: a text diff view highlights added/removed content and metadata changes.
+- Revision history is retained indefinitely for published posts. For drafts, the system retains the last 50 revisions.
+
+# 8. SEO Requirements
+
+Full SEO control is available per post via the SEO Panel in the blog editor.
+
+## 8.1 Per-Post SEO Fields
+
+## 8.2 Slug Management
+- Slug auto-generated from post title on first save. Admin can manually override at any time.
+- Slug must be unique across all posts. Validation runs on save and publish.
+- When a slug is changed on a published post, a 301 redirect is automatically created from the old slug to the new slug.
+- Redirect history is viewable in the post's SEO panel.
+
+## 8.3 Page-Level SEO Requirements
+- Post title renders as the page H1.
+- Section headings support H2 and H3 via the rich text editor — admin cannot insert H1 within content.
+- XML sitemap automatically includes all published posts. Scheduled and draft posts are excluded.
+- Sitemap is regenerated on every publish and unpublish action.
+- Multilingual alternate tags (hreflang) are included when linked language variants exist.
+
+## 8.4 Multilingual SEO
+- Blog posts are created per language. Supported languages in v1: English (en), Hindi (hi).
+- Posts in different languages are linked as variants of each other via a shared parent ID.
+- URL structure: /blog/[slug] for English, /hi/blog/[slug] for Hindi.
+- Hreflang tags are auto-generated for linked variants.
+- Each language variant has its own independent SEO metadata fields.
+- Language selector on public blog post links to the variant if it exists; otherwise hides the option.
+
+# 9. Blog Management Screens
+
+## 9.1 Blog List Screen
+The Blog List is the main management screen. It shows all posts and enables bulk management.
+- Displays all posts in a sortable table: Title, Category, Status, Language, Author, Publish Date, Views (last 30 days).
+- Filter by: Status, Category, Tag, Language, Date Range.
+- Search by: Title, Slug, or Tag.
+- Bulk actions: Publish, Unpublish, Delete (with confirmation), Duplicate.
+- Quick-edit: Status change and date change inline from the list without opening the editor.
+- Analytics summary card at the top of the list: Total Published Posts, Total Views This Month, Top Post This Month.
+
+## 9.2 Blog Editor Screen
+The Blog Editor is opened when creating a new post or editing an existing one.
+- Left panel: Meta fields (Title, Slug, Summary, Cover Image, Category, Tags, Language, Author).
+- Centre canvas: Builder canvas with section library side-panel.
+- Right panel: SEO Panel (collapsed by default, expandable).
+- Right panel: Related Posts (up to 5 manual selections).
+- Right panel: Related Products (up to 10 manual selections from catalogue).
+- Top bar: Save Draft, Preview, Publish / Schedule, Revision History.
+- Builder mode toggle in top bar: Visual Builder | Full Page Code.
+
+## 9.3 Blog Preview
+- Preview renders the post as it will appear on the public site.
+- Preview is accessible via a shareable time-limited URL (valid 48 hours) so the admin can review on mobile.
+- Preview shows both desktop and mobile viewports via a toggle in the preview header.
+- Preview is available for Draft, Scheduled, and Published posts.
+
+# 10. Scheduling and Publishing
+
+
+- Scheduled publish executes within ±2 minutes of the set time.
+- Admin receives an in-app notification when a scheduled post goes live.
+- If a scheduled post has validation errors at publish time, it moves to Draft and admin is notified with the error reason.
+
+# 11. Analytics Dashboard
+
+Analytics is a core, required module. It must be available from the Blog List screen and as a dedicated Analytics view. The primary goal is to connect blog performance to product page visits and sales.
+
+## 11.1 Post-Level Metrics
+- Total page views per post.
+- Unique visitors per post.
+- Average time on page.
+- Bounce rate per post.
+- Views over time: line graph for last 7 / 30 / 90 days (selectable).
+
+## 11.2 Traffic & Discovery
+- Referrer breakdown: Google Organic, Direct, WhatsApp, Instagram, Facebook, Other.
+- Top search keywords that landed users on each post (requires Google Search Console integration, optional but recommended).
+- Device breakdown: Mobile vs Desktop vs Tablet. Critical insight as the majority of Indian ecommerce traffic is mobile.
+
+## 11.3 Ecommerce Conversion Metrics
+- Click-throughs from blog post to product pages — tracked per post and per product block.
+- Click-throughs from blog post to collection/category pages.
+- Click-throughs from CTA buttons — tracked per section.
+- Top performing posts by product click-through rate (CTR), not just raw traffic.
+
+## 11.4 Content Health Metrics
+- Posts with zero traffic in the last 30 days — highlighted in the Blog List with a 'Low Traffic' badge.
+- Posts with missing SEO fields (alt text, meta description, OG image) — highlighted with a 'SEO Incomplete' badge.
+- Published posts with no Related Products linked — flagged as 'Unlinked' in the list.
+
+## 11.5 Analytics Summary Card (Blog List Screen)
+- Total published posts count.
+- Total blog views this month.
+- Top post this month (by views).
+- Total product page clicks from blog this month.
+
+
+# 12. Comments & Engagement Policy
+
+Native blog comments are explicitly out of scope for v1. The admin team has decided not to implement a comments system at launch. The following policy applies:
+- No comment input field will appear on public blog post pages.
+- No third-party comment widget (Disqus, etc.) will be embedded.
+- If comments are desired in a future version, a new PRD module will be drafted covering: comment submission, spam filtering, admin moderation (approve/reject/delete), and notification flow.
+
+# 13. Validation Rules
+
+The following validation rules are enforced at draft save and/or publish time:
+
+
+301 redirect rule: If admin changes a slug on a published post without setting a redirect destination, the system auto-creates a redirect from the old slug to the new slug.
+
+# 14. Internal Linking & Related Content
+
+## 14.1 Related Posts
+- Admin can manually link up to 5 related posts via the editor's right panel.
+- Related posts are displayed at the bottom of the public post page in a card grid.
+- If no related posts are linked, the section does not render on the public page.
+
+## 14.2 Related Products
+- Admin can manually link up to 10 products from the catalogue.
+- Related products are displayed in a 'Shop the Look' or 'Featured Products' section at the bottom of the post.
+- This is separate from inline Product Card Embed sections (Section 5.2) — related products are a post-level footer block.
+
+## 14.3 Internal Link Suggestions (Nice to Have)
+While writing a post, the system may optionally suggest existing blog posts to link to based on matching tags and keywords. This is a nice-to-have for v1.5 and is not required for v1.
+
+# 15. Social Sharing
+
+Social sharing is a resolved requirement. The following sharing features must be implemented:
+
+## 15.1 Public Post Share Buttons
+- Each public blog post must have share buttons for: WhatsApp, Instagram (copy link), and Facebook.
+- WhatsApp share uses the post's OG title and URL in the pre-filled message.
+- All share links open in a new tab or use native share sheet on mobile.
+
+## 15.2 Admin Auto-Share (Future)
+- Automatic posting to social channels on publish is out of scope for v1.
+- A manual 'Share to WhatsApp Business / Instagram' trigger from the admin panel is a v2 consideration.
+
+# 16. Acceptance Criteria
+
+All of the following scenarios must pass QA before the blog module can be released to production:
+
+- Super Admin can create a new blog post using only pre-built sections, fill all required SEO fields, and publish — post appears publicly at the correct URL.
+- Super Admin can insert a Custom Code section with HTML/CSS/JS, acknowledge the security toggle, save, and the rendered output is visible in preview and on the public post.
+- Super Admin can switch a post to Full Page Code Mode, write raw HTML/CSS/JS, and publish — the post renders correctly on the public site.
+- Super Admin can set meta title, meta description, OG image, and Twitter card — these values are verifiable in the page source of the published post.
+- Super Admin can schedule a post for a future date/time — the post is not publicly visible before that time and appears exactly after it.
+- Super Admin can restore a previous revision — the post content and metadata revert to the selected revision state.
+- Super Admin can change a published post's slug — a 301 redirect from the old URL to the new URL is automatically created and verified.
+- Super Admin can upload an image to the media library, insert it into a post with alt text, and the alt text appears in the published page source.
+- Super Admin can link a product card inside a post — the product card renders on the public page with correct product data and click-through to the product page is tracked in analytics.
+- Analytics dashboard shows page views, referrer breakdown, and product click-through data for a published post after it receives test traffic.
+- A post published in Hindi at /hi/blog/[slug] has the correct hreflang tag pointing to its English variant and vice versa.
+- A post with a missing alt text or missing meta description cannot be published — the system shows a clear, actionable error message.
+
+# 17. Open Items & Decisions Pending
+
+
+— End of PRD v2.0 —
+| SHREE HARI CUTPIECE
+Admin Panel — Blog Builder
+Product Requirements Document  |  v2.0 |
+| --- |
+| Status: Draft  |  Owner: Admin Panel Team  |  Date: March 2026 |
+| Project | Shree Hari Cutpiece — Ecommerce Website |
+| --- | --- |
+| Module | Admin Blog Builder + Public Blog Pages |
+| Document Ver | 2.0 (Revised with full recommendations) |
+| Status | Draft — Pending Engineering Review |
+| Owner | Admin Panel Team |
+| Last Updated | March 2026 |
+| Access | Super Admin Only |
+| Role | Permissions |
+| --- | --- |
+| Super Admin | Full access: create, read, edit, publish, schedule, unpublish, delete, restore revisions, manage media library, access full-page code mode, manage tags and categories, view analytics. |
+| Design Note
+All admin screens described in this PRD are accessible only to authenticated Super Admin sessions. Unauthenticated requests must redirect to the admin login page. |
+| --- |
+| Field | Type / Constraint | Notes |
+| --- | --- | --- |
+| Title | String — required | Displayed as H1 on public page. |
+| Slug | String — required, unique | Auto-generated from title; manually overridable. Validated for uniqueness on save. 301 redirect created on change. |
+| Summary/Excerpt | String — max length configurable | Shown on blog list page and OG description fallback. |
+| Cover Image | Media — required for publish | Uploaded via media library. Displayed as hero image. |
+| Content | Builder layout JSON | Serialised section list from the visual builder or full-page HTML/CSS/JS. |
+| SEO Metadata | Structured object | See Section 8 for full breakdown. |
+| Publish Status | Enum: Draft / Scheduled / Published / Unpublished | Controls public visibility. |
+| Publish Date/Time | DateTime | Required for Scheduled status. UTC stored, displayed in IST. |
+| Author Name | String | Display name shown on post. Defaults to Super Admin profile name. |
+| Tags | Array of strings — multi | Managed globally; free-form or from predefined list. |
+| Category | Single select | One category per post. Managed in admin settings. |
+| Language | Enum: en / hi / other | Posts are per-language. Linked variants share a parent ID. |
+| Revision History | Array of revision snapshots | Auto-saved on every save action. See Section 7. |
+| Schema Markup | Boolean toggle | Enables BlogPosting JSON-LD on the public post. |
+| Related Posts | Array of Post IDs — manual | Admin manually links up to 5 related posts. |
+| Related Products | Array of Product IDs — manual | Links to product pages in the catalogue. |
+| Important
+Custom JS in any code block is permitted for Super Admin only and requires explicit security acknowledgement on each save. This is a deliberate security checkpoint. |
+| --- |
+| Section Type | Description |
+| --- | --- |
+| Heading + Subheading | Large H2 title with an optional supporting subtext. Used for blog chapter breaks. |
+| Rich Text / Paragraph | Full WYSIWYG editor supporting bold, italic, underline, links, ordered and unordered lists, and inline images. |
+| Single Image | Full-width or contained image. Required: alt text field. Optional: link on click. |
+| Image with Caption | Image block with an editable caption below. Caption supports rich text. |
+| Two-Column (Text + Image) | Side-by-side layout. Left or right image position. Responsive stacks to single column on mobile. |
+| Quote / Testimonial | Styled pull-quote block with optional attribution name and designation. |
+| Call to Action | Prominent button + supporting text. Admin configures button label, URL, and colour. |
+| Spacer / Divider | Vertical whitespace or a horizontal rule. Configurable height. |
+| Embed (YouTube/Instagram) | Paste a YouTube or Instagram URL. System generates a responsive embed. No other platforms in v1. |
+| FAQ (Accordion) | Expandable Q&A pairs. Admin adds, edits, and reorders FAQ items. |
+| Image Gallery | 2–4 column grid of images. Each image has its own alt text and optional link. |
+| Table | Simple data table. Admin inputs rows and columns. Supports a header row toggle. |
+| Section Type | Description |
+| --- | --- |
+| Product Card Embed | Admin selects one or more SKUs from the catalogue. Renders a product card (image, name, price, Add to Cart button) inline in the blog. Clicking the card navigates to the product page. |
+| Collection / Category Highlight | Admin selects a product category or collection. Renders a banner or card grid linking to that collection page. Ideal for seasonal posts (e.g., 'Diwali Fabric Collection'). |
+| Offer / Price Banner | A prominent highlight strip with configurable text, discount percentage, and a CTA button. Ideal for sale announcements within a blog post. |
+| Fabric Specification Table | A pre-styled table optimised for fabric attributes: GSM, width, material composition, wash care. Admin fills structured fields. |
+| SEO & Accessibility Note
+Alt text is mandatory for accessibility (WCAG 2.1 AA compliance) and contributes to image search SEO. Posts with missing alt text must not be publishable. |
+| --- |
+| Field | Requirement |
+| --- | --- |
+| Meta Title | Editable. Character counter shown. Max 60 chars recommended. Required for publish. |
+| Meta Description | Editable. Character counter shown. Max 160 chars recommended. Required for publish. |
+| Canonical URL | Editable. Defaults to the post's own URL. Admin can override for syndicated content. |
+| OG Title | Editable. Defaults to Meta Title if left blank. |
+| OG Description | Editable. Defaults to Meta Description if left blank. |
+| OG Image | Manual upload by admin only via media library. Recommended size: 1200x630px. No auto-generation. |
+| Twitter Card Type | Dropdown: summary or summary_large_image. |
+| Schema Markup Toggle | Enables BlogPosting JSON-LD on the public post page. |
+| Robots Directives | Dropdown: index/follow, noindex/follow, noindex/nofollow. |
+| Status | Public Visibility | Behaviour |
+| --- | --- | --- |
+| Draft | Not visible | Default state. Auto-saved. Only admin can view via preview URL. |
+| Scheduled | Not yet visible | Becomes Published automatically at the set date/time (IST). Admin can edit or cancel schedule any time before publish. |
+| Published | Publicly visible | Appears on blog list page, sitemap, and is indexable by search engines. |
+| Unpublished | Not visible (removed from public) | Retained in admin with full history. Can be re-published. 410 Gone header served on old URL unless a redirect exists. |
+| Implementation Note
+Analytics can be powered by a self-hosted solution (e.g., Plausible or Umami) or Google Analytics 4. The choice is an engineering decision. The functional requirements above must be satisfied regardless of the underlying tool. |
+| --- |
+| Field / Rule | Draft Save | Publish |
+| --- | --- | --- |
+| Title | Required | Required |
+| Slug | Required, unique | Required, unique |
+| Summary max length | Warning only | Warning only (configurable limit) |
+| Cover image | Optional | Required |
+| Alt text on all images | Warning only | Blocked — must be resolved |
+| Meta title | Optional | Required |
+| Meta description | Optional | Required |
+| OG image | Optional | Warning only |
+| Invalid HTML/CSS/JS | Warning, allowed | Blocked — must fix |
+| Custom JS save confirm | Toggle required | Toggle required |
+| Scheduled date/time | N/A | Required if status = Scheduled; must be future date |
+| Language field | Required | Required |
+| Category field | Optional | Warning only |
+| Item | Status / Notes |
+| --- | --- |
+| Analytics vendor choice | Engineering decision. Options: GA4, Plausible, Umami. Functional requirements in Section 11 must be met regardless. |
+| GSC integration for keywords | Recommended but optional for v1. Admin must connect GSC account in settings. |
+| Supported languages beyond en/hi | Hindi and English confirmed for v1. Additional languages (e.g., Gujarati) deferred to v2. |
+| Summary max character limit | Configurable by developer. Suggested default: 300 characters. |
+| Scheduled post failure alerts | Mechanism (email vs in-app) to be decided by product team. |
+| v2 auto-social sharing | Instagram and WhatsApp Business API integration deferred to v2 PRD. |
+| Internal link suggestion feature | Nice-to-have for v1.5. Not in scope for v1 engineering sprint. |
+| Version labels for revisions | Beyond timestamps — e.g., 'Pre-Diwali Edit'. Deferred to v2. |

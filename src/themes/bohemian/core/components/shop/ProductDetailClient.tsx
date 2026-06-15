@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-explicit-any, @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useEffect, useRef, useState } from "react";
@@ -19,10 +19,12 @@ import {
 	Share2,
 	Sparkles,
 	Star,
+	Scissors,
 } from "lucide-react";
 import Navbar from "@/themes/bohemian/components/layout/Navbar";
 import Footer from "@/themes/bohemian/components/layout/Footer";
 import CartSidebar from "@/themes/bohemian/components/cart/CartSidebar";
+import FabricCalculator from "@/components/FabricCalculator";
 import ProductReviews from "@/components/shop/ProductReviews";
 import { formatPrice } from "@/lib/utils";
 import { useCart } from "@/context/CartContext";
@@ -322,6 +324,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	const [isAdding, setIsAdding] = useState(false);
 	const [isBuying, setIsBuying] = useState(false);
 	const [meters, setMeters] = useState(1);
+	const [showCalculator, setShowCalculator] = useState(false);
 	const [activeTab, setActiveTab] = useState<string>("");
 	const [activeMedia, setActiveMedia] = useState(0);
 	const [selectedVariant, setSelectedVariant] = useState<any>(null);
@@ -1221,11 +1224,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 								</div>
 
 								{isMeterProduct ? (
-									<p className="mt-3 text-xs leading-relaxed text-[#7a6f68]">
-										{fittingGuideMatch
-											? `Your selected quantity is commonly used for ${fittingGuideMatch.use}.`
-											: "Share measurements on WhatsApp for exact cut guidance from our stylist."}
-									</p>
+									<div className="mt-3 space-y-2">
+										<p className="text-xs leading-relaxed text-[#7a6f68]">
+											{fittingGuideMatch
+												? `Your selected quantity is commonly used for ${fittingGuideMatch.use}.`
+												: "Share measurements on WhatsApp for exact cut guidance from our stylist."}
+										</p>
+										<button
+											type="button"
+											onClick={() => setShowCalculator(true)}
+											className="text-xs font-semibold text-[#9f3f29] flex items-center gap-1.5 hover:underline"
+										>
+											<Scissors className="w-3.5 h-3.5" /> Fabric Requirement Calculator
+										</button>
+									</div>
 								) : null}
 							</div>
 
@@ -2028,6 +2040,20 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 					)}
 				</section>
 			</main>
+			{showCalculator && (
+				<div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+					<div className="relative max-w-2xl w-full max-h-[90vh] overflow-y-auto rounded-2xl bg-white shadow-2xl">
+						<FabricCalculator
+							isModal
+							onClose={() => setShowCalculator(false)}
+							onApply={(calcMeters) => {
+								updateQuantity(calcMeters);
+								setShowCalculator(false);
+							}}
+						/>
+					</div>
+				</div>
+			)}
 
 			<Footer />
 		</>

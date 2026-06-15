@@ -97,18 +97,23 @@ export default async function handleVerifyPayment(req: NextRequest) {
       return NextResponse.json({ error: "Razorpay order ID mismatch." }, { status: 400 });
     }
 
-    if (orderData.payment_status === "paid") {
+    if (orderData.payment_status === "paid" || orderData.payment_status === "advance_paid") {
       return NextResponse.json({ success: true, orderId: orderData.id });
+    }
+
+    const isCod = orderData.payment_method === "cod";
+    const updatePayload: any = {
+      payment_status: isCod ? "advance_paid" : "paid",
+      razorpay_order_id: razorpayOrderId,
+      razorpay_payment_id: razorpayPaymentId,
+    };
+    if (!isCod) {
+      updatePayload.payment_method = "razorpay";
     }
 
     const { error: updateError } = await supabaseAdmin
       .from("orders")
-      .update({
-        payment_status: "paid",
-        payment_method: "razorpay",
-        razorpay_order_id: razorpayOrderId,
-        razorpay_payment_id: razorpayPaymentId,
-      })
+      .update(updatePayload)
       .eq("id", orderData.id);
 
     if (updateError) {
@@ -119,8 +124,11 @@ export default async function handleVerifyPayment(req: NextRequest) {
       order_id: orderData.id,
       from_status: orderData.status,
       to_status: orderData.status,
-      note: `Razorpay payment verified. Payment ID: ${razorpayPaymentId}`,
+      note: isCod
+        ? `COD partial advance payment verified via Razorpay. Payment ID: ${razorpayPaymentId}`
+        : `Razorpay payment verified. Payment ID: ${razorpayPaymentId}`,
     });
+
 
     // Fire order confirmation notifications in background
     triggerOrderNotification(orderData.id, "confirmation").catch(err => {

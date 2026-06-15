@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
+import { calculateCheckoutDetails, getShippingRatesConfig } from "@/lib/shipping/rates";
 
 type CheckoutItem = {
   id: string;
@@ -38,9 +39,7 @@ type RazorpayOrderResponse = {
   currency: string;
 };
 
-const SHIPPING_THRESHOLD = 999;
-const SHIPPING_CHARGE = 99;
-const GST_RATE = 0.18;
+// Constants removed to use dynamic rates configurations
 
 function getAuthToken(req: NextRequest): string | null {
   const auth = req.headers.get("authorization") || "";
@@ -270,10 +269,9 @@ export default async function handleCreateOrder(req: NextRequest) {
       }
     }
 
-    const discountedSubtotal = Math.max(subtotal - discountAmount, 0);
-    const shippingAmount = subtotal >= SHIPPING_THRESHOLD ? 0 : SHIPPING_CHARGE;
-    const gstAmount = Math.round(discountedSubtotal * GST_RATE);
-    const totalAmount = discountedSubtotal + shippingAmount + gstAmount;
+    const shippingConfig = await getShippingRatesConfig();
+    const details = calculateCheckoutDetails(subtotal, discountAmount, formData.state, "razorpay", shippingConfig);
+    const totalAmount = details.totalAmount;
     const totalAmountPaise = Math.round(totalAmount * 100);
 
     const orderNumber = generateOrderNumber();
@@ -292,7 +290,7 @@ export default async function handleCreateOrder(req: NextRequest) {
     const orderNotes = [
       formData.notes || "",
       coupon ? `Coupon ${coupon.code} applied (discount ₹${discountAmount.toFixed(2)})` : "",
-      `Tax (GST 18%): INR ${gstAmount}`,
+      details.taxAmount > 0 ? `Tax (${shippingConfig.taxMode === "add_extra" ? "" : "Included "}${shippingConfig.taxRate}%): INR ${details.taxAmount}` : "",
       "Payment initiated via Razorpay",
     ]
       .filter(Boolean)
@@ -308,7 +306,7 @@ export default async function handleCreateOrder(req: NextRequest) {
         payment_method: "razorpay",
         subtotal,
         discount_amount: discountAmount,
-        shipping_amount: shippingAmount,
+        shipping_amount: details.shippingFee,
         total_amount: totalAmount,
         coupon_id: coupon?.id ?? null,
         coupon_code: coupon?.code ?? null,

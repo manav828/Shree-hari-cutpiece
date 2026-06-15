@@ -1,8 +1,8 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, Suspense } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
     LayoutDashboard,
     Layout,
@@ -21,21 +21,29 @@ import {
     ChevronRight,
     CreditCard,
     Mail,
-    ChevronDown
+    ChevronDown,
+    Truck,
+    Clock,
+    MapPin,
+    Tag,
+    Layers,
+    TrendingUp
 } from "lucide-react";
 import AdminCacheControls from "@/components/admin/layout/AdminCacheControls";
 import AdminNotificationsBell from "@/components/admin/layout/AdminNotificationsBell";
 import GlobalToastContainer from "@/components/admin/layout/GlobalToastContainer";
 
-export default function AdminLayout({ children }: { children: ReactNode }) {
+function AdminLayoutContent({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
+    const searchParams = useSearchParams();
     const [isAuthorized, setIsAuthorized] = useState(false);
     const [isChecking, setIsChecking] = useState(true);
     const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
     const [isCollapsed, setIsCollapsed] = useState(false);
     const [isCmsOpen, setIsCmsOpen] = useState(false);
     const [isProductsOpen, setIsProductsOpen] = useState(false);
+    const [isReportsOpen, setIsReportsOpen] = useState(false);
 
     useEffect(() => {
         if (
@@ -49,6 +57,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             pathname.startsWith("/admin/products")
         ) {
             setIsProductsOpen(true);
+        }
+        if (
+            pathname.startsWith("/admin/reports")
+        ) {
+            setIsReportsOpen(true);
         }
     }, [pathname]);
 
@@ -67,17 +80,36 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (pathname === "/admin/login") { setIsChecking(false); return; }
-        const authState = localStorage.getItem("shreehari_admin_auth");
-        if (authState === "true") { setIsAuthorized(true); } else { router.push("/admin/login"); }
+        setIsAuthorized(true);
         setIsChecking(false);
-    }, [pathname, router]);
+    }, [pathname]);
 
     useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
 
-    const handleSignOut = () => {
-        localStorage.removeItem("shreehari_admin_auth");
+    const handleSignOut = async () => {
+        try {
+            await fetch("/api/admin/auth", { method: "DELETE" });
+        } catch (err) {
+            console.error("Logout failed:", err);
+        }
         setIsAuthorized(false);
         router.push("/admin/login");
+    };
+
+    const isSubActive = (subHref: string) => {
+        if (subHref.includes("?")) {
+            const [path, queryStr] = subHref.split("?");
+            if (pathname !== path) return false;
+            const queryParams = new URLSearchParams(queryStr);
+            const tab = queryParams.get("tab");
+            const activeTab = searchParams.get("tab") || "overview";
+            return activeTab === tab;
+        }
+        return pathname === subHref || (
+            subHref === "/admin/products"
+                ? false
+                : (pathname.startsWith(`${subHref}/`) && subHref !== "/admin")
+        );
     };
 
     const navItems = [
@@ -96,6 +128,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             ]
         },
         { name: "Orders", href: "/admin/orders", icon: ShoppingCart },
+        { name: "Abandoned Carts", href: "/admin/abandoned-carts", icon: ShoppingCart },
         { name: "Customers", href: "/admin/customers", icon: Users },
         { name: "Coupons", href: "/admin/coupons", icon: Tags },
         {
@@ -111,8 +144,25 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             ]
         },
         { name: "Documentation", href: "/admin/documentation", icon: BookOpen },
-        { name: "Reports", href: "/admin/reports", icon: BarChart },
+        {
+            name: "Reports",
+            icon: BarChart,
+            isGroup: true,
+            isOpen: isReportsOpen,
+            setOpen: setIsReportsOpen,
+            subItems: [
+                { name: "Overview & Trends", href: "/admin/reports?tab=overview", icon: BarChart },
+                { name: "Orders Wise", href: "/admin/reports?tab=orders", icon: ShoppingCart },
+                { name: "Order Product Wise", href: "/admin/reports?tab=items", icon: Clock },
+                { name: "Individual Product Sell", href: "/admin/reports?tab=products", icon: TrendingUp },
+                { name: "Geographic Sales", href: "/admin/reports?tab=geography", icon: MapPin },
+                { name: "Coupon Report", href: "/admin/reports?tab=coupons", icon: Tag },
+                { name: "Category Sales", href: "/admin/reports?tab=categories", icon: Layers },
+                { name: "Payment Methods", href: "/admin/reports?tab=payments", icon: CreditCard },
+            ]
+        },
         { name: "Payments", href: "/admin/payments", icon: CreditCard },
+        { name: "Shipping", href: "/admin/shipping", icon: Truck },
         { name: "Settings", href: "/admin/settings", icon: Settings },
     ];
 
@@ -334,5 +384,17 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 }
             `}} />
         </div>
+    );
+}
+
+export default function AdminLayout({ children }: { children: ReactNode }) {
+    return (
+        <Suspense fallback={
+            <div className="h-screen bg-slate-900 flex items-center justify-center">
+                <div className="w-8 h-8 border-[3px] border-cyan-400 border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <AdminLayoutContent children={children} />
+        </Suspense>
     );
 }

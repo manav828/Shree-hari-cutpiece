@@ -18,17 +18,21 @@ export default function AdminLogin() {
         setError("");
         setLoading(true);
 
-        // Allow UI to show loading state briefly for premium feel
-        setTimeout(() => {
-            if (email === "manavss828@gmail.com" && password === "shreehari828") {
-                // Set custom admin auth flag in localStorage
-                localStorage.setItem("shreehari_admin_auth", "true");
-                router.push("/admin");
-            } else {
-                setError("Invalid admin credentials");
-                setLoading(false);
+        try {
+            const res = await fetch("/api/admin/auth", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || "Authentication failed.");
             }
-        }, 800);
+            router.push("/admin");
+        } catch (err: any) {
+            setError(err.message || "Failed to log in.");
+            setLoading(false);
+        }
     };
 
     return (

@@ -1,6 +1,25 @@
 "use client";
 
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useEffect, useState, useMemo, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import {
+    ResponsiveContainer,
+    LineChart,
+    Line,
+    BarChart,
+    Bar,
+    PieChart,
+    Pie,
+    Cell,
+    XAxis,
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    Legend,
+    AreaChart,
+    Area,
+    ComposedChart
+} from "recharts";
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/admin/ui/Table";
 import { Input } from "@/components/admin/ui/Input";
 import {
@@ -15,6 +34,7 @@ import {
     Layers,
     ChevronLeft,
     ChevronRight,
+    ChevronDown,
     ArrowUpDown,
     BarChart3,
     Clock,
@@ -146,16 +166,59 @@ function getPresetDates(preset: DatePreset): { start: string; end: string } {
     }
 }
 
+const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+        return (
+            <div className="bg-slate-900/95 backdrop-blur-md border border-slate-800 p-3.5 rounded-xl shadow-xl select-none">
+                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">
+                    {typeof label === "string" && label.length > 30 ? `${label.slice(0, 30)}...` : label}
+                </p>
+                <div className="space-y-1.5">
+                    {payload.map((entry: any, index: number) => {
+                        const val = entry.value;
+                        const isRevenue = entry.dataKey === "total_revenue" || entry.dataKey === "gross" || entry.dataKey === "net";
+                        const formattedValue = isRevenue ? `₹${Number(val).toLocaleString("en-IN")}` : val;
+                        
+                        return (
+                            <div key={index} className="flex items-center justify-between gap-6 text-[12px]">
+                                <span className="flex items-center gap-2 font-medium text-slate-300">
+                                    <span 
+                                        className="w-2 h-2 rounded-full inline-block" 
+                                        style={{ backgroundColor: entry.stroke || entry.fill || "#4f46e5" }} 
+                                    />
+                                    {entry.name}
+                                </span>
+                                <span className="font-semibold text-white">
+                                    {formattedValue}
+                                </span>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        );
+    }
+    return null;
+};
+
 // ─── Main Component ──────────────────────────────────────────────────────────
 
-export default function AdminReports() {
+function AdminReportsContent() {
+    const searchParams = useSearchParams();
+    const tabParam = (searchParams.get("tab") || "overview") as TabId;
+    const activeTab = tabParam;
+
     const [preset, setPreset] = useState<DatePreset>("last30");
     const [startDate, setStartDate] = useState("");
     const [endDate, setEndDate] = useState("");
-    const [activeTab, setActiveTab] = useState<TabId>("overview");
     const [data, setData] = useState<ReportsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+    const [isMounted, setIsMounted] = useState(false);
+
+    useEffect(() => {
+        setIsMounted(true);
+    }, []);
 
     // Table controls
     const [searchQuery, setSearchQuery] = useState("");
@@ -700,63 +763,58 @@ export default function AdminReports() {
                 </button>
             </div>
 
-            {/* Horizontal Tabs Grid (Box Design, Icon Top, Name Bottom) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-3 select-none">
-                {[
-                    { id: "overview", label: "Overview & Trends", icon: BarChart3 },
-                    { id: "orders", label: "Orders Wise", icon: ShoppingBag },
-                    { id: "items", label: "Order Product Wise", icon: Clock },
-                    { id: "products", label: "Individual Product Sell", icon: TrendingUp },
-                    { id: "geography", label: "Geographic Sales", icon: MapPin },
-                    { id: "coupons", label: "Coupon Report", icon: Tag },
-                    { id: "categories", label: "Category Sales", icon: Layers },
-                    { id: "payments", label: "Payment Methods", icon: CreditCard },
-                ].map((tab) => {
-                    const Icon = tab.icon;
-                    const isCurrent = activeTab === tab.id;
-                    return (
-                        <button
-                            key={tab.id}
-                            onClick={() => setActiveTab(tab.id as TabId)}
-                            className={`flex flex-col items-center justify-center p-4 text-center border rounded-xl gap-2 transition-all cursor-pointer shadow-xs min-h-[92px] ${
-                                isCurrent
-                                    ? "bg-gray-950 text-white border-transparent shadow-md scale-[1.02]"
-                                    : "bg-white border-gray-200 hover:bg-gray-50 text-gray-600 hover:text-gray-900"
-                            }`}
-                        >
-                            <Icon className={`w-5 h-5 shrink-0 ${isCurrent ? "text-indigo-400 animate-pulse" : "text-gray-400"}`} />
-                            <span className="text-[11px] font-semibold leading-tight">{tab.label}</span>
-                        </button>
-                    );
-                })}
-            </div>
+
 
             {/* Filters Row */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
-                {/* Date presets */}
-                <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-200/60 max-w-fit">
-                    {(["last30", "thisMonth", "lastMonth", "thisYear", "custom"] as const).map((p) => {
-                        const labels: Record<string, string> = {
-                            last30: "Last 30 Days",
-                            thisMonth: "This Month",
-                            lastMonth: "Last Month",
-                            thisYear: "This Year",
-                            custom: "Custom Date",
-                        };
-                        return (
-                            <button
-                                key={p}
-                                onClick={() => setPreset(p)}
-                                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
-                                    preset === p
-                                        ? "bg-white text-gray-900 shadow-xs border border-gray-200/50"
-                                        : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
-                                }`}
-                            >
-                                {labels[p]}
-                            </button>
-                        );
-                    })}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 flex flex-col xl:flex-row items-stretch xl:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                    {/* Date presets */}
+                    <div className="flex flex-wrap gap-1.5 bg-gray-50 p-1 rounded-lg border border-gray-200/60 max-w-fit">
+                        {(["last30", "thisMonth", "lastMonth", "thisYear", "custom"] as const).map((p) => {
+                            const labels: Record<string, string> = {
+                                last30: "Last 30 Days",
+                                thisMonth: "This Month",
+                                lastMonth: "Last Month",
+                                thisYear: "This Year",
+                                custom: "Custom Date",
+                            };
+                            return (
+                                <button
+                                    key={p}
+                                    onClick={() => setPreset(p)}
+                                    className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors cursor-pointer ${
+                                        preset === p
+                                            ? "bg-white text-gray-900 shadow-xs border border-gray-200/50"
+                                            : "text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    }`}
+                                >
+                                    {labels[p]}
+                                </button>
+                            );
+                        })}
+                    </div>
+
+                    {/* Time Grouping (Overview only) */}
+                    {activeTab === "overview" && (
+                        <div className="flex items-center gap-2 border-l border-gray-200 pl-3">
+                            <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider select-none">Group By:</span>
+                            <div className="flex rounded-md border border-gray-200 bg-gray-50 p-0.5 overflow-hidden">
+                                {(["day", "week", "month", "year"] as const).map((t) => (
+                                    <button
+                                        key={t}
+                                        onClick={() => setTimeGrouping(t)}
+                                        className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md transition-colors cursor-pointer ${
+                                            timeGrouping === t
+                                                ? "bg-white text-gray-900 shadow-xs"
+                                                : "text-gray-500 hover:text-gray-800"
+                                        }`}
+                                    >
+                                        {t}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Date Inputs */}
@@ -848,6 +906,113 @@ export default function AdminReports() {
                 </div>
             </div>
 
+            {/* Visual Analytics Charts */}
+            {isMounted && !loading && data && sortedDataset.length > 0 && ["overview", "products", "categories", "geography", "payments"].includes(activeTab) && (
+                <div className="bg-white p-6 rounded-xl border border-gray-200 shadow-sm space-y-4">
+                    <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
+                        {activeTab.replace(/([A-Z])/g, " $1")} Visual Analytics
+                    </h3>
+                    <div className="h-80 w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            {activeTab === "overview" ? (
+                                <ComposedChart data={[...overviewData].reverse()} margin={{ top: 15, right: 30, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="overviewNetGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#4f46e5" stopOpacity={0.2} />
+                                            <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="label" stroke="#64748b" fontSize={11} tickLine={false} />
+                                    <YAxis yAxisId="left" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                                    <YAxis yAxisId="right" orientation="right" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    <Area yAxisId="left" type="monotone" dataKey="net" name="Net Sales" fill="url(#overviewNetGrad)" stroke="#4f46e5" strokeWidth={2.5} dot={{ r: 3, stroke: "#4f46e5", strokeWidth: 1.5, fill: "#fff" }} activeDot={{ r: 5 }} />
+                                    <Line yAxisId="right" type="monotone" dataKey="orders" name="Orders Count" stroke="#eab308" strokeWidth={2.5} dot={{ r: 2, stroke: "#eab308", strokeWidth: 1.5, fill: "#fff" }} />
+                                </ComposedChart>
+                            ) : activeTab === "products" ? (
+                                <BarChart data={[...productsData].sort((a, b) => b.total_revenue - a.total_revenue).slice(0, 8)} margin={{ top: 15, right: 30, left: 20, bottom: 20 }}>
+                                    <defs>
+                                        <linearGradient id="prodIndigoGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
+                                            <stop offset="100%" stopColor="#4f46e5" stopOpacity={0.4} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="product_name" stroke="#64748b" fontSize={10} tickLine={false} tickFormatter={(v) => v.length > 15 ? `${v.slice(0, 15)}...` : v} />
+                                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    <Bar dataKey="total_revenue" name="Sales Revenue" fill="url(#prodIndigoGrad)" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                                </BarChart>
+                            ) : activeTab === "categories" ? (
+                                <PieChart>
+                                    <Pie
+                                        data={categoriesData}
+                                        dataKey="total_revenue"
+                                        nameKey="category_name"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={85}
+                                        paddingAngle={4}
+                                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                                    >
+                                        {categoriesData.map((entry, index) => {
+                                            const colors = ["#c58b68", "#4f46e5", "#0d9488", "#d97706", "#8b5cf6", "#06b6d4", "#ec4899"];
+                                            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="#ffffff" strokeWidth={2} />;
+                                        })}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            ) : activeTab === "geography" ? (
+                                <BarChart data={geographyData.filter(g => g.type === "State").sort((a, b) => b.gross - a.gross).slice(0, 8)} margin={{ top: 15, right: 30, left: 20, bottom: 5 }}>
+                                    <defs>
+                                        <linearGradient id="geoTealGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#0d9488" stopOpacity={0.9} />
+                                            <stop offset="100%" stopColor="#14b8a6" stopOpacity={0.4} />
+                                        </linearGradient>
+                                    </defs>
+                                    <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
+                                    <XAxis dataKey="name" stroke="#64748b" fontSize={11} tickLine={false} />
+                                    <YAxis stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} tickFormatter={(v) => `₹${v}`} />
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="top" height={36} iconType="circle" />
+                                    <Bar dataKey="gross" name="State Gross Sales" fill="url(#geoTealGrad)" radius={[6, 6, 0, 0]} maxBarSize={32} />
+                                </BarChart>
+                            ) : activeTab === "payments" ? (
+                                <PieChart>
+                                    <Pie
+                                        data={paymentsData}
+                                        dataKey="gross"
+                                        nameKey="method"
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={85}
+                                        paddingAngle={4}
+                                        label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                                    >
+                                        {paymentsData.map((entry, index) => {
+                                            const colors = ["#0d9488", "#4f46e5", "#c58b68", "#ef4444"];
+                                            return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} stroke="#ffffff" strokeWidth={2} />;
+                                        })}
+                                    </Pie>
+                                    <Tooltip content={<CustomTooltip />} />
+                                    <Legend verticalAlign="bottom" height={36} iconType="circle" />
+                                </PieChart>
+                            ) : (
+                                <div className="flex items-center justify-center h-full text-slate-400 text-xs">
+                                    No chart visualization for this tab.
+                                </div>
+                            )}
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+            )}
+
             {/* Dashboard Table panel */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden flex flex-col min-h-[450px]">
                     
@@ -857,26 +1022,6 @@ export default function AdminReports() {
                             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
                                 {activeTab.replace(/([A-Z])/g, " $1")} Report
                             </h3>
-                            {activeTab === "overview" && (
-                                <div className="flex items-center gap-1.5 ml-2">
-                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider select-none">Group By:</span>
-                                    <div className="flex rounded-md border border-gray-200 bg-white p-0.5 overflow-hidden">
-                                        {(["day", "week", "month", "year"] as const).map((t) => (
-                                            <button
-                                                key={t}
-                                                onClick={() => setTimeGrouping(t)}
-                                                className={`px-2 py-1 text-[10px] font-bold uppercase rounded-md transition-colors cursor-pointer ${
-                                                    timeGrouping === t
-                                                        ? "bg-gray-900 text-white"
-                                                        : "text-gray-500 hover:text-gray-800"
-                                                }`}
-                                            >
-                                                {t}
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
                         </div>
 
                         {/* Search Input */}
@@ -1269,5 +1414,17 @@ export default function AdminReports() {
                 </div>
 
             </div>
+    );
+}
+
+export default function AdminReports() {
+    return (
+        <Suspense fallback={
+            <div className="p-8 flex items-center justify-center min-h-[400px]">
+                <div className="w-8 h-8 border-4 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+            </div>
+        }>
+            <AdminReportsContent />
+        </Suspense>
     );
 }

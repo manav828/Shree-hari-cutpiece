@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { trackAddToCart } from "@/lib/tracking";
+import { supabase } from "@/lib/supabase";
 
 export interface CartItemOption {
   group_id?: string;
@@ -66,9 +67,30 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage and sync to database whenever it changes
   useEffect(() => {
     localStorage.setItem("shreehari-cart", JSON.stringify(items));
+
+    const syncCart = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id || null;
+
+        await fetch("/api/cart/sync", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userId,
+            cartItems: items
+          })
+        });
+      } catch (err) {
+        console.error("Cart sync failed:", err);
+      }
+    };
+
+    const timer = setTimeout(syncCart, 1000);
+    return () => clearTimeout(timer);
   }, [items]);
 
   const buildOptionsKey = (options?: CartItemOption[]) => {
@@ -119,7 +141,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const updateQuantity = (id: string, meters: number) => {
-    if (meters < 1) {
+    if (meters <= 0) {
       removeFromCart(id);
       return;
     }

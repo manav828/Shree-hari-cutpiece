@@ -12,7 +12,9 @@ import {
     RefreshCw
 } from "lucide-react";
 import { fetchDashboardMetrics, DashboardMetricsResponse } from "@/app/actions/dashboardStats";
-import { Table, TableBody, TableRow, TableCell } from "@/components/admin/ui/Table";
+import { Table, TableBody, TableRow, TableCell, TableHeader, TableHead } from "@/components/admin/ui/Table";
+import OrderStatusBadge from "@/components/admin/orders/OrderStatusBadge";
+import Link from "next/link";
 
 export default function AdminDashboard() {
     const [dashboardData, setDashboardData] = useState<DashboardMetricsResponse | null>(null);
@@ -47,11 +49,13 @@ export default function AdminDashboard() {
         }
     };
 
-    const { liveStats, comparisons, chartData, disabledRlsTables } = dashboardData || {
+    const { liveStats, comparisons, chartData, disabledRlsTables, recentOrders, lowStockVariants } = dashboardData || {
         liveStats: { totalSales: 0, activeOrders: 0, totalProducts: 0, totalCustomers: 0 },
         comparisons: [],
         chartData: [],
-        disabledRlsTables: []
+        disabledRlsTables: [],
+        recentOrders: [],
+        lowStockVariants: []
     };
 
     const leftSide = useMemo(() => {
@@ -560,17 +564,115 @@ export default function AdminDashboard() {
 
             {/* Bottom Grid for Orders and Stock */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <h3 className="font-playfair font-bold text-lg mb-4 text-gray-900">Recent Orders</h3>
-                    <div className="flex items-center justify-center h-48 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-sm">No recent orders found</p>
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-playfair font-bold text-lg text-gray-900">Recent Orders</h3>
+                        <Link href="/admin/orders" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                            View All
+                        </Link>
                     </div>
+                    {recentOrders && recentOrders.length > 0 ? (
+                        <div className="grow overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Order #</TableHead>
+                                        <TableHead>Customer</TableHead>
+                                        <TableHead>Date</TableHead>
+                                        <TableHead>Status</TableHead>
+                                        <TableHead className="text-right">Amount</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {recentOrders.map((order) => (
+                                        <TableRow key={order.id}>
+                                            <TableCell className="font-mono text-xs font-bold text-indigo-600">
+                                                <Link href={`/admin/orders/${order.id}`} className="hover:underline">
+                                                    {order.order_number}
+                                                </Link>
+                                            </TableCell>
+                                            <TableCell className="font-medium">{order.customer_name}</TableCell>
+                                            <TableCell className="text-xs text-slate-500">
+                                                {new Date(order.created_at).toLocaleDateString("en-IN", {
+                                                    day: "numeric",
+                                                    month: "short",
+                                                    year: "numeric"
+                                                })}
+                                            </TableCell>
+                                            <TableCell>
+                                                <OrderStatusBadge status={order.status} />
+                                            </TableCell>
+                                            <TableCell className="text-right font-semibold">
+                                                ₹{order.total_amount.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center grow min-h-48 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 p-4">
+                            <ShoppingBag className="w-8 h-8 text-slate-300 mb-2" />
+                            <p className="text-slate-400 text-sm">No recent orders found</p>
+                        </div>
+                    )}
                 </div>
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                    <h3 className="font-playfair font-bold text-lg mb-4 text-gray-900">Low Stock Alerts</h3>
-                    <div className="flex items-center justify-center h-48 bg-gray-50 rounded-lg border border-dashed border-gray-200">
-                        <p className="text-gray-400 text-sm">Inventory is healthy</p>
+
+                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex flex-col">
+                    <div className="flex items-center justify-between mb-4">
+                        <h3 className="font-playfair font-bold text-lg text-gray-900">Low Stock Alerts</h3>
+                        <Link href="/admin/products/stock" className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 transition-colors">
+                            Manage Stock
+                        </Link>
                     </div>
+                    {lowStockVariants && lowStockVariants.length > 0 ? (
+                        <div className="grow overflow-hidden">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead>Product</TableHead>
+                                        <TableHead>Variant</TableHead>
+                                        <TableHead>SKU</TableHead>
+                                        <TableHead>Stock</TableHead>
+                                        <TableHead className="text-right">Action</TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {lowStockVariants.map((variant) => (
+                                        <TableRow key={variant.id}>
+                                            <TableCell className="font-medium max-w-[150px] truncate" title={variant.product_name}>
+                                                {variant.product_name}
+                                            </TableCell>
+                                            <TableCell>{variant.color_name}</TableCell>
+                                            <TableCell className="font-mono text-xs text-slate-500">{variant.sku || "-"}</TableCell>
+                                            <TableCell>
+                                                <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold ${
+                                                    variant.stock <= 5 
+                                                        ? "bg-red-50 text-red-700" 
+                                                        : "bg-amber-50 text-amber-700"
+                                                }`}>
+                                                    {variant.stock} left
+                                                </span>
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Link 
+                                                    href={`/admin/products/stock`}
+                                                    className="text-xs font-bold text-indigo-600 hover:text-indigo-800 transition-colors"
+                                                >
+                                                    Restock
+                                                </Link>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    ) : (
+                        <div className="flex flex-col items-center justify-center grow min-h-48 bg-slate-50/50 rounded-xl border border-dashed border-slate-200 p-4">
+                            <Layers className="w-8 h-8 text-slate-300 mb-2" />
+                            <p className="text-slate-400 text-sm">Inventory is healthy</p>
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

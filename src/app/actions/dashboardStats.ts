@@ -22,26 +22,66 @@ export interface LiveStats {
     totalCustomers: number;
 }
 
+export interface RecentOrder {
+    id: string;
+    order_number: string;
+    created_at: string;
+    status: string;
+    total_amount: number;
+    customer_name: string;
+}
+
+export interface LowStockVariant {
+    id: string;
+    product_name: string;
+    color_name: string;
+    sku: string | null;
+    stock: number;
+}
+
 export interface DashboardMetricsResponse {
     liveStats: LiveStats;
     comparisons: ComparisonMetric[];
     chartData: ChartPoint[];
     disabledRlsTables?: string[];
+    recentOrders?: RecentOrder[];
+    lowStockVariants?: LowStockVariant[];
 }
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetricsResponse> {
     try {
-        // 1. Fetch live overview stats from database
+        // 1. Fetch live overview stats, recent orders, and low stock variants from database
         const [
             { count: totalProductsCount },
             { count: totalCustomersCount },
             { count: activeOrdersCount },
-            { data: paidOrdersData }
+            { data: paidOrdersData },
+            recentOrdersRes,
+            lowStockRes
         ] = await Promise.all([
             supabaseAdmin.from("products").select("id", { count: "exact", head: true }),
             supabaseAdmin.from("profiles").select("id", { count: "exact", head: true }),
             supabaseAdmin.from("orders").select("id", { count: "exact", head: true }).in("status", ["pending", "processing", "shipped"]),
-            supabaseAdmin.from("orders").select("total_amount").eq("payment_status", "paid")
+            supabaseAdmin.from("orders").select("total_amount").eq("payment_status", "paid"),
+            supabaseAdmin.from("orders").select(`
+                id,
+                order_number,
+                created_at,
+                status,
+                total_amount,
+                profiles (
+                    full_name
+                )
+            `).order("created_at", { ascending: false }).limit(8),
+            supabaseAdmin.from("product_variants").select(`
+                id,
+                color_name,
+                stock,
+                sku,
+                products (
+                    name
+                )
+            `).lt("stock", 20).order("stock", { ascending: true }).limit(10)
         ]);
 
         const totalSalesSum = (paidOrdersData ?? []).reduce(
@@ -55,6 +95,30 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetricsResponse>
             totalProducts: totalProductsCount ?? 0,
             totalCustomers: totalCustomersCount ?? 0
         };
+
+        if (recentOrdersRes.error) {
+            console.error("Error fetching recent orders:", recentOrdersRes.error);
+        }
+        if (lowStockRes.error) {
+            console.error("Error fetching low stock variants:", lowStockRes.error);
+        }
+
+        const recentOrders: RecentOrder[] = (recentOrdersRes.data ?? []).map((o: any) => ({
+            id: o.id,
+            order_number: o.order_number,
+            created_at: o.created_at,
+            status: o.status,
+            total_amount: Number(o.total_amount || 0),
+            customer_name: o.profiles?.full_name || "Guest"
+        }));
+
+        const lowStockVariants: LowStockVariant[] = (lowStockRes.data ?? []).map((v: any) => ({
+            id: v.id,
+            product_name: v.products?.name || "Unknown Product",
+            color_name: v.color_name,
+            sku: v.sku,
+            stock: v.stock
+        }));
 
         // 2. Fetch all non-cancelled orders to compute comparisons and charts
         const { data: orders, error } = await supabaseAdmin
@@ -213,14 +277,16 @@ export async function fetchDashboardMetrics(): Promise<DashboardMetricsResponse>
             console.error("Failed to query disabled RLS tables:", rlsErr);
         }
 
-        return { liveStats, comparisons, chartData, disabledRlsTables };
+        return { liveStats, comparisons, chartData, disabledRlsTables, recentOrders, lowStockVariants };
     } catch (err: any) {
         console.error("Error fetching dashboard statistics:", err);
         return {
             liveStats: { totalSales: 0, activeOrders: 0, totalProducts: 0, totalCustomers: 0 },
             comparisons: [],
             chartData: [],
-            disabledRlsTables: []
+            disabledRlsTables: [],
+            recentOrders: [],
+            lowStockVariants: []
         };
     }
 }

@@ -1,420 +1,209 @@
-# Shree Hari Admin Panel - Complete User Guide
+# Shree Hari Admin Panel - Complete Development & Knowledge Bank Guide
 
-This guide documents the full admin panel as currently implemented.
-It includes module behavior, admin workflows, technical API mapping, and known gaps.
+This document is the master knowledge bank for the Shree Hari e-commerce admin panel. It covers all features, operational checklists, database structures, Next.js cache revalidation keys, and custom resolver overrides.
 
-## 1) Admin Access and Navigation
-
-### Login flow
-- Admin login page: `/admin/login`
-- Current login is client-side only:
-  - Valid email: `manavss828@gmail.com`
-  - Valid password: `shreehari828`
-- On success, localStorage key `shreehari_admin_auth=true` is set.
-- Admin layout checks this key and redirects unauthorized users to `/admin/login`.
-- Logout removes that key and returns to login.
-
-Important:
-- This is not server-authenticated admin access. It is a temporary guard for internal usage.
-
-### Layout and menu
-Main admin routes in sidebar:
-- Dashboard
-- Products
-- Orders
-- Customers
-- Coupons
-- Blog
-- Reports
-- Settings
-
-The layout supports:
-- Desktop fixed sidebar
-- Mobile slide-out menu
-- Shared top-level shell for all admin pages
-
-## 2) Dashboard Module (`/admin`)
-
-Status: Placeholder
-
-What exists:
-- Static cards for Total Sales, Active Orders, Total Products, Customers
-- Placeholder blocks for Recent Orders and Low Stock Alerts
-
-What does not exist yet:
-- Real data binding
-- Live recent order feed
-- Low stock analytics
-
-## 3) Products Module (`/admin/products`)
-
-Status: Implemented and functional
-
-### Product listing page
-Capabilities:
-- Loads products with category and variants
-- Search by product name and variant color
-- Filters:
-  - Category
-  - Sell mode (`meter` or `quantity`)
-  - Status (`active` / draft)
-- Product row actions:
-  - View storefront page
-  - Edit product
-  - Delete product (with confirmation)
-- Active toggle directly from list
-- Stock awareness (in stock / low / out of stock)
-
-Data source:
-- Supabase client queries directly from UI:
-  - `products`
-  - `product_variants`
-  - `variant_images`
-  - `categories`
-
-### Create product page (`/admin/products/new`)
-Capabilities:
-- Multi-step style editor:
-  - Product details (short description, category)
-  - Product description (HTML/CSS) and care fields
-  - Selling mode and discount display style
-  - Color variants
-  - Product options (radio, multi-select, dropdown, input + validation)
-  - SEO metadata (meta, canonical, OG, Twitter card)
-  - Product content (long description, highlights, FAQs)
-  - Recommended products (You May Also Like)
-- Variant-level management:
-  - Color name and swatch
-  - Price and original price
-  - SKU
-  - Stock
-  - Default variant selector
-  - Multiple media uploads (image/video)
-  - Primary media selection per variant
-- Publish or Save as Draft
-
-Storage:
-- Uploads to Supabase Storage bucket `product-images`
-
-### Edit product page (`/admin/products/[id]/edit`)
-Capabilities:
-- Full product edit with tabbed sections
-- Dynamic fabric details key-value rows
-- Variant CRUD and media management
-- Options tab (groups, values, required rules, validation)
-- SEO tab (meta title/description, canonical, OG, Twitter)
-- Content tab (long description, highlights, FAQs)
-- Recommendations (select products to show in You May Also Like)
-- Pricing normalization logic during save (original price correction)
-- View-on-store shortcut
-- Product delete action from edit view
-
-### Category management (`/admin/products/categories`)
-Capabilities:
-- List categories
-- Add category
-- Edit category name/slug
-- Delete category
-
-## 4) Orders Module (`/admin/orders`)
-
-Status: Implemented and functional
-
-### Orders list page
-Capabilities:
-- Top stats cards:
-  - Total orders
-  - Pending orders
-  - Shipped today
-  - Revenue today
-- Filters:
-  - Search (order number, customer name/phone behavior)
-  - Order status
-  - Payment status
-  - Date range
-- Paginated order table with:
-  - Order number
-  - Date/time
-  - Customer snapshot
-  - Collapsible products preview
-  - Payment badge
-  - Status badge
-- Quick actions:
-  - View order detail
-  - Print label/invoice
-
-### Order detail page (`/admin/orders/[id]`)
-Capabilities:
-- Full order summary and timeline
-- Sections:
-  - Customer info
-  - Shipping address
-  - Itemized product table
-  - Amount breakdown
-  - Payment info
-  - Coupon details (if used)
-  - Status history timeline
-- Custom status color support via settings-managed statuses
-- Unified action panel (`OrderActions`) for:
-  - Status update
-  - Tracking update
-  - Admin notes update
-
-### Print page (`/admin/orders/[id]/print`)
-Capabilities:
-- Invoice-style printable layout
-- Shipping and order line item details
-- Print button for hardcopy workflow
-
-### Order backend logic
-Core utility: `src/lib/orders.ts`
-- `getOrderStats()`
-- `fetchOrders(filters)`
-- `fetchOrderById(id)`
-- `fetchOrderUserEmail(userId)`
-
-Server actions: `src/app/actions/order.ts`
-- `updateOrderStatus(orderId, newStatus, note?)`
-- `updateOrderTracking(orderId, trackingUrl)`
-- `updateOrderNotes(orderId, notes)`
-
-## 5) Customers Module (`/admin/customers`)
-
-Status: Implemented and functional
-
-### Customer list page
-Capabilities:
-- Search by name/email/phone
-- Filters:
-  - Account status
-  - Registration date range
-  - Last order date range
-  - Order count buckets
-  - Lifetime value min/max
-- Pagination with configurable page size
-- CSV export with full filter parity
-- Table columns include:
-  - Identity fields
-  - Join and last order dates
-  - Total orders
-  - Lifetime value
-  - Account status
-
-### Customer detail page (`/admin/customers/[id]`)
-Capabilities:
-- Profile summary and key metrics
-- Order history with expandable drilldown cards
-- Quick links to related order and print pages
-- Profile controls:
-  - Account status change (`active`, `suspended`, `blocked`)
-  - Internal notes
-- Interaction timeline
-- Note creation
-- Address management:
-  - Add
-  - Edit
-  - Soft delete
-  - Set default shipping/billing
-- Quick action buttons for status presets and email shortcut
-
-### Customer APIs
-- `GET /api/admin/customers`
-  - Filtered + paginated list
-- `GET /api/admin/customers/export`
-  - CSV export using same filters
-- `GET /api/admin/customers/[id]`
-  - Full customer detail payload
-- `PATCH /api/admin/customers/[id]`
-  - Profile/status/preferences updates
-- `GET /api/admin/customers/[id]/interactions`
-  - Interaction feed
-- `POST /api/admin/customers/[id]/notes`
-  - Add interaction note
-- `POST /api/admin/customers/[id]/addresses`
-  - Add address
-- `PATCH /api/admin/customers/[id]/addresses`
-  - Update address or defaults
-- `DELETE /api/admin/customers/[id]/addresses`
-  - Soft delete address
-
-## 6) Coupons Module (`/admin/coupons`)
-
-Status: Implemented and functional
-
-### Coupon list page
-Capabilities:
-- Analytics cards:
-  - Total coupons
-  - Active coupons
-  - Total redemptions
-  - Total discount spend
-  - Influenced revenue
-- Search by code/name
-- Coupon table with:
-  - Discount details
-  - Eligibility rules
-  - Placement visibility
-  - Status
-- Actions:
-  - Edit
-  - Activate/Deactivate
-
-### Create coupon (`/admin/coupons/new`)
-Capabilities:
-- Full coupon form with strong client validation:
-  - Code and name
-  - Discount type/value
-  - Caps and thresholds
-  - Usage limits
-  - Start/end date
-  - Status
-  - Banner/modal visibility toggles
-  - Destination URL + preset routes
-  - User-specific mode and assignments
-
-### Edit coupon (`/admin/coupons/[id]`)
-Capabilities:
-- Loads coupon + assigned users
-- Updates all major fields
-- Updates assigned user list
-
-### Coupon APIs
-- `GET /api/admin/coupons`
-- `POST /api/admin/coupons`
-- `GET /api/admin/coupons/[id]`
-- `PATCH /api/admin/coupons/[id]`
-- `GET /api/admin/coupons/analytics`
-- `GET /api/admin/users`
-  - Used to assign coupons to specific users
-
-## 7) Settings Module (`/admin/settings`)
-
-Status: Implemented and functional
-
-### Theme management
-Capabilities:
-- Select active storefront theme:
-  - `classic`
-  - `luxury`
-- Saves selection in `site_settings` key `active_theme`
-
-Important:
-- This controls storefront rendering, not admin panel styling.
-
-### Custom order status management
-Capabilities:
-- Create status label + color
-- Edit status label + color
-- Delete custom status
-- Live usage in orders module badges
-
-API + actions involved:
-- `GET /api/admin/custom-statuses`
-- Server actions in `src/app/actions/customStatus.ts`:
-  - `fetchCustomStatuses`
-  - `createCustomStatus`
-  - `updateCustomStatus`
-  - `deleteCustomStatus`
-
-## 8) Blog Module (`/admin/blog`)
-
-Status: Implemented and functional
-
-### Blog list page
-Capabilities:
-- Summary cards: Published Posts, Views (last 30 days), Product Clicks (last 30 days), Top Post
-- Filters: search, status, language, category, tags, date range, rows per page
-- Row actions: Edit, View Live (published only)
-- Bulk actions: Publish, Unpublish, Delete
-- Inline updates: status changes, scheduled datetime (IST)
-- Health badges: Low Traffic, SEO Incomplete, Related Products Missing (when enabled)
-
-APIs used:
-- `GET /api/admin/blogs`
-- `PATCH /api/admin/blogs`
-- `GET /api/admin/blogs/analytics`
-- `GET /api/admin/blogs/notifications`
-
-### Blog editor page (`/admin/blog/new`, `/admin/blog/[id]`)
-Capabilities:
-- Metadata: title, slug, summary, cover image, category, tags, language, author, status, schedule (IST)
-- Display options: show header/title, show cover image, show share buttons
-- Code editor: HTML/CSS/JS with inline preview and popup preview
-- SEO: meta title/description, canonical, OG title/description/image, Twitter card, robots, schema toggle
-- Relations: language variants, related posts (max 5)
-- Recommended products: toggle, custom section title, searchable multi-select (max 10)
-- Media library for cover/OG images
-- Revision history and redirect history
-
-APIs used:
-- `GET /api/admin/blogs/[id]`
-- `POST /api/admin/blogs`
-- `PATCH /api/admin/blogs/[id]`
-- `GET /api/admin/blogs/[id]/revisions`
-- `POST /api/admin/blogs/[id]/revisions`
-- `GET /api/admin/blogs/[id]/validate`
-- `GET /api/admin/blogs/categories`
-- `GET /api/admin/blogs/tags`
-- `GET /api/admin/blogs/media`
-- `POST /api/admin/blogs/media`
-- `PATCH /api/admin/blogs/media`
-- `DELETE /api/admin/blogs/media`
-- `GET /api/admin/products/search`
-
-## 9) Reports Module (`/admin/reports`)
-
-Status: Placeholder
-
-Current behavior:
-- Shows static placeholder panel only.
-- No charting, date slicing, export, or analytics pipeline wired yet.
-
-## 10) Related Account-Side Features Completed (Storefront User Area)
-
-These are outside `/admin` UI but impact admin operations and support workflows:
-- Account dashboard stats/recent orders page
-- Profile management page
-- Address book and preference pages
-- Account data export API: `/api/account/export`
-- Delete request API: `/api/account/delete-request`
-
-This supports customer service and compliance flows that admins can coordinate with customers.
-
-## 11) Module Status Summary
-
-Implemented:
-- Products
-- Orders
-- Customers
-- Coupons
-- Blog
-- Settings (themes + custom statuses)
-- Admin shell/navigation
-
-Partially implemented:
-- Dashboard (UI present, data mostly static)
-
-Not implemented (placeholder only):
-- Reports/analytics dashboards
-
-## 12) Known Risks and Limitations
-
-1. Admin authentication is localStorage-based and hardcoded in UI.
-2. Dashboard metrics are static placeholders.
-3. Reports module is not yet functional.
-4. Several admin screens use direct Supabase client calls from browser.
-5. Blog editor supports custom HTML/CSS/JS; enforce review before publish.
-6. Production hardening still needed for role-based access enforcement and audit controls.
-
-## 13) Suggested Next Build Priorities
-
-1. Replace hardcoded admin login with server-side auth + role checks.
-2. Connect dashboard cards/widgets to real analytics queries.
-3. Implement Reports module with date filters and export.
-4. Add stronger audit logs for admin actions across modules.
-5. Add approval workflow/permissions for blog publishing.
+The guide is organized into exactly **11 sections**, matching the sidebar navigation menu in the admin dashboard.
 
 ---
 
-Guide scope note:
-This document reflects the current code implementation state at the time of writing, including both completed and placeholder modules.
+## 1. Dashboard Module (`/admin`)
+
+### Operations Handbook
+- **Daily Check**: Verify Total Sales, Active Orders, Total Products, and Customer Metrics.
+- **Stock Alert**: Review the **Low Stock Alerts** table to identify variant levels that are dropping below 20 items or meters.
+- **Active Orders Feed**: Check the **Recent Orders** feed to see newly placed checkout records requiring fulfillment.
+- **Security Check**: Verify the Row Level Security (RLS) check at the bottom. If any warning indicates disabled security policies, contact technical support.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Admin Dashboard Overview - Recent Orders & Low Stock Tables]`
+
+### Technical Details
+- **Data Action**: `src/app/actions/dashboardStats.ts` fetches metrics in parallel using server-side queries.
+- **Recent Orders Query**: Joins the orders table with `profiles` to pull shopper names, limited to the 8 most recent rows.
+- **Low Stock Query**: Joins `product_variants` with `products` where `stock < 20`, limited to the top 10 items.
+- **Cache Control**: Real-time stats skip static cache to ensure data freshness.
+- **RLS Audit**: CallsSupabase RPC `get_disabled_rls_tables` to identify tables lacking row-level security policies.
+
+---
+
+## 2. Products & Inventory (`/admin/products`)
+
+### Operations Handbook
+- **Product Setup**: Define standard fields (name, slug, description, category, and care tips).
+- **Selling Modes**: Select **Quantity** (for pieces/items) or **Meters** (for fabrics).
+- **Color Variants**: Define color swatch values, SKUs, inventory counts, pricing, and original prices (for discounts).
+- **Fabric Calculator**: Fabric products show a "Calculate Fabric Need" modal on the storefront. Admins can configure presets for various garments (Kurti, Salwar, Shirt) and size categories. The calculator computes yard requirements and converts them to meters, automatically rounding up to the nearest **0.5m** (e.g. 2.3m rounds to 2.5m) to prevent shipping shortages.
+- **Reviews Approval**: Toggle reviews status directly to prevent spam from appearing on the storefront.
+- **Reviews Curation**: Create reviews manually, select star rating, type comments, and upload customer photo/video assets.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Admin Product Creator - Color Variant Hex Swatch Picker & Media Uploader]`
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Reviews Moderation Queue - Curated Review Creation Dialog]`
+
+### Technical Details
+- **Database Tables**:
+  - `products` (Core product details)
+  - `product_variants` (SKU, price, original_price, swatch, stock)
+  - `variant_images` (Image maps per variant)
+  - `categories` (Product tax and slug groupings)
+  - `product_option_groups` & `product_option_values` (Custom options)
+- **Webpack Custom Override Resolver**: The build engine (`next.config.mjs`) intercepts imports. If a file exists in the active theme's changes directory (e.g. `changes/components/shop/ProductDetailClient.tsx`), it overwrites the `core/` file at compile time.
+- **Calculator Presets**: Defined in `src/components/FabricCalculator.tsx` with garment modifiers and dimensions.
+  - Formula: `rawMeters = basePreset * widthFactor * sizeFactor`
+  - Rounding helper: `Math.max(0.5, Math.ceil(rawMeters * 2) / 2)`
+- **Media Upload Bucket**: Files are uploaded to the `product-images` storage bucket.
+- **Cache Tags**: `revalidateTag("products")` must be fired on product changes.
+
+---
+
+## 3. Orders & Fulfillment (`/admin/orders`)
+
+### Operations Handbook
+- **Order Lifecycle**: Advance orders through statuses: `Pending` -> `Confirmed` -> `Processing` -> `Shipped` -> `Delivered` -> `Cancelled`.
+- **Fulfillment**: Click the order row, review details, change status to Processing to confirm packing, then change to Shipped, adding the courier tracking URL.
+- **Invoice Downloads**: Print standard packing lists or click the **Download Invoice** button to instantly save a client-side generated PDF invoice.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Order Details - Status Transition Dropdown and Download Invoice Button]`
+
+### Technical Details
+- **Fulfillment Actions**: Handled in `src/app/actions/order.ts` (methods `updateOrderStatus`, `updateOrderTracking`).
+- **PDF Compilation**: Renders PDF templates using the `jspdf` library in `src/utils/invoice/InvoiceGenerator.ts`. It extracts order headers, customer shipping addresses, product line items, and totals.
+- **Invoice Styling**: Brand accent terracotta `#9f3f29`, background beige `#faf8f5`, text foreground `#1c1c19`. Text auto-wrapping uses `doc.splitTextToSize`.
+- **Status Audits**: Transitions append logging entries to the database status timeline in `public.order_status_history`.
+- **Custom Status Registry**: Links to `public.order_custom_statuses`. Custom status insertion requires dropping the database-level `orders_status_check` constraint.
+
+---
+
+## 4. Customers & Accounts (`/admin/customers`)
+
+### Operations Handbook
+- **Shopper Timelines**: Search customer rows, view their order history, and leave internal support notes.
+- **Address Management**: Correct customer shipment address typos or set default shipping/billing targets.
+- **Soft Deletion Compliance**: When a customer requests account deletion, the system performs a soft deletion. This anonymizes personal identification fields (email, name, phone, address records) and disables login capabilities, while keeping order statistics intact for accurate monthly sales accounting.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Customer Directory - Lifetime Value Dashboard and Search Filters]`
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Customer Detail Page - Privacy Actions and Anonymize Dialog]`
+
+### Technical Details
+- **List View Query**: Queries the `admin_customer_summary` database view to optimize pagination and CSV exports.
+- **Soft Deletion Endpoint**: `src/app/api/account/delete-request/route.ts` runs anonymization SQL calls. It changes user email to `deleted-${userId}@ecomshrihari.local`, randomizes the password, and updates account status in `profiles` to `deleted`.
+- **Default Address Invariant**: Address creation calls default-clearing SQL scripts to ensure that each customer profile retains only one default billing and one default shipping address.
+
+---
+
+## 5. Coupons & Discounts (`/admin/coupons`)
+
+### Operations Handbook
+- **Discount Types**: Create codes with percentage-based (e.g., 10% off) or fixed-amount (e.g., ₹200 off) discounts.
+- **Usage Rules**: Enforce expiration dates, cart minimum limits, and maximum use caps.
+- **User-Specific Constraints**: Enable the targeted coupon option and select which customer emails are eligible to redeem the code. Unassigned users will see validation errors if they try to apply it.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Coupon Creator - User-Targeted Account Lookup]`
+
+### Technical Details
+- **Database Tables**:
+  - `coupons` (Discount rules and constraints)
+  - `coupon_user_assignments` (User profile mappings for targeted campaigns)
+  - `coupon_redemptions` (Usage log history)
+- **Validation Pipeline**: Checks constraints (subtotal thresholds, user ID matches, expiration dates) before modifying the checkout cart total.
+- **Atomic Locking Redemption**: Uses `redeem_coupon_atomic` database function with a pg advisory transaction lock to protect against race conditions.
+- **Influenced Revenue Calculation**: Queries order tables by filtering records that redeemed the target coupon code.
+
+---
+
+## 6. Content Management (CMS) (`/admin/cms`, `/admin/blog`)
+
+### Operations Handbook
+- **Homepage Sliders**: Add announcement bars, main hero images, and promotional popups. Banners can be scheduled with active date windows.
+- **Hero Layouts**: Select Contained or Full Width layouts for the storefront main slider.
+- **Blog Engine**: Write blog articles with rich visual sections, cover images, and SEO metadata. Alt text is mandatory for images before publishing.
+- **Blog Scheduler**: Schedule blog posts to publish automatically by selecting a future date and time in Indian Standard Time (IST).
+- **Email Notification Templates**: Customize templates for transaction alerts (Order Placed, Payment Received, Order Shipped).
+- **Screenshot Placeholder**: `[Screenshot Placeholder: CMS Banners - Priority Ordering and Upload Panel]`
+- **Screenshot Placeholder**: `[Screenshot Placeholder: CMS Blog Editor - Schedule Timestamp and Alt Text Requirement]`
+
+### Technical Details
+- **Banners Grouping**: Banners are stored in the `banners` table. The admin page aggregates hero rows into a single synthetic group. Banners support relative paths and absolute link URLs.
+- **Scheduler Webhook**: `src/app/api/admin/blogs/scheduler/route.ts` is triggered by a cron job. It queries posts where status is `scheduled` and publish date is <= current time, running syntax validations and updating status to `published`.
+- **Revision History**: Saves snapshots in `blog_post_revisions` on post edits to support rollbacks.
+- **Cache Tags**: `revalidateTag("cms_banners")`, `revalidateTag("cms_categories")`, `revalidateTag("blog_posts")`.
+
+---
+
+## 7. Documentation & Search (`/admin/documentation`)
+
+### Operations Handbook
+- **Knowledge Base**: Access operations checklists, step-by-step task guides, and technical configurations.
+- **Prominent Search**: Enter any keyword (e.g. \"GST\", \"Delhivery\", \"calculator\") to instantly filter help sections. Matching task steps will be highlighted and displayed directly on the card preview.
+- **Developer Mode Toggle**: Standard admins will see simple merchant checklists by default. Toggle \"Developer Mode\" to reveal database schemas, API routes, and code references.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Admin Documentation - Search Highlight and Developer Toggle]`
+
+### Technical Details
+- **Routing Structure**:
+  - Handbook: `/admin/documentation/handbook/[sectionId]`
+  - Technical: `/admin/documentation/technical/[sectionId]`
+- **Keyword Highlighting**: A RegEx match parsing script splits content strings and wraps matching terms in `<mark>` highlight tags.
+- **Settings Persistence**: Stores the Developer Mode state in browser `localStorage` under `shreehari_docs_mode`.
+
+---
+
+## 8. Reports & Sales Analytics (`/admin/reports`)
+
+### Operations Handbook
+- **Reports Dashboard**: Review total revenue, average order value, payment distributions, and order growth.
+- **Date Slicing**: Adjust date parameters (Today, Last 7 Days, Custom Date Range) to parse metrics.
+- **Data Export**: Export reports directly to CSV spreadsheets for offline bookkeeping.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Sales Reports - Date Preset Filter and CSV Export Trigger]`
+
+### Technical Details
+- **SQL Aggregations**: Queries the `orders` table to compute sums and counts, grouping records by payment status.
+- **Recharts Configurations**:
+  - `ComposedChart`: Combines Area plot (revenue) and Line plot (order counts).
+  - Donut charts: Configured with `innerRadius={60}`, `outerRadius={85}`, `paddingAngle={4}` for categories.
+- **CSV Writer**: Streams string buffer data directly to client browser attachment packages, escaping comma inputs.
+
+---
+
+## 9. Payments Gateways & COD Surcharges (`/admin/payments`)
+
+### Operations Handbook
+- **Razorpay Settings**: View configured API keys. Online checkout validation ensures payment signatures match.
+- **COD Surcharges**: Configure extra fees (e.g. ₹50) applied on cash-on-delivery checkouts.
+- **Transaction Logs**: Audit transaction signature records to resolve checkout payment issues.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Payment Settings - API Credentials and COD Configuration]`
+
+### Technical Details
+- **Signature Verification**: `src/payments/razorpay/api/verify-payment.ts` confirms Razorpay payments using SHA256 HMAC validation checks on order payloads.
+- **COD Payment Status**: If the checkout is COD with a partial advance payment, the verification route catches the signature, updates order status to `pending`, and updates payment status to `advance_paid` while retaining the `cod` payment method.
+
+---
+
+## 10. Shipping & Fulfillment Providers (`/admin/shipping`)
+
+### Operations Handbook
+- **Fulfillment Partners**: Add keys and credentials for Shiprocket and Delhivery, or select Manual shipping.
+- **State-based Shipping Zones**: Group any of India's 36 states and Union Territories into custom zones. Set flat delivery fees for each zone (e.g. South Zone: ₹80, North-East: ₹150) that apply to orders below the free shipping threshold.
+- **Free Shipping Limit**: Set a global free shipping threshold (e.g., free shipping on orders above ₹1500).
+- **COD Advance Payments**: Require customers to pay a partial advance online via Razorpay for COD orders. This can be configured as a flat amount (e.g. ₹100) or a percentage of the cart total (e.g. 15%). The order is confirmed only after the advance payment is verified.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Shipping Settings - State Allocation Map and Zone Config]`
+
+### Technical Details
+- **Calculation Utility**: `src/lib/shipping/rates.ts` contains the core calculation function:
+  ```typescript
+  export function calculateCheckoutDetails(params: {
+      subtotal: number;
+      shippingState: string;
+      paymentMethod: string;
+      settings: Record<string, string>;
+  }): CheckoutDetails;
+  ```
+- **State Groups Mapping**: Stored in the `site_settings` table as a JSON string under the key `shipping_state_groups`.
+- **Public Rate API**: `/api/checkout/shipping-rates` returns calculations to the checkout widget securely without exposing API keys.
+
+---
+
+## 11. Settings & Cache Setup (`/admin/settings`)
+
+### Operations Handbook
+- **Theme Selection**: Toggle the storefront layout theme (e.g., Classic vs Luxury) from settings.
+- **Custom Order Statuses**: Create custom order status labels with custom colors (e.g., \"Ready for Dispatch\" in Blue). Once created, these options instantly appear in order status dropdowns.
+- **Cache Control**: Manually trigger cache bust actions to refresh storefront catalog caches immediately.
+- **Screenshot Placeholder**: `[Screenshot Placeholder: Settings Panel - Custom Status Registry and Cache Bust Trigger]`
+
+### Technical Details
+- **Site Settings Schema**: Stores configurations in the `site_settings` table (key-value JSONB records).
+- **Custom Status Schema**: Reads and writes custom badge variables to the `order_custom_statuses` table.
+- **Cache Bust Endpoint**: Sends invalidation tags (e.g., `revalidateTag`) to Next.js routes to clear cached layouts (`products`, `cms_banners`, `cms_categories`, `site_config`, `blog_posts`).

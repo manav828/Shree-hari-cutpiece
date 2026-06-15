@@ -1,7 +1,7 @@
 import sys
 import os
 
-skill_path = r"C:\Users\manav\.gemini\antigravity\skills\ui-ux-pro-max\scripts"
+skill_path = r"C:\Users\manav\.gemini\config\skills\ui-ux-pro-max\scripts"
 sys.path.insert(0, skill_path)
 
 try:

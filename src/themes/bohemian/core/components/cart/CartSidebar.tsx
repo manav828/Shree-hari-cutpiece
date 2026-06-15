@@ -8,27 +8,9 @@ import { Minus, Plus, Trash2, X } from "lucide-react";
 import { useCart } from "@/context/CartContext";
 import { formatPrice } from "@/lib/utils";
 import { bohemianBodyFont, bohemianHeadingFont } from "@/themes/bohemian/components/layout/premiumFonts";
+import { useUpsellProducts } from "@/hooks/useUpsellProducts";
 
 const FREE_SHIPPING_THRESHOLD = 5000;
-
-const UPSELL_ITEMS = [
-	{
-		id: "upsell-candle",
-		slug: "amber-soy-candle",
-		name: "Amber Soy Candle",
-		price: 1450,
-		image:
-			"https://lh3.googleusercontent.com/aida-public/AB6AXuARsFmn3la9e456fMRqSRDpzVXeRMVQZJYnQ5H72EE_kwcGe-YTHacLomSSzhWFlQGeirPzfC3nu_Sqe3qYVdAVSJgI_aMPqAm_XS7vuP_RWJy6gvqxVli-9r0PrUWdyEbXwxgsUgBRzbu322qiBdzZ9AvlNLWQq91seq02fmzEUTZ5lgY_bISRXNYo3gdTcyWgutZROPwET_-qcvTGJqmMMRFiArUfbNr1u_yDPZeQVp7A1Lw8dC6onkj5k9C348ndCgIZRlQgsZM",
-	},
-	{
-		id: "upsell-linen",
-		slug: "linen-napkin-set",
-		name: "Linen Napkin Set",
-		price: 1890,
-		image:
-			"https://lh3.googleusercontent.com/aida-public/AB6AXuA6TZ-4rKeuVruPQHPVdYPrylwf2mxw0uN-oHcy98icVsaqFdEHjVy0_Ywa5uVayHwDVzB2N46iuAnov1lEi5dlRfieNczSm_58BSe9BSQqh4_33hxPjiondainq1JbD1b5QChQJXumAr1uHcgLW8SPIhaQXo4BUVF-mK2Ba3OjdrcszSSWgAEu6I3PLuTdvm1Sr2O3QLh7msvEeJgIbLdmqG_UtCjeKxtHhojNbSFzYE9xxl-KsU2yKEDd6N2wI_D3K3OoPD7XFq4",
-	},
-];
 
 function buildItemMeta(item: {
 	selected_options?: Array<{ group_name: string; value_labels?: string[]; input_value?: string | number }>;
@@ -65,8 +47,9 @@ export default function BohemianCartSidebar() {
 		setIsCartOpen,
 	} = useCart();
 	const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+	const { products: upsellProducts, loading: upsellLoading } = useUpsellProducts(2);
 
-	function handleUpsellQuickAdd(item: (typeof UPSELL_ITEMS)[number]) {
+	function handleUpsellQuickAdd(item: any) {
 		addToCart({
 			id: item.id,
 			product_id: item.id,
@@ -74,8 +57,8 @@ export default function BohemianCartSidebar() {
 			slug: item.slug,
 			price: item.price,
 			image: item.image,
-			meters: 1,
-			selling_mode: "piece",
+			meters: item.selling_mode === "meter" ? 1.0 : 1,
+			selling_mode: item.selling_mode,
 			analytics_source: "bohemian_quick_cart_upsell",
 		});
 	}
@@ -188,25 +171,47 @@ export default function BohemianCartSidebar() {
 											</div>
 
 											<div className="mt-3 flex items-end justify-between gap-3">
-												<div className="flex items-center rounded-lg bg-[#f0ede8] p-1">
-													<button
-														type="button"
-														onClick={() => updateQuantity(item.id, item.meters - 1)}
-														className="flex h-6 w-6 items-center justify-center text-[#6f645d] hover:text-[#9f3f29]"
-														aria-label={`Decrease quantity for ${item.name}`}
-													>
-														<Minus className="h-3.5 w-3.5" />
-													</button>
-													<span className="w-7 text-center text-xs font-semibold text-[#1c1c19]">{item.meters}</span>
-													<button
-														type="button"
-														onClick={() => updateQuantity(item.id, item.meters + 1)}
-														className="flex h-6 w-6 items-center justify-center text-[#6f645d] hover:text-[#9f3f29]"
-														aria-label={`Increase quantity for ${item.name}`}
-													>
-														<Plus className="h-3.5 w-3.5" />
-													</button>
-												</div>
+												{(() => {
+													const isMeter = item.selling_mode === "meter";
+													const step = isMeter ? 0.5 : 1;
+													const minVal = isMeter ? 0.5 : 1;
+													const isMin = item.meters <= minVal;
+													return (
+														<div className="flex items-center rounded-lg bg-[#f0ede8] p-1">
+															<button
+																type="button"
+																disabled={isMin}
+																onClick={() => {
+																	if (!isMin) {
+																		const nextVal = parseFloat((item.meters - step).toFixed(1));
+																		updateQuantity(item.id, Math.max(minVal, nextVal));
+																	}
+																}}
+																className={`flex h-6 w-6 items-center justify-center text-[#6f645d] hover:text-[#9f3f29] transition-opacity ${
+																	isMin ? "opacity-30 cursor-not-allowed hover:text-[#6f645d]" : ""
+																}`}
+																aria-label={`Decrease quantity for ${item.name}`}
+															>
+																<Minus className="h-3.5 w-3.5" />
+															</button>
+															<span className="w-9 text-center text-xs font-semibold text-[#1c1c19]">
+																{item.meters.toFixed(isMeter ? 1 : 0).replace(/\.0$/, "")}
+																{isMeter ? "m" : ""}
+															</span>
+															<button
+																type="button"
+																onClick={() => {
+																	const nextVal = parseFloat((item.meters + step).toFixed(1));
+																	updateQuantity(item.id, nextVal);
+																}}
+																className="flex h-6 w-6 items-center justify-center text-[#6f645d] hover:text-[#9f3f29]"
+																aria-label={`Increase quantity for ${item.name}`}
+															>
+																<Plus className="h-3.5 w-3.5" />
+															</button>
+														</div>
+													);
+												})()}
 
 												<p className={`${bohemianHeadingFont.className} text-[24px] leading-none text-[#9f3f29]`}>
 													{formatPrice(item.price * item.meters)}
@@ -219,29 +224,31 @@ export default function BohemianCartSidebar() {
 								</div>
 							))}
 
-							<div className="border-t border-[#ddc0ba]/25 pt-6">
-								<h4 className={`${bohemianHeadingFont.className} text-[25px] italic text-[#5a6245]`}>Complete your space</h4>
-								<div className="mt-3 grid grid-cols-2 gap-3">
-									{UPSELL_ITEMS.map((upsell) => (
-										<article key={upsell.id} className="space-y-2">
-											<div className="aspect-square overflow-hidden rounded-xl bg-[#f0ede8]">
-												<Image src={upsell.image} alt={upsell.name} width={280} height={280} className="h-full w-full object-cover" />
-											</div>
-											<p className="line-clamp-1 text-xs font-medium text-[#1c1c19]">{upsell.name}</p>
-											<div className="flex items-center justify-between gap-2">
-												<p className="text-xs text-[#6f645d]">{formatPrice(upsell.price)}</p>
-												<button
-													type="button"
-													onClick={() => handleUpsellQuickAdd(upsell)}
-													className="rounded-md border border-[#cbb8b0] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9f3f29] transition hover:bg-[#f0ede8]"
-												>
-													Quick Add
-												</button>
-											</div>
-										</article>
-									))}
+							{!upsellLoading && upsellProducts.length > 0 && (
+								<div className="border-t border-[#ddc0ba]/25 pt-6">
+									<h4 className={`${bohemianHeadingFont.className} text-[25px] italic text-[#5a6245]`}>Complete your space</h4>
+									<div className="mt-3 grid grid-cols-2 gap-3">
+										{upsellProducts.map((upsell) => (
+											<article key={upsell.id} className="space-y-2">
+												<div className="aspect-square overflow-hidden rounded-xl bg-[#f0ede8]">
+													<Image src={getThumbnailUrl(upsell.image)} alt={upsell.name} width={280} height={280} className="h-full w-full object-cover" />
+												</div>
+												<p className="line-clamp-1 text-xs font-medium text-[#1c1c19]">{upsell.name}</p>
+												<div className="flex items-center justify-between gap-2">
+													<p className="text-xs text-[#6f645d]">{formatPrice(upsell.price)}</p>
+													<button
+														type="button"
+														onClick={() => handleUpsellQuickAdd(upsell)}
+														className="rounded-md border border-[#cbb8b0] px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#9f3f29] transition hover:bg-[#f0ede8]"
+													>
+														Quick Add
+													</button>
+												</div>
+											</article>
+										))}
+									</div>
 								</div>
-							</div>
+							)}
 						</div>
 					)}
 				</div>
