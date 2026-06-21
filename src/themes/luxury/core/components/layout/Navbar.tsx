@@ -1,11 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { Search, ShoppingBag } from "lucide-react";
+import { Search, ShoppingBag, User } from "lucide-react";
 import { useCart } from "@/context/CartContext";
+import { useAuth } from "@/context/AuthContext";
 
 export default function Navbar() {
-    const { items } = useCart();
+    const { items, setIsCartOpen } = useCart();
+    const { user } = useAuth();
     const itemCount = items.reduce((total, item) => total + (item.quantity || 1), 0);
 
     return (
@@ -36,7 +38,15 @@ export default function Navbar() {
                             className="bg-transparent border-none outline-none text-[11px] tracking-[0.15em] w-32 placeholder:text-white/60 text-white"
                         />
                     </div>
-                    <button className="relative hover:opacity-70 transition-opacity">
+                    
+                    <Link href={user ? "/account" : "/login"} className="hover:opacity-70 transition-opacity flex items-center gap-1.5 cursor-pointer">
+                        <User className="w-5 h-5 stroke-[1.5]" />
+                        <span className="text-[11px] uppercase tracking-[0.15em] hidden md:inline">
+                            {user ? "Account" : "Login"}
+                        </span>
+                    </Link>
+
+                    <button onClick={() => setIsCartOpen(true)} className="relative hover:opacity-70 transition-opacity cursor-pointer">
                         <ShoppingBag className="w-5 h-5 stroke-[1.5]" />
                         {itemCount > 0 && (
                             <span className="absolute -top-2 -right-2 text-[10px] w-4 h-4 bg-white text-black rounded-full flex items-center justify-center font-medium">

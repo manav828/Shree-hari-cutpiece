@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { revalidatePath } from "next/cache";
 import type { CustomOrderStatus } from "@/types/orders";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 // ─── Fetch all custom statuses ────────────────────────────────────────────────
 
@@ -22,6 +23,9 @@ export async function fetchCustomStatuses(): Promise<CustomOrderStatus[]> {
 // ─── Create a new custom status ───────────────────────────────────────────────
 
 export async function createCustomStatus(label: string, color: string) {
+    if (!(await verifyAdminSession())) {
+        return { success: false, error: "Unauthorized: Admin session required." };
+    }
     // Get current max sort_order
     const { data: existing } = await supabaseAdmin
         .from("order_custom_statuses")
@@ -45,6 +49,9 @@ export async function createCustomStatus(label: string, color: string) {
 // ─── Update an existing custom status ────────────────────────────────────────
 
 export async function updateCustomStatus(id: string, label: string, color: string) {
+    if (!(await verifyAdminSession())) {
+        return { success: false, error: "Unauthorized: Admin session required." };
+    }
     const { error } = await supabaseAdmin
         .from("order_custom_statuses")
         .update({ label, color })
@@ -60,6 +67,9 @@ export async function updateCustomStatus(id: string, label: string, color: strin
 // ─── Delete a custom status ───────────────────────────────────────────────────
 
 export async function deleteCustomStatus(id: string) {
+    if (!(await verifyAdminSession())) {
+        return { success: false, error: "Unauthorized: Admin session required." };
+    }
     const { error } = await supabaseAdmin
         .from("order_custom_statuses")
         .delete()

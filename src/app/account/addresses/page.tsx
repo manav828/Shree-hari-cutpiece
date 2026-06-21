@@ -206,7 +206,7 @@ export default function AccountAddressesPage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-12 lg:pt-24 pb-20 min-h-screen">
+            <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
                 <Container>
                     <div className="max-w-4xl mx-auto space-y-6">
                         <div>
@@ -254,7 +254,28 @@ export default function AccountAddressesPage() {
 
                         <div className="space-y-3">
                             {loading ? (
-                                <p className="text-sm text-text-secondary">Loading addresses...</p>
+                                <div className="space-y-3">
+                                    {[...Array(2)].map((_, i) => (
+                                        <div key={i} className="bg-white rounded-xl border border-border p-4 space-y-3">
+                                            <div className="flex items-start justify-between gap-3">
+                                                <div className="space-y-2 flex-1">
+                                                    <div className="w-1/3 h-4 rounded shimmer-bg" />
+                                                    <div className="w-1/4 h-3 rounded shimmer-bg" />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <div className="w-12 h-6 rounded border border-border shimmer-bg" />
+                                                    <div className="w-14 h-6 rounded border border-border shimmer-bg" />
+                                                </div>
+                                            </div>
+                                            <div className="w-2/3 h-4 rounded shimmer-bg" />
+                                            <div className="w-1/2 h-4 rounded shimmer-bg" />
+                                            <div className="flex gap-2 pt-2">
+                                                <div className="w-28 h-6 rounded border border-border shimmer-bg" />
+                                                <div className="w-28 h-6 rounded border border-border shimmer-bg" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
                             ) : addresses.length === 0 ? (
                                 <div className="bg-white rounded-xl border border-border p-6 text-sm text-text-secondary">No saved addresses yet.</div>
                             ) : (

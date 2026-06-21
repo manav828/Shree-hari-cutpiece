@@ -51,7 +51,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
     signup: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
-    logout: () => void;
+    logout: () => Promise<void>;
     updateProfile: (data: Partial<User>) => void;
     refreshOrders: () => Promise<void>;
 }
@@ -183,7 +183,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const signup = async (name: string, email: string, phone: string, password: string) => {
-        const { error } = await supabase.auth.signUp({
+        const { data, error } = await supabase.auth.signUp({
             email,
             password,
             options: {
@@ -193,11 +193,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (error) return { success: false, error: error.message };
 
         // Asynchronously trigger welcome registration notification in the background
-        fetch("/api/notifications/welcome", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, phone, name })
-        }).catch(console.error);
+        if (data.user) {
+            fetch("/api/notifications/welcome", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, phone, name, userId: data.user.id })
+            }).catch(console.error);
+        }
 
         return { success: true };
     };

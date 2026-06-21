@@ -3,6 +3,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { revalidatePath } from "next/cache";
 import nodemailer from "nodemailer";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 export interface NotificationTemplate {
     id: string;
@@ -19,6 +20,10 @@ export interface NotificationTemplate {
 // 1. Fetch all notification templates
 export async function fetchNotificationTemplates(): Promise<NotificationTemplate[]> {
     try {
+        if (!(await verifyAdminSession())) {
+            console.error("Unauthorized fetchNotificationTemplates attempt.");
+            return [];
+        }
         const { data, error } = await supabaseAdmin
             .from("notification_templates")
             .select("*")
@@ -52,6 +57,9 @@ export async function fetchTemplateByKey(key: string): Promise<NotificationTempl
 // 3. Update a template's subject and body
 export async function updateNotificationTemplate(key: string, subject: string | null, body: string) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         const { error } = await supabaseAdmin
             .from("notification_templates")
             .update({
@@ -74,6 +82,10 @@ export async function updateNotificationTemplate(key: string, subject: string | 
 // 4. Fetch notification settings configuration
 export async function fetchNotificationConfig(): Promise<Record<string, string>> {
     try {
+        if (!(await verifyAdminSession())) {
+            console.error("Unauthorized fetchNotificationConfig attempt.");
+            return {};
+        }
         const { data, error } = await supabaseAdmin
             .from("settings")
             .select("key, value")
@@ -97,6 +109,9 @@ export async function fetchNotificationConfig(): Promise<Record<string, string>>
 // 5. Update notification settings configuration
 export async function updateNotificationConfig(config: Record<string, string>) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         // Prepare list of upserts
         const upserts = Object.entries(config).map(([key, value]) => ({
             key,
@@ -122,6 +137,9 @@ export async function updateNotificationConfig(config: Record<string, string>) {
 // 6. Test send diagnostics function (Resend, SMTP, Twilio)
 export async function testProviderConnection(provider: "resend" | "smtp" | "twilio", recipient: string, config: Record<string, string>) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         if (provider === "smtp") {
             const host = config.notification_smtp_host;
             const port = parseInt(config.notification_smtp_port || "587");
@@ -248,6 +266,9 @@ export async function testRegistrationNotification(
     testName: string
 ): Promise<{ success: boolean; emailSent?: boolean; whatsappSent?: boolean; errors?: string[] }> {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, errors: ["Unauthorized: Admin session required."] };
+        }
         const { triggerRegistrationNotification } = await import("@/lib/notifications");
         const res = await triggerRegistrationNotification(testName, testEmail, testPhone);
         return res;

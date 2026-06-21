@@ -198,7 +198,7 @@ export default function AccountProfilePage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-12 lg:pt-24 pb-20 min-h-screen">
+            <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
                 <Container>
                     <div className="max-w-2xl mx-auto space-y-6">
                         <div>
@@ -211,7 +211,16 @@ export default function AccountProfilePage() {
 
                         <div className="bg-white rounded-xl border border-border p-6 space-y-4">
                             {loading ? (
-                                <p className="text-sm text-text-secondary">Loading profile...</p>
+                                <div className="space-y-4">
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <div className="w-20 h-3 rounded shimmer-bg" />
+                                            <div className="w-full h-10 rounded-md shimmer-bg" />
+                                        </div>
+                                    ))}
+                                    <div className="w-24 h-6 rounded shimmer-bg pt-2" />
+                                    <div className="w-32 h-6 rounded shimmer-bg" />
+                                </div>
                             ) : (
                                 <>
                                     <div>

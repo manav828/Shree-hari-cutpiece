@@ -89,13 +89,25 @@ export async function middleware(req: NextRequest) {
         return NextResponse.next();
     }
 
-    if (pathname.startsWith("/admin")) {
+    // Admin Access Security Check (Excluding /api/admin/auth)
+    if ((pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) && pathname !== "/api/admin/auth") {
         const token = req.cookies.get("shreehari_admin_session")?.value;
+        const isApi = pathname.startsWith("/api");
+
         if (!token) {
+            if (isApi) {
+                return NextResponse.json({ error: "Unauthorized: Admin session required." }, { status: 401 });
+            }
             return NextResponse.redirect(new URL("/admin/login", req.url));
         }
+
         const userId = await getUserIdFromToken(token);
         if (!userId || !(await checkAdminRole(userId))) {
+            if (isApi) {
+                const response = NextResponse.json({ error: "Forbidden: Admin access required." }, { status: 403 });
+                response.cookies.delete("shreehari_admin_session");
+                return response;
+            }
             const response = NextResponse.redirect(new URL("/admin/login", req.url));
             response.cookies.delete("shreehari_admin_session");
             return response;
@@ -141,5 +153,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-    matcher: ["/blogs/:path*", "/hi/blogs/:path*", "/admin/:path*"],
+    matcher: ["/blogs/:path*", "/hi/blogs/:path*", "/admin/:path*", "/api/admin/:path*"],
 };

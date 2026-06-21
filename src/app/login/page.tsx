@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -25,7 +25,17 @@ export default function LoginPage() {
     const [formData, setFormData] = useState({ email: "", password: "" });
     const [error, setError] = useState("");
     const [isLoading, setIsLoading] = useState(false);
+    const [showRegisteredMessage, setShowRegisteredMessage] = useState(false);
     const supportLink = getWhatsAppUrl("Hi, I need help logging into my account.");
+
+    useEffect(() => {
+        if (typeof window !== "undefined") {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get("registered") === "true") {
+                setShowRegisteredMessage(true);
+            }
+        }
+    }, []);
 
     const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,10 +47,10 @@ export default function LoginPage() {
         setIsLoading(true);
         const result = await login(formData.email.trim(), formData.password);
         if (result.success) {
-            let redirectUrl = "/account";
+            let redirectUrl = "/";
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
-                redirectUrl = params.get("redirect") || "/account";
+                redirectUrl = params.get("redirect") || "/";
             }
             router.push(redirectUrl);
         } else {
@@ -121,6 +131,12 @@ export default function LoginPage() {
                             <span className="text-xs font-medium uppercase tracking-[0.2em] text-[#56423d]">Or</span>
                             <div className="h-px flex-1 bg-[#dcdad5]" />
                         </div>
+
+                        {showRegisteredMessage && (
+                            <div className="rounded-md bg-[#e6f4ea] border border-[#34a853]/20 px-4 py-3 text-sm text-[#137333]">
+                                Account created successfully! Please sign in below to continue.
+                            </div>
+                        )}
 
                         <form onSubmit={handleSubmit} className="space-y-[clamp(0.65rem,1.4vh,1.25rem)]">
                             <div className="space-y-1.5">

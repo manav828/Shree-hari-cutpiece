@@ -46,12 +46,16 @@ export default function SignupPage() {
         const result = await signup(formData.name.trim(), formData.email.trim(), "", formData.password);
 
         if (result.success) {
-            let redirectUrl = "/account";
+            let redirectUrl = "/login?registered=true";
             if (typeof window !== "undefined") {
                 const params = new URLSearchParams(window.location.search);
-                redirectUrl = params.get("redirect") || "/account";
+                const redirectParam = params.get("redirect");
+                if (redirectParam) {
+                    redirectUrl = `/login?registered=true&redirect=${encodeURIComponent(redirectParam)}`;
+                }
             }
             router.push(redirectUrl);
+            setIsLoading(false);
         } else {
             setError(result.error || "Something went wrong.");
             setIsLoading(false);

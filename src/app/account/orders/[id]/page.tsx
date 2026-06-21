@@ -259,23 +259,86 @@ export default function OrderDetailPage() {
             <>
                 <Navbar />
                 <CartSidebar />
-                <main className="pt-24 min-h-screen flex items-center justify-center">
-                    {!isLoading && !order ? (
-                        <div className="text-center">
-                            <p className="text-text-secondary mb-6 text-lg">Order not found.</p>
-                            <Link href="/account" className="btn-primary text-sm py-3">
-                                Back to My Orders
-                            </Link>
-                        </div>
-                    ) : (
-                        <div className="flex flex-col items-center gap-4">
-                            <svg className="w-8 h-8 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                            </svg>
-                            <p className="text-text-secondary text-sm">Loading order details...</p>
-                        </div>
-                    )}
+                <main className="pt-6 lg:pt-10 pb-20 min-h-screen bg-[#FDFBF7]">
+                    <Container>
+                        {!isLoading && !order ? (
+                            <div className="text-center py-24">
+                                <p className="text-text-secondary mb-6 text-lg">Order not found.</p>
+                                <Link href="/account" className="btn-primary text-sm py-3">
+                                    Back to My Orders
+                                </Link>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                {/* Back link shimmer */}
+                                <div className="w-32 h-4 rounded shimmer-bg" />
+
+                                {/* Header shimmer */}
+                                <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                                    <div className="space-y-2">
+                                        <div className="w-24 h-3 rounded shimmer-bg" />
+                                        <div className="w-48 h-8 rounded shimmer-bg" />
+                                        <div className="w-36 h-4 rounded shimmer-bg" />
+                                    </div>
+                                    <div className="flex gap-2">
+                                        <div className="w-24 h-8 rounded-full shimmer-bg" />
+                                        <div className="w-24 h-8 rounded-full shimmer-bg" />
+                                    </div>
+                                </div>
+
+                                <div className="grid lg:grid-cols-3 gap-8">
+                                    {/* Left main content shimmer */}
+                                    <div className="lg:col-span-2 space-y-6">
+                                        {/* Progress Shimmer */}
+                                        <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 space-y-4">
+                                            <div className="w-32 h-6 rounded shimmer-bg" />
+                                            <div className="h-16 w-full rounded shimmer-bg" />
+                                        </div>
+
+                                        {/* Items Shimmer */}
+                                        <div className="bg-white rounded-2xl border border-border p-6 sm:p-8 space-y-4">
+                                            <div className="flex justify-between items-center">
+                                                <div className="w-36 h-6 rounded shimmer-bg" />
+                                                <div className="w-24 h-8 rounded shimmer-bg" />
+                                            </div>
+                                            <div className="divide-y divide-border">
+                                                {[...Array(2)].map((_, i) => (
+                                                    <div key={i} className="flex items-center gap-4 py-5 first:pt-0 last:pb-0">
+                                                        <div className="w-16 h-20 rounded-lg shimmer-bg flex-shrink-0" />
+                                                        <div className="flex-1 space-y-2">
+                                                            <div className="w-1/2 h-4 rounded shimmer-bg" />
+                                                            <div className="w-1/4 h-3 rounded shimmer-bg" />
+                                                            <div className="w-1/3 h-4 rounded shimmer-bg" />
+                                                        </div>
+                                                        <div className="w-20 h-8 rounded shimmer-bg flex-shrink-0" />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Right sidebar shimmer */}
+                                    <div className="space-y-6">
+                                        <div className="bg-white rounded-2xl border border-border p-6 space-y-4">
+                                            <div className="w-28 h-5 rounded shimmer-bg" />
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between"><div className="w-16 h-4 rounded shimmer-bg" /><div className="w-12 h-4 rounded shimmer-bg" /></div>
+                                                <div className="flex justify-between"><div className="w-16 h-4 rounded shimmer-bg" /><div className="w-12 h-4 rounded shimmer-bg" /></div>
+                                                <div className="flex justify-between pt-3 border-t border-border"><div className="w-16 h-4 rounded shimmer-bg" /><div className="w-16 h-6 rounded shimmer-bg" /></div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-white rounded-2xl border border-border p-6 space-y-4">
+                                            <div className="w-20 h-5 rounded shimmer-bg" />
+                                            <div className="space-y-3">
+                                                <div className="flex justify-between"><div className="w-12 h-4 rounded shimmer-bg" /><div className="w-16 h-4 rounded shimmer-bg" /></div>
+                                                <div className="flex justify-between"><div className="w-12 h-4 rounded shimmer-bg" /><div className="w-20 h-4 rounded shimmer-bg" /></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </Container>
                 </main>
                 <Footer />
             </>
@@ -299,7 +362,7 @@ export default function OrderDetailPage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-12 lg:pt-24 pb-20 min-h-screen bg-[#FDFBF7]">
+            <main className="pt-6 lg:pt-10 pb-20 min-h-screen bg-[#FDFBF7]">
                 <Container>
                     {/* Back Link */}
                     <div className="mb-8">

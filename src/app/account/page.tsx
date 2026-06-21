@@ -183,14 +183,65 @@ export default function AccountPage() {
             <>
                 <Navbar />
                 <CartSidebar />
-                <main className="pt-24 min-h-screen flex items-center justify-center">
-                    <div className="flex flex-col items-center gap-4">
-                        <svg className="w-8 h-8 animate-spin text-accent" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                        </svg>
-                        <p className="text-text-secondary text-sm">Loading your account...</p>
-                    </div>
+                <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
+                    <Container>
+                        {/* Profile Header Shimmer */}
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-12 pb-10 border-b border-border">
+                            {/* Avatar Shimmer */}
+                            <div className="w-20 h-20 rounded-full flex-shrink-0 shimmer-bg" />
+                            <div className="flex-1 space-y-2">
+                                <div className="w-28 h-3 rounded shimmer-bg" />
+                                <div className="w-48 h-8 rounded shimmer-bg" />
+                                <div className="w-32 h-4 rounded shimmer-bg" />
+                            </div>
+                            <div className="w-24 h-10 rounded-lg shimmer-bg" />
+                        </div>
+
+                        <div className="grid lg:grid-cols-4 gap-10">
+                            {/* Sidebar Nav Shimmer */}
+                            <div className="lg:col-span-1 space-y-2">
+                                <div className="w-full h-11 rounded-lg shimmer-bg" />
+                                <div className="w-full h-11 rounded-lg shimmer-bg" />
+                                <div className="w-full h-11 rounded-lg shimmer-bg" />
+                            </div>
+
+                            {/* Content Area Shimmer */}
+                            <div className="lg:col-span-3 space-y-6">
+                                <div className="bg-white border border-border rounded-2xl p-6 space-y-6">
+                                    <div className="space-y-2">
+                                        <div className="w-24 h-3 rounded shimmer-bg" />
+                                        <div className="w-40 h-6 rounded shimmer-bg" />
+                                        <div className="w-3/4 h-4 rounded shimmer-bg" />
+                                    </div>
+
+                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                        {[...Array(4)].map((_, i) => (
+                                            <div key={i} className="bg-white border border-border rounded-lg p-3 space-y-2">
+                                                <div className="w-16 h-3 rounded shimmer-bg" />
+                                                <div className="w-10 h-6 rounded shimmer-bg" />
+                                            </div>
+                                        ))}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                        <div className="w-20 h-8 rounded shimmer-bg" />
+                                        <div className="w-20 h-8 rounded shimmer-bg" />
+                                        <div className="w-20 h-8 rounded shimmer-bg" />
+                                    </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div className="flex items-center justify-between mb-2">
+                                        <div className="w-28 h-6 rounded shimmer-bg" />
+                                        <div className="w-16 h-4 rounded shimmer-bg" />
+                                    </div>
+                                    {[...Array(3)].map((_, i) => (
+                                        <div key={i} className="h-24 w-full rounded-xl border border-border shimmer-bg" />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                    </Container>
                 </main>
                 <Footer />
             </>
@@ -226,7 +277,7 @@ export default function AccountPage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-12 lg:pt-24 pb-20 min-h-screen">
+            <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
                 <Container>
                     {/* Profile Header */}
                     <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-12 pb-10 border-b border-border">
@@ -240,8 +291,8 @@ export default function AccountPage() {
                             <p className="text-text-secondary text-sm">{user.email}</p>
                         </div>
                         <button
-                            onClick={() => {
-                                logout();
+                            onClick={async () => {
+                                await logout();
                                 router.push("/");
                             }}
                             className="btn-secondary text-sm py-3 flex items-center gap-2 self-start sm:self-auto"
@@ -464,7 +515,7 @@ export default function AccountPage() {
                                         <h3 className="text-sm font-medium text-foreground mb-2">Sign Out</h3>
                                         <p className="text-text-secondary text-xs mb-4">You will be signed out of your account on this device.</p>
                                         <button
-                                            onClick={() => { logout(); router.push("/"); }}
+                                            onClick={async () => { await logout(); router.push("/"); }}
                                             className="text-sm text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
                                         >
                                             Sign Out

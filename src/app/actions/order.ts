@@ -3,9 +3,13 @@
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { revalidatePath } from "next/cache";
 import { triggerOrderNotification } from "@/lib/notifications";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 export async function updateOrderStatus(orderId: string, newStatus: string, note?: string) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         // Update the main order status
         const { error: updateError } = await supabaseAdmin
             .from("orders")
@@ -47,6 +51,9 @@ export async function updateOrderStatus(orderId: string, newStatus: string, note
 
 export async function updateOrderTracking(orderId: string, trackingUrl: string) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         const { error } = await supabaseAdmin
             .from("orders")
             .update({ tracking_url: trackingUrl || null })
@@ -63,6 +70,9 @@ export async function updateOrderTracking(orderId: string, trackingUrl: string) 
 
 export async function updateOrderNotes(orderId: string, notes: string) {
     try {
+        if (!(await verifyAdminSession())) {
+            return { success: false, error: "Unauthorized: Admin session required." };
+        }
         const { error } = await supabaseAdmin
             .from("orders")
             .update({ notes: notes || null })

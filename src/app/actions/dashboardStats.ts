@@ -1,6 +1,7 @@
 "use server";
 
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { verifyAdminSession } from "@/lib/adminAuth";
 
 export interface ComparisonMetric {
     period: string;
@@ -50,6 +51,9 @@ export interface DashboardMetricsResponse {
 
 export async function fetchDashboardMetrics(): Promise<DashboardMetricsResponse> {
     try {
+        if (!(await verifyAdminSession())) {
+            throw new Error("Unauthorized: Admin session required.");
+        }
         // 1. Fetch live overview stats, recent orders, and low stock variants from database
         const [
             { count: totalProductsCount },
