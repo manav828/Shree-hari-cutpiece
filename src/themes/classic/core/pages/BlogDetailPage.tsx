@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import Navbar from "@/themes/classic/components/layout/Navbar";
+import Footer from "@/themes/classic/components/layout/Footer";
 import Container from "@/components/ui/Container";
 import CartSidebar from "@/components/cart/CartSidebar";
 import BlogCard from "@/components/blog/BlogCard";

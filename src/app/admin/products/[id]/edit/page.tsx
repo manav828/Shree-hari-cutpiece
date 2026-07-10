@@ -963,28 +963,33 @@ export default function EditProductPage() {
             {toast && <Toast message={toast} onClose={() => setToast("")} />}
 
             {/* Header */}
-            <div className="flex items-center gap-3 mb-4">
-                <Link href="/admin/products" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400"><ArrowLeft className="h-5 w-5" /></Link>
-                <div className="flex-1">
-                    <h1 className="text-lg font-semibold text-gray-900">Edit Product</h1>
-                    <p className="text-sm text-gray-400">{form.name || "Untitled"}</p>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+                <Link href="/admin/products" className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 flex-shrink-0"><ArrowLeft className="h-5 w-5" /></Link>
+                <div className="flex-1 min-w-0">
+                    <h1 className="text-lg font-semibold text-gray-900 leading-tight">Edit Product</h1>
+                    <p className="text-sm text-gray-400 truncate">{form.name || "Untitled"}</p>
                 </div>
-                <Link href={`/shop/${form.slug}`} target="_blank" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50"><ExternalLink className="h-4 w-4" /> View on Store</Link>
-                <Link href="/admin/products" className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50">Back to Products</Link>
-                <button onClick={handleSave} disabled={saving} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50">
-                    {saving ? <><Loader2 className="h-4 w-4 animate-spin" />Saving...</> : <><Save className="h-4 w-4" />Save Changes</>}
-                </button>
-                <button onClick={() => setDeleteModal(true)} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-sm font-medium text-red-500 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100"><Trash2 className="h-4 w-4" /> Delete</button>
+                {/* Action buttons — grid on mobile, flex on desktop */}
+                <div className="grid grid-cols-2 gap-2 w-full sm:flex sm:w-auto sm:items-center sm:gap-2">
+                    <Link href={`/shop/${form.slug}`} target="_blank" className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 whitespace-nowrap w-full sm:w-auto"><ExternalLink className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> <span className="hidden sm:inline">View on Store</span><span className="sm:hidden">View Store</span></Link>
+                    <Link href="/admin/products" className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-gray-500 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 whitespace-nowrap w-full sm:w-auto"><ArrowLeft className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Back to Products</span><span className="sm:hidden">Back</span></Link>
+                    <button onClick={handleSave} disabled={saving} className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 disabled:opacity-50 whitespace-nowrap w-full sm:w-auto">
+                        {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /><span className="hidden sm:inline">Saving...</span><span className="sm:hidden">Saving...</span></> : <><Save className="h-3.5 w-3.5" /><span className="hidden sm:inline">Save Changes</span><span className="sm:hidden">Save</span></>}
+                    </button>
+                    <button onClick={() => setDeleteModal(true)} className="inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs sm:text-sm font-medium text-red-500 bg-red-50 border border-red-100 rounded-lg hover:bg-red-100 whitespace-nowrap w-full sm:w-auto"><Trash2 className="h-3.5 w-3.5" /> <span>Delete</span></button>
+                </div>
             </div>
 
-            {/* ═══ TAB BAR — Toggle active section ═══ */}
-            <div className="flex items-stretch gap-1 bg-white border border-gray-200 rounded-xl p-1.5 mb-5">
-                {TABS.map((tab) => (
-                    <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                        className={`flex-1 min-w-0 flex flex-col items-center gap-1 px-2 py-2 text-[11px] font-semibold rounded-lg transition-all text-center leading-tight ${activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}>
-                        <tab.icon className="h-4 w-4" />{tab.label}
-                    </button>
-                ))}
+            {/* ═══ TAB BAR — scrolls horizontally on mobile ═══ */}
+            <div className="overflow-x-auto -mx-1 px-1 mb-5">
+                <div className="flex items-stretch gap-1 bg-white border border-gray-200 rounded-xl p-1.5 min-w-max">
+                    {TABS.map((tab) => (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+                            className={`flex flex-col items-center gap-1 px-3 py-2 text-[11px] font-semibold rounded-lg transition-all text-center leading-tight whitespace-nowrap shrink-0 ${activeTab === tab.id ? "bg-gray-900 text-white shadow-sm" : "text-gray-500 hover:bg-gray-100"}`}>
+                            <tab.icon className="h-4 w-4 flex-shrink-0" />{tab.label}
+                        </button>
+                    ))}
+                </div>
             </div>
 
             {/* Delete Modal */}

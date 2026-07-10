@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/apiAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { 
+    validateName, 
+    validatePhone, 
+    validatePincode, 
+    validateAddressLine, 
+    validateCity, 
+    validateState 
+} from "@/lib/validation";
 
 type AddressPatch = {
     full_name?: string;
@@ -53,6 +61,35 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         if (typeof body.country === "string") updates.country = clean(body.country);
         if (typeof body.is_default_shipping === "boolean") updates.is_default_shipping = body.is_default_shipping;
         if (typeof body.is_default_billing === "boolean") updates.is_default_billing = body.is_default_billing;
+
+        if (updates.full_name !== undefined) {
+            const nameErr = validateName(updates.full_name);
+            if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+        }
+        if (updates.phone !== undefined) {
+            const phoneErr = validatePhone(updates.phone);
+            if (phoneErr) return NextResponse.json({ error: phoneErr }, { status: 400 });
+        }
+        if (updates.address_line1 !== undefined) {
+            const addr1Err = validateAddressLine(updates.address_line1, "Address line 1");
+            if (addr1Err) return NextResponse.json({ error: addr1Err }, { status: 400 });
+        }
+        if (updates.address_line2 !== undefined && updates.address_line2 !== null) {
+            const addr2Err = validateAddressLine(updates.address_line2, "Address line 2", false);
+            if (addr2Err) return NextResponse.json({ error: addr2Err }, { status: 400 });
+        }
+        if (updates.city !== undefined) {
+            const cityErr = validateCity(updates.city);
+            if (cityErr) return NextResponse.json({ error: cityErr }, { status: 400 });
+        }
+        if (updates.state !== undefined) {
+            const stateErr = validateState(updates.state);
+            if (stateErr) return NextResponse.json({ error: stateErr }, { status: 400 });
+        }
+        if (updates.pincode !== undefined) {
+            const pinErr = validatePincode(updates.pincode);
+            if (pinErr) return NextResponse.json({ error: pinErr }, { status: 400 });
+        }
 
         if (Object.keys(updates).length === 0) {
             return NextResponse.json({ error: "No valid fields to update" }, { status: 400 });

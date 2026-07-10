@@ -21,6 +21,16 @@ import { supabase } from "@/lib/supabase";
 import { bohemianBodyFont, bohemianHeadingFont } from "@/themes/bohemian/components/layout/premiumFonts";
 import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/siteStyles";
 import { paymentClientHandlers } from "@/payments/client";
+import { 
+  validateName, 
+  validatePhone, 
+  validatePincode, 
+  validateEmail, 
+  validateAddressLine, 
+  validateCity, 
+  validateState,
+  validateNotes
+} from "@/lib/validation";
 
 type CheckoutCartItem = {
   id: string;
@@ -430,11 +440,47 @@ export default function CheckoutPage() {
     ];
 
     const missing = requiredFields.find((field) => !String(formData[field.key] || "").trim());
-    if (!missing) {
-      return null;
+    if (missing) {
+      return `${missing.label} is required.`;
     }
 
-    return `${missing.label} is required.`;
+    const nameErr = validateName(formData.fullName);
+    if (nameErr) return nameErr;
+
+    const addrErr = validateAddressLine(formData.addressLine1, "Street Address");
+    if (addrErr) return addrErr;
+
+    const areaErr = validateAddressLine(formData.area, "Area / Locality");
+    if (areaErr) return areaErr;
+
+    if (formData.landmark) {
+      const landmarkErr = validateAddressLine(formData.landmark, "Landmark", false);
+      if (landmarkErr) return landmarkErr;
+    }
+
+    const cityErr = validateCity(formData.city);
+    if (cityErr) return cityErr;
+
+    const stateErr = validateState(formData.state);
+    if (stateErr) return stateErr;
+
+    const pinErr = validatePincode(formData.pincode);
+    if (pinErr) return pinErr;
+
+    const phoneErr = validatePhone(formData.phone);
+    if (phoneErr) return phoneErr;
+
+    if (formData.email) {
+      const emailErr = validateEmail(formData.email, false);
+      if (emailErr) return emailErr;
+    }
+
+    if (formData.notes) {
+      const notesErr = validateNotes(formData.notes);
+      if (notesErr) return notesErr;
+    }
+
+    return null;
   }
 
   async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
@@ -654,6 +700,7 @@ export default function CheckoutPage() {
                       name="fullName"
                       value={formData.fullName}
                       onChange={handleFieldChange}
+                      maxLength={100}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="Arjun Sharma"
                     />
@@ -665,6 +712,7 @@ export default function CheckoutPage() {
                       name="addressLine1"
                       value={formData.addressLine1}
                       onChange={handleFieldChange}
+                      maxLength={100}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="Flat 402, Lotus Apartments"
                     />
@@ -676,6 +724,7 @@ export default function CheckoutPage() {
                       name="area"
                       value={formData.area}
                       onChange={handleFieldChange}
+                      maxLength={100}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="Bandra West"
                     />
@@ -687,6 +736,7 @@ export default function CheckoutPage() {
                       name="landmark"
                       value={formData.landmark}
                       onChange={handleFieldChange}
+                      maxLength={100}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="Near Mount Mary Church"
                     />
@@ -698,6 +748,7 @@ export default function CheckoutPage() {
                       name="city"
                       value={formData.city}
                       onChange={handleFieldChange}
+                      maxLength={50}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="Mumbai"
                     />
@@ -709,6 +760,7 @@ export default function CheckoutPage() {
                       name="pincode"
                       value={formData.pincode}
                       onChange={handleFieldChange}
+                      maxLength={6}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="400050"
                     />
@@ -736,6 +788,7 @@ export default function CheckoutPage() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleFieldChange}
+                        maxLength={10}
                         className="h-11 w-full border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                         placeholder="98765 43210"
                       />
@@ -749,6 +802,7 @@ export default function CheckoutPage() {
                       name="email"
                       value={formData.email}
                       onChange={handleFieldChange}
+                      maxLength={254}
                       className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
                       placeholder="name@email.com"
                     />

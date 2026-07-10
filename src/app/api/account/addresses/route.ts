@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/apiAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { 
+    validateName, 
+    validatePhone, 
+    validatePincode, 
+    validateAddressLine, 
+    validateCity, 
+    validateState 
+} from "@/lib/validation";
 
 type AddressInput = {
     full_name?: string;
@@ -85,6 +93,29 @@ export async function POST(req: NextRequest) {
         if (!payload.full_name || !payload.phone || !payload.address_line1 || !payload.city || !payload.state || !payload.pincode) {
             return NextResponse.json({ error: "Missing required address fields" }, { status: 400 });
         }
+
+        const nameErr = validateName(payload.full_name);
+        if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+
+        const phoneErr = validatePhone(payload.phone);
+        if (phoneErr) return NextResponse.json({ error: phoneErr }, { status: 400 });
+
+        const addrErr = validateAddressLine(payload.address_line1, "Address line 1");
+        if (addrErr) return NextResponse.json({ error: addrErr }, { status: 400 });
+
+        if (payload.address_line2) {
+            const addr2Err = validateAddressLine(payload.address_line2, "Address line 2", false);
+            if (addr2Err) return NextResponse.json({ error: addr2Err }, { status: 400 });
+        }
+
+        const cityErr = validateCity(payload.city);
+        if (cityErr) return NextResponse.json({ error: cityErr }, { status: 400 });
+
+        const stateErr = validateState(payload.state);
+        if (stateErr) return NextResponse.json({ error: stateErr }, { status: 400 });
+
+        const pinErr = validatePincode(payload.pincode);
+        if (pinErr) return NextResponse.json({ error: pinErr }, { status: 400 });
 
         await clearExistingDefaults(userId, Boolean(payload.is_default_shipping), Boolean(payload.is_default_billing));
 

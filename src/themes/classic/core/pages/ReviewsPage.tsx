@@ -2,8 +2,8 @@
 
 import { useSearchParams, useParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import Navbar from "@/themes/classic/components/layout/Navbar";
+import Footer from "@/themes/classic/components/layout/Footer";
 import Container from "@/components/ui/Container";
 import ProductReviews from "@/components/shop/ProductReviews";
 import CartSidebar from "@/components/cart/CartSidebar";

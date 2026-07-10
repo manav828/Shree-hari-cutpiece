@@ -1,11 +1,13 @@
 import crypto from "crypto";
 
 const ALGORITHM = "aes-256-cbc";
-// Derive a 32-byte key from the environment variable (or a stable fallback)
-const ENCRYPTION_KEY = process.env.SHIPPING_ENCRYPTION_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || "shree_hari_default_secret_key_32bytes_long";
+const ENCRYPTION_KEY = process.env.SHIPPING_ENCRYPTION_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 // Helper to get key of exactly 32 bytes
 function getSecretKey(): Buffer {
+    if (!ENCRYPTION_KEY) {
+        throw new Error("Missing required environment variable SHIPPING_ENCRYPTION_KEY or SUPABASE_SERVICE_ROLE_KEY for shipping encryption.");
+    }
     return crypto.createHash("sha256").update(ENCRYPTION_KEY).digest();
 }
 

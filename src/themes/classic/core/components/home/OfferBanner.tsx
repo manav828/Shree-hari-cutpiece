@@ -1,4 +1,4 @@
-import CouponAnnouncementBar from "@/components/coupons/CouponAnnouncementBar";
+import CouponAnnouncementBar from "../../../../../components/coupons/CouponAnnouncementBar";
 import { getActiveCmsBannersByPlacement } from "@/lib/cms";
 import CmsAnnouncementBar from "@/themes/classic/components/home/CmsAnnouncementBar";
 
@@ -9,5 +9,5 @@ export default async function OfferBanner() {
     return <CmsAnnouncementBar banners={banners} />;
   }
 
-  return <CouponAnnouncementBar />;
+  return <CouponAnnouncementBar theme="classic" />;
 }

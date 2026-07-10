@@ -50,7 +50,7 @@ interface AuthContextType {
     orders: Order[];
     isLoading: boolean;
     login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
-    signup: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; error?: string }>;
+    signup: (name: string, email: string, phone: string, password: string) => Promise<{ success: boolean; hasSession?: boolean; error?: string }>;
     logout: () => Promise<void>;
     updateProfile: (data: Partial<User>) => void;
     refreshOrders: () => Promise<void>;
@@ -152,22 +152,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         // Get the initial session
         supabase.auth.getSession().then(async ({ data: { session } }) => {
-            if (session?.user) {
-                await fetchProfile(session.user);
-                await fetchOrdersByUserId(session.user.id);
+            try {
+                if (session?.user) {
+                    await fetchProfile(session.user);
+                    await fetchOrdersByUserId(session.user.id);
+                }
+            } catch (err) {
+                console.error("Error fetching initial session profile/orders:", err);
+            } finally {
+                setIsLoading(false);
             }
+        }).catch((err) => {
+            console.error("getSession error:", err);
             setIsLoading(false);
         });
 
         // Listen for changes
         const { data: { subscription } } = supabase.auth.onAuthStateChange(
             async (event, session) => {
-                if (session?.user) {
-                    await fetchProfile(session.user);
-                    await fetchOrdersByUserId(session.user.id);
-                } else {
-                    setUser(null);
-                    setOrders([]);
+                setIsLoading(true);
+                try {
+                    if (session?.user) {
+                        await fetchProfile(session.user);
+                        await fetchOrdersByUserId(session.user.id);
+                    } else {
+                        setUser(null);
+                        setOrders([]);
+                    }
+                } catch (err) {
+                    console.error("onAuthStateChange handling error:", err);
+                } finally {
+                    setIsLoading(false);
                 }
             }
         );
@@ -201,7 +216,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }).catch(console.error);
         }
 
-        return { success: true };
+        return { success: true, hasSession: !!data.session };
     };
 
     const logout = async () => {
@@ -218,6 +233,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // @ts-ignore - bypassing never compilation inference
         await supabase.from("profiles").update(updates).eq("id", user.id);
+
+        // Also update user_profiles table to keep both in sync
+        // @ts-ignore - bypassing never compilation inference
+        await supabase.from("user_profiles").update(updates).eq("id", user.id);
 
         setUser((prev) => (prev ? { ...prev, ...data } : prev));
     };

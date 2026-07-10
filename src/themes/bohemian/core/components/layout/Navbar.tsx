@@ -25,7 +25,7 @@ export default function BohemianNavbar({ activePage = "home" }: BohemianNavbarPr
 		<header className="sticky top-0 z-50 border-b border-[#e8ddd3] bg-[#fcf9f4]/95 backdrop-blur-sm">
 			<nav className={`${BOHEMIAN_SITE_CONTAINER} flex items-center justify-between py-4`}>
 				<div className="flex items-center gap-8">
-					<Link href="/" className={`${bohemianHeadingFont.className} text-[34px] font-semibold leading-none text-[#9f3f29]`}>
+					<Link href="/" className={`${bohemianHeadingFont.className} text-[22px] sm:text-[27px] md:text-[34px] font-semibold leading-none text-[#9f3f29] whitespace-nowrap`}>
 						The Artisanal Archive
 					</Link>
 				</div>

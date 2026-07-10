@@ -9,6 +9,14 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@
 import { Input } from "@/components/admin/ui/Input";
 import { Select } from "@/components/admin/ui/Select";
 import { Textarea } from "@/components/admin/ui/Textarea";
+import { 
+    validateName, 
+    validatePhone, 
+    validatePincode, 
+    validateAddressLine, 
+    validateCity, 
+    validateState 
+} from "@/lib/validation";
 
 function formatDate(value: string | null) {
     if (!value) return "—";
@@ -231,6 +239,29 @@ export default function AdminCustomerDetailPage() {
             setError("Please fill all required address fields.");
             return;
         }
+
+        const nameErr = validateName(addressForm.full_name);
+        if (nameErr) { setError(nameErr); return; }
+
+        const phoneErr = validatePhone(addressForm.phone);
+        if (phoneErr) { setError(phoneErr); return; }
+
+        const addr1Err = validateAddressLine(addressForm.address_line1, "Address line 1");
+        if (addr1Err) { setError(addr1Err); return; }
+
+        if (addressForm.address_line2) {
+            const addr2Err = validateAddressLine(addressForm.address_line2, "Address line 2", false);
+            if (addr2Err) { setError(addr2Err); return; }
+        }
+
+        const cityErr = validateCity(addressForm.city);
+        if (cityErr) { setError(cityErr); return; }
+
+        const stateErr = validateState(addressForm.state);
+        if (stateErr) { setError(stateErr); return; }
+
+        const pinErr = validatePincode(addressForm.pincode);
+        if (pinErr) { setError(pinErr); return; }
 
         setSavingAddress(true);
         setError("");
@@ -561,25 +592,29 @@ export default function AdminCustomerDetailPage() {
                                 <Input
                                     value={addressForm.full_name}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, full_name: e.target.value }))}
+                                    maxLength={100}
                                     placeholder="Full name *"
                                     className="bg-white"
-                                />
+                                  />
                                 <Input
                                     value={addressForm.phone}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, phone: e.target.value }))}
+                                    maxLength={10}
                                     placeholder="Phone *"
                                     className="bg-white"
-                                />
+                                  />
                             </div>
                             <Input
                                 value={addressForm.address_line1}
                                 onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line1: e.target.value }))}
+                                maxLength={100}
                                 placeholder="Address line 1 *"
                                 className="bg-white"
                             />
                             <Input
                                 value={addressForm.address_line2}
                                 onChange={(e) => setAddressForm((prev) => ({ ...prev, address_line2: e.target.value }))}
+                                maxLength={100}
                                 placeholder="Address line 2"
                                 className="bg-white"
                             />
@@ -587,18 +622,21 @@ export default function AdminCustomerDetailPage() {
                                 <Input
                                     value={addressForm.city}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, city: e.target.value }))}
+                                    maxLength={50}
                                     placeholder="City *"
                                     className="bg-white"
                                 />
                                 <Input
                                     value={addressForm.state}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, state: e.target.value }))}
+                                    maxLength={50}
                                     placeholder="State *"
                                     className="bg-white"
                                 />
                                 <Input
                                     value={addressForm.pincode}
                                     onChange={(e) => setAddressForm((prev) => ({ ...prev, pincode: e.target.value }))}
+                                    maxLength={6}
                                     placeholder="Pincode *"
                                     className="bg-white"
                                 />

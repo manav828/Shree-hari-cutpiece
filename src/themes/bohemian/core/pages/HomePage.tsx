@@ -455,7 +455,7 @@ export default async function BohemianHomePage() {
         />
 
         <section className="bg-[#f6f3ee] py-12">
-          <div className={`${BOHEMIAN_SITE_CONTAINER} grid grid-cols-2 gap-8 md:grid-cols-4`}>
+          <div className={`${BOHEMIAN_SITE_CONTAINER} grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-4`}>
             <div className="flex items-center gap-4">
               <Truck className="h-8 w-8 text-[#9f3f29]" />
               <div>
@@ -487,11 +487,11 @@ export default async function BohemianHomePage() {
           </div>
         </section>
 
-        <section className={`${BOHEMIAN_SITE_CONTAINER} py-24`}>
-          <div className="mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
+        <section className={`${BOHEMIAN_SITE_CONTAINER} py-14 md:py-24`}>
+          <div className="mb-12 md:mb-16 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <h2 className={`${newsreader.className} text-4xl italic text-[#1c1c19] md:text-5xl`}>{archiveTitle}</h2>
-              <p className="mt-4 text-lg text-[#56423d]">{archiveSubtitle}</p>
+              <h2 className={`${newsreader.className} text-3xl italic text-[#1c1c19] md:text-4xl lg:text-5xl`}>{archiveTitle}</h2>
+              <p className="mt-3 text-base text-[#56423d] md:text-lg">{archiveSubtitle}</p>
             </div>
             <Link href="/shop" className="group flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-[#9f3f29]">
               View All Categories
@@ -499,8 +499,8 @@ export default async function BohemianHomePage() {
             </Link>
           </div>
 
-          <div className="grid h-[800px] grid-cols-1 gap-6 md:h-[600px] md:grid-cols-12">
-            <Link href={`/shop?category=${archiveCards[0].slug}`} className="group relative overflow-hidden rounded-xl md:col-span-8">
+          <div className="grid grid-cols-1 gap-4 md:h-[600px] md:grid-cols-12 md:gap-6">
+            <Link href={`/shop?category=${archiveCards[0].slug}`} className="group relative aspect-[4/3] overflow-hidden rounded-xl md:aspect-auto md:col-span-8">
               <Image
                 src={archiveCards[0].image}
                 alt={archiveCards[0].alt}
@@ -509,25 +509,25 @@ export default async function BohemianHomePage() {
                 className="object-cover transition-transform duration-700 group-hover:scale-105"
               />
               <div className="absolute inset-0 bg-black/20 transition-colors group-hover:bg-black/10" />
-              <div className="absolute bottom-10 left-10 text-white">
-                <h3 className={`${newsreader.className} mb-2 text-4xl`}>{archiveCards[0].title}</h3>
-                {archiveCards[0].subtitle ? <p className="italic tracking-wide">{archiveCards[0].subtitle}</p> : null}
+              <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 text-white">
+                <h3 className={`${newsreader.className} mb-1 md:mb-2 text-2xl md:text-4xl`}>{archiveCards[0].title}</h3>
+                {archiveCards[0].subtitle ? <p className="italic tracking-wide text-sm md:text-base">{archiveCards[0].subtitle}</p> : null}
               </div>
             </Link>
 
-            <div className="grid gap-6 md:col-span-4 md:grid-rows-2">
+            <div className="grid grid-cols-2 gap-4 md:col-span-4 md:grid-cols-1 md:grid-rows-2">
               {archiveCards.slice(1).map((card) => (
-                <Link key={card.title} href={`/shop?category=${card.slug}`} className="group relative overflow-hidden rounded-xl">
+                <Link key={card.title} href={`/shop?category=${card.slug}`} className="group relative aspect-[3/4] overflow-hidden rounded-xl md:aspect-auto">
                   <Image
                     src={card.image}
                     alt={card.alt}
                     fill
-                    sizes="(max-width: 768px) 100vw, 33vw"
+                    sizes="(max-width: 768px) 50vw, 33vw"
                     className="object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                   <div className="absolute inset-0 bg-black/20" />
-                  <div className="absolute bottom-6 left-6 text-white">
-                    <h3 className={`${newsreader.className} text-2xl`}>{card.title}</h3>
+                  <div className="absolute bottom-4 left-4 md:bottom-6 md:left-6 text-white">
+                    <h3 className={`${newsreader.className} text-xl md:text-2xl`}>{card.title}</h3>
                   </div>
                 </Link>
               ))}
@@ -535,11 +535,11 @@ export default async function BohemianHomePage() {
           </div>
         </section>
 
-        <section className="bg-[#f0ede8] py-24 md:py-32">
+        <section className="bg-[#f0ede8] py-14 md:py-32">
           <div className={BOHEMIAN_SITE_CONTAINER}>
             <div className="mb-16 text-center">
-              <h2 className={`${newsreader.className} mb-6 text-5xl italic text-[#1c1c19] md:text-7xl`}>{spacesTitle}</h2>
-              <p className="mx-auto max-w-2xl text-lg font-light leading-relaxed text-[#56423d] md:text-xl">
+              <h2 className={`${newsreader.className} mb-4 md:mb-6 text-3xl italic text-[#1c1c19] sm:text-4xl md:text-5xl lg:text-6xl`}>{spacesTitle}</h2>
+              <p className="mx-auto max-w-2xl text-base font-light leading-relaxed text-[#56423d] md:text-xl">
                 {spacesDescription}
               </p>
             </div>
@@ -564,10 +564,10 @@ export default async function BohemianHomePage() {
         </section>
 
         {/* Journal Highlights Section */}
-        <section className={`${BOHEMIAN_SITE_CONTAINER} py-24`}>
+        <section className={`${BOHEMIAN_SITE_CONTAINER} py-14 md:py-24`}>
           <div className="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
             <div>
-              <h2 className={`${newsreader.className} text-4xl italic text-[#1c1c19] md:text-5xl lg:text-6xl`}>
+              <h2 className={`${newsreader.className} text-3xl italic text-[#1c1c19] sm:text-4xl md:text-5xl lg:text-6xl`}>
                 {siteConfig.bohemian_journal_title?.trim() || "Journal Highlights"}
               </h2>
             </div>
@@ -583,11 +583,11 @@ export default async function BohemianHomePage() {
           <JournalCarousel posts={blogs} />
         </section>
 
-        <section id="new-arrivals" className="bg-[#f6f3ee] py-24">
+        <section id="new-arrivals" className="bg-[#f6f3ee] py-14 md:py-24">
           <div className={BOHEMIAN_SITE_CONTAINER}>
-            <div className="mb-16 flex items-end justify-between">
-              <h2 className={`${newsreader.className} text-4xl italic text-[#1c1c19]`}>{freshlyHarvestedTitle}</h2>
-              <Link href="/shop" className="text-sm font-medium text-[#56423d] underline decoration-[#ddc0ba] underline-offset-8">
+            <div className="mb-10 md:mb-16 flex flex-col items-start gap-4 md:flex-row md:items-end md:justify-between">
+              <h2 className={`${newsreader.className} text-3xl italic text-[#1c1c19] sm:text-4xl`}>{freshlyHarvestedTitle}</h2>
+              <Link href="/shop" className="text-sm font-medium text-[#56423d] underline decoration-[#ddc0ba] underline-offset-8 shrink-0">
                 See the full collection
               </Link>
             </div>
@@ -623,10 +623,10 @@ export default async function BohemianHomePage() {
           </div>
         </section>
 
-        <section className="bg-[#f5eee9] py-24 overflow-hidden">
+        <section className="bg-[#f5eee9] py-14 md:py-24 overflow-hidden">
           <div className={`${BOHEMIAN_SITE_CONTAINER} mb-16`}>
             <div className="text-center">
-              <h2 className={`${newsreader.className} text-4xl italic text-[#1c1c19] md:text-5xl lg:text-6xl`}>
+              <h2 className={`${newsreader.className} text-3xl italic text-[#1c1c19] sm:text-4xl md:text-5xl lg:text-6xl`}>
                 Community Stories
               </h2>
             </div>
@@ -707,10 +707,10 @@ export default async function BohemianHomePage() {
           </div>
         </section>
 
-        <section id="our-story" className="bg-[#ebe8e3] py-24">
+        <section id="our-story" className="bg-[#ebe8e3] py-14 md:py-24">
           <div className={`${BOHEMIAN_SITE_CONTAINER} flex flex-col items-center gap-16 md:flex-row`}>
             <div className="w-full md:w-1/2">
-              <h2 className={`${newsreader.className} mb-8 text-5xl italic leading-tight text-[#1c1c19]`}>
+              <h2 className={`${newsreader.className} mb-6 md:mb-8 text-3xl italic leading-tight text-[#1c1c19] sm:text-4xl md:text-5xl`}>
                 Crafting Slowly, Living Better.
               </h2>
               <p className="mb-8 text-lg leading-relaxed text-[#56423d]">
@@ -769,7 +769,7 @@ export default async function BohemianHomePage() {
           </div>
         </section>
 
-        <section className="py-24">
+        <section className="py-14 md:py-24">
           <div className={`${BOHEMIAN_SITE_CONTAINER} mb-12 text-center`}>
             <h2 className={`${newsreader.className} mb-4 text-3xl italic`}>In Your Sanctuaries</h2>
             <p className="text-[#56423d]">
@@ -801,11 +801,11 @@ export default async function BohemianHomePage() {
         </section>
 
 
-        <section className="bg-[#9f3f29] py-24 text-white">
+        <section className="bg-[#9f3f29] py-14 md:py-24 text-white">
           <div className={BOHEMIAN_SITE_CONTAINER}>
             <div className="mx-auto max-w-4xl text-center">
-            <h2 className={`${newsreader.className} mb-6 text-5xl italic`}>Join Our Journal</h2>
-            <p className="mb-12 text-lg opacity-90">Sign up for soulful inspiration, artisan stories, and 10% off your first curation.</p>
+            <h2 className={`${newsreader.className} mb-4 md:mb-6 text-3xl italic sm:text-4xl md:text-5xl`}>Join Our Journal</h2>
+            <p className="mb-8 md:mb-12 text-base opacity-90 md:text-lg">Sign up for soulful inspiration, artisan stories, and 10% off your first curation.</p>
             <form className="mx-auto flex max-w-lg flex-col gap-4 md:flex-row">
               <input
                 type="email"

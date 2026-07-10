@@ -5,12 +5,12 @@ import Footer from "@/themes/luxury/components/layout/Footer";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
-import CouponAnnouncementBar from "@/components/coupons/CouponAnnouncementBar";
+import CouponAnnouncementBar from "../../../../components/coupons/CouponAnnouncementBar";
 
 export default function HomePage() {
     return (
         <div className="bg-[#050505] text-[#F5F5F7] min-h-screen font-sans selection:bg-[#D4AF37] selection:text-black">
-            <CouponAnnouncementBar />
+            <CouponAnnouncementBar theme="luxury" />
             <Navbar />
 
             <main>

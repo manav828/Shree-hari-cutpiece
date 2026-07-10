@@ -1,5 +1,5 @@
-import CouponAnnouncementBar from "@/components/coupons/CouponAnnouncementBar";
+import CouponAnnouncementBar from "../../../../../components/coupons/CouponAnnouncementBar";
 
 export default function OfferBanner() {
-  return <CouponAnnouncementBar />;
+  return <CouponAnnouncementBar theme="bohemian" />;
 }

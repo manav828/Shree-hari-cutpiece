@@ -4,6 +4,16 @@ import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode
 import type { Coupon } from "@/types/coupons";
 import { triggerOrderNotification } from "@/lib/notifications";
 import { calculateCheckoutDetails, getShippingRatesConfig } from "@/lib/shipping/rates";
+import { 
+    validateName, 
+    validatePhone, 
+    validatePincode, 
+    validateEmail, 
+    validateAddressLine, 
+    validateCity, 
+    validateState, 
+    validateNotes 
+} from "@/lib/validation";
 
 type CheckoutItem = {
     id: string;
@@ -146,6 +156,42 @@ export default async function handlePlaceOrder(req: NextRequest) {
 
         if (!formData.fullName || !formData.phone || !formData.addressLine1 || !formData.area || !formData.city || !formData.state || !formData.pincode) {
             return NextResponse.json({ error: "Please fill all required address fields." }, { status: 400 });
+        }
+
+        const nameErr = validateName(formData.fullName);
+        if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+
+        const phoneErr = validatePhone(formData.phone);
+        if (phoneErr) return NextResponse.json({ error: phoneErr }, { status: 400 });
+
+        const addrErr = validateAddressLine(formData.addressLine1, "Street Address");
+        if (addrErr) return NextResponse.json({ error: addrErr }, { status: 400 });
+
+        const areaErr = validateAddressLine(formData.area, "Area / Locality");
+        if (areaErr) return NextResponse.json({ error: areaErr }, { status: 400 });
+
+        if (formData.landmark) {
+            const landmarkErr = validateAddressLine(formData.landmark, "Landmark", false);
+            if (landmarkErr) return NextResponse.json({ error: landmarkErr }, { status: 400 });
+        }
+
+        const cityErr = validateCity(formData.city);
+        if (cityErr) return NextResponse.json({ error: cityErr }, { status: 400 });
+
+        const stateErr = validateState(formData.state);
+        if (stateErr) return NextResponse.json({ error: stateErr }, { status: 400 });
+
+        const pinErr = validatePincode(formData.pincode);
+        if (pinErr) return NextResponse.json({ error: pinErr }, { status: 400 });
+
+        if (formData.email) {
+            const emailErr = validateEmail(formData.email, false);
+            if (emailErr) return NextResponse.json({ error: emailErr }, { status: 400 });
+        }
+
+        if (formData.notes) {
+            const notesErr = validateNotes(formData.notes);
+            if (notesErr) return NextResponse.json({ error: notesErr }, { status: 400 });
         }
 
         // Security check: Verify that Cash on Delivery is actually enabled in settings

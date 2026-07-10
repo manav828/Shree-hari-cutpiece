@@ -47,8 +47,8 @@ class ThemeFallbackResolverPlugin {
             }
           }
         }
-      } else if (normPath.includes("/src/") && !normPath.includes("/src/themes/")) {
-        // Check if path is in src/ but outside src/themes/
+      } else if (normPath.includes("/src/") && !normPath.includes("/src/themes/") && !normPath.includes("/src/components/")) {
+        // Check if path is in src/ but outside src/themes/ and outside src/components/
         const activeTheme = process.env.NEXT_PUBLIC_ACTIVE_THEME;
         if (activeTheme) {
           const srcIdx = normPath.indexOf("/src/");

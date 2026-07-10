@@ -110,9 +110,9 @@ export default function AdminCacheControls() {
             {/* Cache Controls */}
             <div className="flex items-center gap-2">
                 {/* Cache Status + Toggle */}
-                <div className="flex items-center gap-2 bg-white/70 backdrop-blur-sm rounded-lg px-3 py-1.5 border border-slate-200 shadow-sm">
+                <div className="flex items-center gap-1.5 bg-white/70 backdrop-blur-sm rounded-lg px-2 py-1.5 border border-slate-200 shadow-sm">
                     <Database className="h-3.5 w-3.5 text-slate-400 flex-shrink-0" />
-                    <span className="text-[11px] font-medium text-slate-500 select-none whitespace-nowrap">
+                    <span className="text-[11px] font-medium text-slate-500 select-none whitespace-nowrap hidden sm:inline">
                         Cache
                     </span>
 
@@ -138,9 +138,9 @@ export default function AdminCacheControls() {
                     </button>
 
                     <span
-                        className={`text-[11px] font-semibold w-5 select-none ${
+                        className={`text-[11px] font-semibold select-none ${
                             cacheEnabled ? "text-emerald-600" : "text-slate-400"
-                        }`}
+                        } hidden sm:inline`}
                     >
                         {cacheEnabled === null ? "—" : cacheEnabled ? "ON" : "OFF"}
                     </span>

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { ChevronDown, Heart, Search } from "lucide-react";
+import { ChevronDown, Heart, Search, SlidersHorizontal, X } from "lucide-react";
 import {
   BOHEMIAN_LISTING_HERO_BY_VARIANT,
   type BohemianListingCategoryOption,
@@ -195,7 +195,19 @@ export default function BohemianProductListing({
   const [selectedCategories, setSelectedCategories] = useState<string[]>([normalizeText(selectedCategorySlug)]);
   const [visibleCount, setVisibleCount] = useState(BATCH_SIZE);
   const [isMaterialOpen, setIsMaterialOpen] = useState(true);
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const lazyLoadAnchorRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    if (isFilterOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [isFilterOpen]);
 
   const hero = BOHEMIAN_LISTING_HERO_BY_VARIANT[variant];
 
@@ -449,8 +461,37 @@ export default function BohemianProductListing({
         </div>
       </section>
 
+      {/* Mobile filter sticky bar */}
+      <div className="md:hidden sticky top-[57px] z-30 bg-[#fcf9f4]/95 backdrop-blur-sm border-b border-[#ebe3da] flex items-center gap-3 px-4 py-3">
+        <button
+          onClick={() => setIsFilterOpen(true)}
+          className="flex items-center gap-2 rounded-full bg-[#f0ede8] px-4 py-2.5 text-sm font-semibold text-[#56423d] hover:bg-[#e7dfd6] transition-colors"
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          Filters
+          {(materialFilter !== "all" || selectedCategories.filter(Boolean).length > 0) && (
+            <span className="ml-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#9f3f29] text-[10px] font-bold text-white">
+              {[materialFilter !== "all" ? 1 : 0, selectedCategories.filter(Boolean).length].reduce((a, b) => a + b, 0)}
+            </span>
+          )}
+        </button>
+        <div className="relative flex-1">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value as SortOption)}
+            className="w-full appearance-none rounded-full bg-[#f0ede8] py-2.5 pl-4 pr-8 text-sm font-medium text-[#56423d] outline-none"
+          >
+            <option value="curated">Curated</option>
+            <option value="name">Name</option>
+            <option value="price-low">Price: Low → High</option>
+            <option value="price-high">Price: High → Low</option>
+          </select>
+          <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#89726c]" />
+        </div>
+      </div>
+
       <section className="mx-auto grid w-full max-w-[1320px] grid-cols-1 gap-12 px-6 py-14 md:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
-        <aside>
+        <aside className="hidden md:block">
           <div className="md:sticky md:top-24">
             <div>
               <div className="border-t border-[#ebe3da] pt-6">
@@ -590,6 +631,83 @@ export default function BohemianProductListing({
           </div>
         </section>
       </section>
+
+      {/* Mobile filter drawer */}
+      {isFilterOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setIsFilterOpen(false)} />
+          <div className="absolute left-0 top-0 bottom-0 w-[85vw] max-w-[340px] bg-[#fcf9f4] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-[#ebe3da] px-5 py-4">
+              <h2 className={`${bohemianHeadingFont.className} text-xl`}>Filters</h2>
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="rounded-full p-2 hover:bg-[#f0ede8]"
+                aria-label="Close filters"
+              >
+                <X className="h-5 w-5 text-[#56423d]" />
+              </button>
+            </div>
+            <div className="px-5 py-6 space-y-6">
+              {/* Category */}
+              <div className="border-t border-[#ebe3da] pt-6">
+                <p className={`${bohemianHeadingFont.className} text-xl mb-4`}>Category</p>
+                <CategoryMultiSelect
+                  categories={categories}
+                  selectedValues={selectedCategories}
+                  onChange={setSelectedCategories}
+                  buttonLabel="Select"
+                />
+                <Link href="/shop" className="mt-3 inline-block text-xs font-semibold uppercase tracking-[0.14em] text-[#9f3f29]">
+                  View all categories
+                </Link>
+              </div>
+              {/* Material */}
+              <div className="border-t border-[#ebe3da] pt-6">
+                <p className={`${bohemianHeadingFont.className} text-xl mb-4`}>Material</p>
+                <div className="flex flex-wrap gap-2">
+                  {materialOptions.map((option) => (
+                    <button
+                      key={`mobile-material-${option}`}
+                      type="button"
+                      onClick={() => setMaterialFilter(option)}
+                      className={`rounded-full px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition-colors ${
+                        normalizeText(option) === normalizeText(materialFilter)
+                          ? "bg-[#9f3f29] text-white"
+                          : "bg-[#f0ede8] text-[#5f5954] hover:bg-[#e7dfd6]"
+                      }`}
+                    >
+                      {option === "all" ? "All" : option}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              {/* Price Range */}
+              <div className="border-t border-[#ebe3da] pt-6">
+                <p className={`${bohemianHeadingFont.className} text-xl mb-4`}>Price Range</p>
+                <input
+                  type="range"
+                  min={0}
+                  max={50000}
+                  defaultValue={50000}
+                  className="w-full accent-[#9f3f29]"
+                  aria-label="Price range"
+                />
+                <div className="mt-2 flex justify-between text-xs text-[#7a6f68]">
+                  <span>INR 0</span>
+                  <span>INR 50,000+</span>
+                </div>
+              </div>
+              {/* Apply button */}
+              <button
+                onClick={() => setIsFilterOpen(false)}
+                className="w-full rounded-full bg-[#9f3f29] py-3 text-sm font-bold text-white"
+              >
+                Apply Filters
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

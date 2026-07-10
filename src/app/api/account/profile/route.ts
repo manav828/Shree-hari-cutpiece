@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId } from "@/lib/apiAuth";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { validateName, validatePhone } from "@/lib/validation";
 
 export async function GET(req: NextRequest) {
     try {
@@ -52,6 +53,18 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: "Full name is required" }, { status: 400 });
         }
 
+        const nameErr = validateName(fullName);
+        if (nameErr) {
+            return NextResponse.json({ error: nameErr }, { status: 400 });
+        }
+
+        if (phone) {
+            const phoneErr = validatePhone(phone);
+            if (phoneErr) {
+                return NextResponse.json({ error: phoneErr }, { status: 400 });
+            }
+        }
+
         const { error: updateError } = await supabaseAdmin
             .from("user_profiles")
             .upsert({
@@ -62,6 +75,17 @@ export async function PATCH(req: NextRequest) {
             }, { onConflict: "id" });
 
         if (updateError) throw updateError;
+
+        // Also update profiles table to keep both in sync
+        const { error: profilesUpdateError } = await supabaseAdmin
+            .from("profiles")
+            .upsert({
+                id: userId,
+                full_name: fullName,
+                phone,
+            }, { onConflict: "id" });
+
+        if (profilesUpdateError) throw profilesUpdateError;
 
         return NextResponse.json({ success: true });
     } catch (err: unknown) {

@@ -89,7 +89,7 @@ export default function BohemianHeroCarousel({
           return (
             <div
               key={banner.id}
-              className="relative h-[calc(100vh-72px)] min-h-[560px] w-full min-w-full md:h-[calc(100vh-82px)] shrink-0"
+              className="relative h-[calc(100svh-110px)] min-h-[500px] w-full min-w-full md:h-[calc(100vh-82px)] shrink-0"
             >
               <Image
                 src={bannerImage}
@@ -108,11 +108,11 @@ export default function BohemianHeroCarousel({
                     {defaultHeroBadge}
                   </p>
  
-                  <h1 className={`${headingClassName} mb-6 whitespace-pre-line text-[62px] leading-[0.95] text-[#9f3f29] md:text-[82px]`}>
+                  <h1 className={`${headingClassName} mb-4 md:mb-6 whitespace-pre-line text-[38px] leading-[1.0] sm:text-[52px] md:text-[62px] lg:text-[82px] text-[#9f3f29]`}>
                     {bannerHeadline}
                   </h1>
  
-                  <p className="mb-10 max-w-[520px] text-base leading-relaxed text-[#4f4741] md:text-[18px]">
+                  <p className="mb-6 md:mb-10 max-w-[520px] text-sm leading-relaxed text-[#4f4741] md:text-[18px]">
                     {bannerDescription}
                   </p>
  

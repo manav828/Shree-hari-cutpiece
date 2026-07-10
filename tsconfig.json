@@ -22,10 +22,10 @@
       "@/themes/bohemian/*": ["./src/themes/bohemian/changes/*", "./src/themes/bohemian/core/*"],
       "@/themes/luxury/*": ["./src/themes/luxury/changes/*", "./src/themes/luxury/core/*"],
       "@/*": [
-        "./src/themes/bohemian/changes/*",
+        "./src/*",
         "./src/themes/classic/changes/*",
-        "./src/themes/luxury/changes/*",
-        "./src/*"
+        "./src/themes/bohemian/changes/*",
+        "./src/themes/luxury/changes/*"
       ]
     }
   },

@@ -11,8 +11,51 @@ import CartSidebar from "@/components/cart/CartSidebar";
 import Container from "@/components/ui/Container";
 import { useAuth, Order } from "@/context/AuthContext";
 import { formatPrice } from "@/lib/utils";
+import { getThemeSync } from "@/lib/themeSync";
 
 type Tab = "orders" | "addresses" | "settings";
+
+const themeStyles = {
+  bohemian: {
+    welcomeBg: "bg-[#F7F0F1]",
+    welcomeText: "text-[#7f3321]",
+    cardBg: "bg-[#FDFBF7]",
+    accentBg: "bg-[#9f3f29]",
+    accentText: "text-[#9f3f29]",
+    buttonClass: "bg-[#9f3f29] hover:bg-[#8c3522] text-white",
+    secondaryButtonClass: "border-[#e3d2c5] hover:bg-[#f3e7db] text-[#7f3321] bg-white",
+    fontFamily: "font-serif",
+    accentBorder: "border-[#e8ddd3]",
+    pageBg: "bg-[#fcf9f4]",
+    mainClass: "pt-6 lg:pt-10 pb-20 min-h-screen bg-[#fcf9f4]/30",
+  },
+  classic: {
+    welcomeBg: "bg-background-secondary",
+    welcomeText: "text-foreground",
+    cardBg: "bg-white",
+    accentBg: "bg-accent",
+    accentText: "text-accent",
+    buttonClass: "bg-accent hover:bg-[#721833] text-white",
+    secondaryButtonClass: "border-border hover:bg-background-secondary text-foreground bg-white",
+    fontFamily: "font-sans",
+    accentBorder: "border-border",
+    pageBg: "bg-white",
+    mainClass: "pt-6 lg:pt-10 pb-20 min-h-screen bg-white",
+  },
+  luxury: {
+    welcomeBg: "bg-[#1C1C1C]",
+    welcomeText: "text-[#d4af37]",
+    cardBg: "bg-[#121212]",
+    accentBg: "bg-[#d4af37]",
+    accentText: "text-[#d4af37]",
+    buttonClass: "bg-[#d4af37] hover:bg-[#c29d2c] text-black font-semibold",
+    secondaryButtonClass: "border-[#d4af37]/30 hover:bg-[#d4af37]/10 text-[#d4af37] bg-transparent",
+    fontFamily: "font-sans",
+    accentBorder: "border-[#d4af37]/20",
+    pageBg: "bg-[#0a0a0a]",
+    mainClass: "pt-6 lg:pt-10 pb-20 min-h-screen bg-[#0a0a0a] text-white",
+  }
+};
 
 const statusConfig = {
     placed: { label: "Order Placed", color: "bg-yellow-100 text-yellow-700 border-yellow-200" },
@@ -40,15 +83,16 @@ function formatOptionSummary(options?: Array<{ group_name?: string | null; value
 
 function OrderCard({ order }: { order: Order }) {
     const [isExpanded, setIsExpanded] = useState(false);
+    const theme = getThemeSync();
+    const styles = themeStyles[theme] || themeStyles.classic;
 
-    // Provide a fallback for statuses that might not be in statusConfig (like 'pending')
     const status = statusConfig[order.status as keyof typeof statusConfig] || {
         label: order.status.charAt(0).toUpperCase() + order.status.slice(1),
         color: "bg-gray-100 text-gray-700 border-gray-200"
     };
 
     return (
-        <div className="bg-white border border-border rounded-xl overflow-hidden transition-shadow hover:shadow-md">
+        <div className={`border rounded-xl overflow-hidden transition-shadow hover:shadow-md ${styles.cardBg} ${styles.accentBorder}`}>
             {/* Order Header */}
             <button
                 onClick={() => setIsExpanded(!isExpanded)}
@@ -57,7 +101,7 @@ function OrderCard({ order }: { order: Order }) {
             >
                 <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-3 flex-wrap">
-                        <span className="font-medium text-foreground text-sm">#{order.order_number}</span>
+                        <span className="font-medium text-sm">#{order.order_number}</span>
                         <span className={`text-xs px-2.5 py-0.5 rounded-full border font-medium ${status.color}`}>
                             {status.label}
                         </span>
@@ -82,7 +126,7 @@ function OrderCard({ order }: { order: Order }) {
                         )}
                     </div>
                     <div className="text-right flex-shrink-0">
-                        <p className="font-medium text-foreground text-sm">{formatPrice(order.total)}</p>
+                        <p className="font-medium text-sm">{formatPrice(order.total)}</p>
                     </div>
                     <svg
                         className={`w-5 h-5 text-text-secondary transition-transform duration-300 flex-shrink-0 ${isExpanded ? "rotate-180" : ""}`}
@@ -97,16 +141,16 @@ function OrderCard({ order }: { order: Order }) {
 
             {/* Expandable Details */}
             {isExpanded && (
-                <div className="border-t border-border px-6 py-5 bg-[#FDFBF7]">
+                <div className={`border-t px-6 py-5 ${styles.accentBorder} ${theme === "luxury" ? "bg-[#181818]" : "bg-[#FDFBF7]"}`}>
                     {/* Items */}
                     <div className="space-y-4 mb-5">
                         {order.items.map((item) => (
                             <div key={item.id} className="flex items-center gap-4">
-                                <div className="w-14 h-16 relative bg-white flex-shrink-0 rounded-lg border border-border overflow-hidden">
+                                <div className={`w-14 h-16 relative flex-shrink-0 rounded-lg border overflow-hidden ${styles.cardBg} ${styles.accentBorder}`}>
                                     {item.image_url ? <Image src={getThumbnailUrl(item.image_url)} alt={item.product_name} fill className="object-cover" /> : <div className="w-full h-full bg-border" />}
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{item.product_name}</p>
+                                    <p className="text-sm font-medium truncate">{item.product_name}</p>
                                     <p className="text-xs text-text-secondary mt-0.5">{item.quantity_or_meters} × {formatPrice(item.price_per_unit)}</p>
                                     {formatOptionSummary(item.selected_options_json) && (
                                         <p className="text-[11px] text-text-secondary mt-0.5">
@@ -114,7 +158,7 @@ function OrderCard({ order }: { order: Order }) {
                                         </p>
                                     )}
                                 </div>
-                                <p className="text-sm font-medium text-foreground flex-shrink-0">
+                                <p className="text-sm font-medium flex-shrink-0">
                                     {formatPrice(item.price_per_unit * item.quantity_or_meters)}
                                 </p>
                             </div>
@@ -122,22 +166,22 @@ function OrderCard({ order }: { order: Order }) {
                     </div>
 
                     {/* Totals & Address */}
-                    <div className="flex flex-col sm:flex-row sm:justify-between gap-4 pt-4 border-t border-border">
+                    <div className={`flex flex-col sm:flex-row sm:justify-between gap-4 pt-4 border-t ${styles.accentBorder}`}>
                         <div>
                             <p className="text-xs text-text-secondary mb-1">Delivery Address</p>
-                            <p className="text-sm text-foreground">{order.address}</p>
+                            <p className="text-sm">{order.address}</p>
                         </div>
                         <div className="text-right flex-shrink-0">
                             <p className="text-xs text-text-secondary mb-0.5">Order Total</p>
-                            <p className="font-serif text-xl text-foreground">{formatPrice(order.total)}</p>
+                            <p className={`text-xl font-medium ${theme === "bohemian" ? "font-serif" : "font-sans"}`}>{formatPrice(order.total)}</p>
                         </div>
                     </div>
 
                     {/* View Details Action */}
-                    <div className="mt-5 pt-5 border-t border-border border-dashed">
+                    <div className={`mt-5 pt-5 border-t border-dashed ${styles.accentBorder}`}>
                         <Link
                             href={`/account/orders/${order.id}`}
-                            className="w-full btn-secondary bg-white text-sm py-3 flex items-center justify-center gap-2 rounded-lg"
+                            className={`w-full btn-secondary text-sm py-3 flex items-center justify-center gap-2 rounded-lg ${styles.secondaryButtonClass}`}
                         >
                             View Order Details
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -159,6 +203,9 @@ export default function AccountPage() {
     const [editPhone, setEditPhone] = useState("");
     const [saveSuccess, setSaveSuccess] = useState(false);
 
+    const theme = getThemeSync();
+    const styles = themeStyles[theme] || themeStyles.classic;
+
     // Initial auth redirect and sync local state
     useEffect(() => {
         if (!isLoading && !user) {
@@ -178,12 +225,12 @@ export default function AccountPage() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.id]);
 
-    if (isLoading || !user) {
+    if (isLoading) {
         return (
             <>
                 <Navbar />
                 <CartSidebar />
-                <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
+                <main className={`pt-6 lg:pt-10 pb-20 min-h-screen ${theme === "luxury" ? "bg-[#0a0a0a]" : "bg-white"}`}>
                     <Container>
                         {/* Profile Header Shimmer */}
                         <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-12 pb-10 border-b border-border">
@@ -207,7 +254,7 @@ export default function AccountPage() {
 
                             {/* Content Area Shimmer */}
                             <div className="lg:col-span-3 space-y-6">
-                                <div className="bg-white border border-border rounded-2xl p-6 space-y-6">
+                                <div className={`border border-border rounded-2xl p-6 space-y-6 ${theme === "luxury" ? "bg-[#121212]" : "bg-white"}`}>
                                     <div className="space-y-2">
                                         <div className="w-24 h-3 rounded shimmer-bg" />
                                         <div className="w-40 h-6 rounded shimmer-bg" />
@@ -216,7 +263,7 @@ export default function AccountPage() {
 
                                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                                         {[...Array(4)].map((_, i) => (
-                                            <div key={i} className="bg-white border border-border rounded-lg p-3 space-y-2">
+                                            <div key={i} className={`border border-border rounded-lg p-3 space-y-2 ${theme === "luxury" ? "bg-[#181818]" : "bg-white"}`}>
                                                 <div className="w-16 h-3 rounded shimmer-bg" />
                                                 <div className="w-10 h-6 rounded shimmer-bg" />
                                             </div>
@@ -248,6 +295,10 @@ export default function AccountPage() {
         );
     }
 
+    if (!user) {
+        return null;
+    }
+
     // Generate initials avatar
     const initials = user.name
         .split(" ")
@@ -277,17 +328,17 @@ export default function AccountPage() {
         <>
             <Navbar />
             <CartSidebar />
-            <main className="pt-6 lg:pt-10 pb-20 min-h-screen">
+            <main className={`${styles.mainClass} ${styles.fontFamily}`}>
                 <Container>
                     {/* Profile Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-12 pb-10 border-b border-border">
+                    <div className={`flex flex-col sm:flex-row sm:items-center gap-6 mb-12 pb-10 border-b ${styles.accentBorder}`}>
                         {/* Avatar */}
-                        <div className="w-20 h-20 rounded-full bg-accent flex items-center justify-center flex-shrink-0">
-                            <span className="font-serif text-2xl text-white">{initials}</span>
+                        <div className={`w-20 h-20 rounded-full flex items-center justify-center flex-shrink-0 ${theme === "luxury" ? "bg-[#d4af37]" : "bg-accent"}`}>
+                            <span className={`text-2xl ${theme === "luxury" ? "text-black font-semibold" : "text-white font-serif"}`}>{initials}</span>
                         </div>
                         <div className="flex-1">
-                            <p className="text-accent text-xs tracking-[0.3em] uppercase mb-1 font-medium">Member Account</p>
-                            <h1 className="font-serif text-3xl lg:text-4xl text-foreground mb-1">{user.name}</h1>
+                            <p className={`${styles.accentText} text-xs tracking-[0.3em] uppercase mb-1 font-medium`}>Member Account</p>
+                            <h1 className={`text-3xl lg:text-4xl mb-1 ${theme === "bohemian" ? "font-serif text-[#9f3f29]" : "font-sans font-semibold text-foreground"}`}>{user.name}</h1>
                             <p className="text-text-secondary text-sm">{user.email}</p>
                         </div>
                         <button
@@ -295,7 +346,7 @@ export default function AccountPage() {
                                 await logout();
                                 router.push("/");
                             }}
-                            className="btn-secondary text-sm py-3 flex items-center gap-2 self-start sm:self-auto"
+                            className={`btn-secondary text-sm py-3 flex items-center gap-2 self-start sm:self-auto ${styles.secondaryButtonClass}`}
                         >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -313,13 +364,13 @@ export default function AccountPage() {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${activeTab === tab.id
-                                            ? "bg-accent text-white shadow-sm"
-                                            : "text-text-secondary hover:text-foreground hover:bg-background-secondary"
+                                            ? `${theme === "luxury" ? "bg-[#d4af37] text-black" : `${styles.accentBg} text-white`} shadow-sm`
+                                            : `text-text-secondary hover:text-foreground ${theme === "luxury" ? "hover:bg-[#1C1C1C]" : "hover:bg-background-secondary"}`
                                             }`}
                                     >
                                         {tab.label}
                                         {tab.id === "orders" && (
-                                            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${activeTab === "orders" ? "bg-white/20 text-white" : "bg-border text-text-secondary"}`}>
+                                            <span className={`ml-2 text-xs px-2 py-0.5 rounded-full ${activeTab === "orders" ? (theme === "luxury" ? "bg-black/25 text-black" : "bg-white/20 text-white") : "bg-border text-text-secondary"}`}>
                                                 {orders.length}
                                             </span>
                                         )}
@@ -330,31 +381,31 @@ export default function AccountPage() {
 
                         {/* Content Area */}
                         <div className="lg:col-span-3">
-                            <div className="mb-6 bg-[#F7F0F1] border border-border rounded-2xl p-6">
+                            <div className={`mb-6 border rounded-2xl p-6 ${styles.welcomeBg} ${styles.accentBorder}`}>
                                 <p className="text-xs uppercase tracking-[0.2em] text-text-secondary mb-2">Welcome back</p>
-                                <h2 className="font-serif text-2xl text-foreground">{user.name}</h2>
+                                <h2 className={`text-2xl text-foreground font-semibold ${theme === "bohemian" ? "font-serif text-[#9f3f29]" : "font-sans"}`}>{user.name}</h2>
                                 <p className="text-sm text-text-secondary mt-1">Manage your profile, addresses, and order journey from one place.</p>
 
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-5">
-                                    <div className="bg-white border border-border rounded-lg p-3">
+                                    <div className={`border rounded-lg p-3 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <p className="text-[11px] uppercase text-text-secondary">Total Orders</p>
-                                        <p className="text-lg font-semibold text-foreground mt-1">{orders.length}</p>
+                                        <p className="text-lg font-semibold mt-1">{orders.length}</p>
                                     </div>
-                                    <div className="bg-white border border-border rounded-lg p-3">
+                                    <div className={`border rounded-lg p-3 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <p className="text-[11px] uppercase text-text-secondary">Total Spent</p>
-                                        <p className="text-lg font-semibold text-foreground mt-1">{formatPrice(totalSpent)}</p>
+                                        <p className="text-lg font-semibold mt-1">{formatPrice(totalSpent)}</p>
                                     </div>
-                                    <div className="bg-white border border-border rounded-lg p-3">
+                                    <div className={`border rounded-lg p-3 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <p className="text-[11px] uppercase text-text-secondary">Member Since</p>
-                                        <p className="text-sm font-semibold text-foreground mt-1">
+                                        <p className="text-sm font-semibold mt-1">
                                             {memberSince
                                                 ? new Date(memberSince).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
                                                 : "-"}
                                         </p>
                                     </div>
-                                    <div className="bg-white border border-border rounded-lg p-3">
+                                    <div className={`border rounded-lg p-3 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <p className="text-[11px] uppercase text-text-secondary">Last Order</p>
-                                        <p className="text-sm font-semibold text-foreground mt-1">
+                                        <p className="text-sm font-semibold mt-1">
                                             {lastOrder
                                                 ? new Date(lastOrder.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })
                                                 : "-"}
@@ -363,9 +414,9 @@ export default function AccountPage() {
                                 </div>
 
                                 <div className="flex flex-wrap gap-2 mt-4">
-                                    <Link href="/account/profile" className="btn-secondary text-xs py-2">Edit Profile</Link>
-                                    <Link href="/account/addresses" className="btn-secondary text-xs py-2">Address Book</Link>
-                                    <Link href="/account/preferences" className="btn-secondary text-xs py-2">Preferences</Link>
+                                    <Link href="/account/profile" className={`btn-secondary text-xs py-2 ${styles.secondaryButtonClass}`}>Edit Profile</Link>
+                                    <Link href="/account/addresses" className={`btn-secondary text-xs py-2 ${styles.secondaryButtonClass}`}>Address Book</Link>
+                                    <Link href="/account/preferences" className={`btn-secondary text-xs py-2 ${styles.secondaryButtonClass}`}>Preferences</Link>
                                 </div>
                             </div>
 
@@ -373,13 +424,13 @@ export default function AccountPage() {
                             {activeTab === "orders" && (
                                 <div>
                                     <div className="flex items-center justify-between mb-6">
-                                        <h2 className="font-serif text-2xl text-foreground">My Orders</h2>
+                                        <h2 className="text-2xl font-semibold">My Orders</h2>
                                         <p className="text-text-secondary text-sm">{orders.length} orders</p>
                                     </div>
 
-                                    <div className="mb-6 bg-white border border-border rounded-xl p-4">
+                                    <div className={`mb-6 border rounded-xl p-4 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <div className="flex items-center justify-between mb-3">
-                                            <h3 className="text-sm font-semibold text-foreground">Recent Orders</h3>
+                                            <h3 className="text-sm font-semibold">Recent Orders</h3>
                                             <span className="text-xs text-text-secondary">Last 5</span>
                                         </div>
                                         {recentOrders.length === 0 ? (
@@ -390,15 +441,15 @@ export default function AccountPage() {
                                                     <Link
                                                         key={`recent-${order.id}`}
                                                         href={`/account/orders/${order.id}`}
-                                                        className="flex items-center justify-between rounded-md border border-border px-3 py-2 hover:bg-background-secondary"
+                                                        className={`flex items-center justify-between rounded-md border px-3 py-2 ${styles.accentBorder} ${theme === "luxury" ? "hover:bg-[#1c1c1c]" : "hover:bg-background-secondary"}`}
                                                     >
                                                         <div>
-                                                            <p className="text-sm font-medium text-foreground">#{order.order_number}</p>
+                                                            <p className="text-sm font-medium">#{order.order_number}</p>
                                                             <p className="text-xs text-text-secondary">
                                                                 {new Date(order.date).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" })}
                                                             </p>
                                                         </div>
-                                                        <p className="text-sm font-medium text-foreground">{formatPrice(order.total)}</p>
+                                                        <p className="text-sm font-medium">{formatPrice(order.total)}</p>
                                                     </Link>
                                                 ))}
                                             </div>
@@ -406,12 +457,12 @@ export default function AccountPage() {
                                     </div>
 
                                     {orders.length === 0 ? (
-                                        <div className="text-center py-20 bg-[#F7F0F1] rounded-2xl">
+                                        <div className={`text-center py-20 rounded-2xl ${styles.welcomeBg}`}>
                                             <svg className="w-16 h-16 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                                             </svg>
                                             <p className="text-text-secondary mb-4 text-sm">You haven&apos;t placed any orders yet.</p>
-                                            <Link href="/shop" className="btn-primary text-sm py-3">
+                                            <Link href="/shop" className={`btn-primary text-sm py-3 ${styles.buttonClass}`}>
                                                 Start Shopping
                                             </Link>
                                         </div>
@@ -429,18 +480,18 @@ export default function AccountPage() {
                             {activeTab === "addresses" && (
                                 <div>
                                     <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-                                        <h2 className="font-serif text-2xl text-foreground">Saved Addresses</h2>
-                                        <Link href="/account/addresses" className="btn-secondary text-sm py-2.5">
+                                        <h2 className="text-2xl font-semibold">Saved Addresses</h2>
+                                        <Link href="/account/addresses" className={`btn-secondary text-sm py-2.5 ${styles.secondaryButtonClass}`}>
                                             Manage Addresses
                                         </Link>
                                     </div>
-                                    <div className="bg-[#F7F0F1] rounded-2xl p-8 text-center">
+                                    <div className={`rounded-2xl p-8 text-center ${styles.welcomeBg}`}>
                                         <svg className="w-12 h-12 mx-auto text-text-secondary mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
                                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
                                         </svg>
                                         <p className="text-text-secondary text-sm mb-4">Address management is now available with add, edit, delete, and default selection.</p>
-                                        <Link href="/account/addresses" className="btn-primary text-sm py-2.5 inline-block">Open Address Book</Link>
+                                        <Link href="/account/addresses" className={`btn-primary text-sm py-2.5 inline-block ${styles.buttonClass}`}>Open Address Book</Link>
                                     </div>
                                 </div>
                             )}
@@ -449,23 +500,23 @@ export default function AccountPage() {
                             {activeTab === "settings" && (
                                 <div>
                                     <div className="flex items-center justify-between mb-6 gap-3 flex-wrap">
-                                        <h2 className="font-serif text-2xl text-foreground">Account Settings</h2>
+                                        <h2 className="text-2xl font-semibold">Account Settings</h2>
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <Link href="/account/profile" className="btn-secondary text-sm py-2.5">Profile Page</Link>
-                                            <Link href="/account/preferences" className="btn-secondary text-sm py-2.5">Preferences Page</Link>
+                                            <Link href="/account/profile" className={`btn-secondary text-sm py-2.5 ${styles.secondaryButtonClass}`}>Profile Page</Link>
+                                            <Link href="/account/preferences" className={`btn-secondary text-sm py-2.5 ${styles.secondaryButtonClass}`}>Preferences Page</Link>
                                         </div>
                                     </div>
-                                    <div className="bg-white border border-border rounded-xl p-6 sm:p-8 space-y-5">
+                                    <div className={`border rounded-xl p-6 sm:p-8 space-y-5 ${styles.cardBg} ${styles.accentBorder}`}>
                                         <div className="relative">
                                             <input
                                                 type="text"
                                                 id="edit-name"
                                                 value={editName}
                                                 onChange={(e) => setEditName(e.target.value)}
-                                                className="peer w-full px-4 pt-6 pb-2 border-b-2 border-border bg-[#FDFBF7] focus:outline-none focus:border-accent transition-colors placeholder-transparent rounded-t-md"
+                                                className={`peer w-full px-4 pt-6 pb-2 bg-transparent focus:outline-none transition-colors placeholder-transparent rounded-t-md ${styles.accentBorder} ${theme === "luxury" ? "focus:border-[#d4af37]" : "focus:border-accent"}`}
                                                 placeholder="Full Name"
                                             />
-                                            <label htmlFor="edit-name" className="absolute left-4 top-2 text-[10px] text-text-secondary font-medium pointer-events-none transition-all peer-focus:text-accent">
+                                            <label htmlFor="edit-name" className={`absolute left-4 top-2 text-[10px] text-text-secondary font-medium pointer-events-none transition-all ${theme === "luxury" ? "peer-focus:text-[#d4af37]" : "peer-focus:text-accent"}`}>
                                                 Full Name
                                             </label>
                                         </div>
@@ -475,7 +526,7 @@ export default function AccountPage() {
                                                 id="edit-email"
                                                 value={user.email}
                                                 disabled
-                                                className="peer w-full px-4 pt-6 pb-2 border-b-2 border-border/50 bg-background-secondary/50 focus:outline-none text-text-secondary placeholder-transparent rounded-t-md cursor-not-allowed"
+                                                className={`peer w-full px-4 pt-6 pb-2 border-b-2 bg-transparent/5 focus:outline-none text-text-secondary placeholder-transparent rounded-t-md cursor-not-allowed ${styles.accentBorder}`}
                                                 placeholder="Email"
                                             />
                                             <label htmlFor="edit-email" className="absolute left-4 top-2 text-[10px] text-text-secondary font-medium pointer-events-none">
@@ -488,35 +539,35 @@ export default function AccountPage() {
                                                 id="edit-phone"
                                                 value={editPhone}
                                                 onChange={(e) => setEditPhone(e.target.value)}
-                                                className="peer w-full px-4 pt-6 pb-2 border-b-2 border-border bg-[#FDFBF7] focus:outline-none focus:border-accent transition-colors placeholder-transparent rounded-t-md"
+                                                className={`peer w-full px-4 pt-6 pb-2 border-b-2 bg-transparent focus:outline-none transition-colors placeholder-transparent rounded-t-md ${styles.accentBorder} ${theme === "luxury" ? "focus:border-[#d4af37]" : "focus:border-accent"}`}
                                                 placeholder="Phone"
                                             />
-                                            <label htmlFor="edit-phone" className="absolute left-4 top-2 text-[10px] text-text-secondary font-medium pointer-events-none transition-all peer-focus:text-accent">
+                                            <label htmlFor="edit-phone" className={`absolute left-4 top-2 text-[10px] text-text-secondary font-medium pointer-events-none transition-all ${theme === "luxury" ? "peer-focus:text-[#d4af37]" : "peer-focus:text-accent"}`}>
                                                 Phone Number
                                             </label>
                                         </div>
 
                                         {saveSuccess && (
-                                            <div className="px-4 py-3 bg-green-50 border border-green-200 rounded-md">
-                                                <p className="text-green-700 text-sm">Profile updated successfully!</p>
+                                            <div className="px-4 py-3 bg-green-50/10 border border-green-500/20 rounded-md">
+                                                <p className="text-green-500 text-sm">Profile updated successfully!</p>
                                             </div>
                                         )}
 
                                         <button
                                             onClick={handleSaveProfile}
-                                            className="btn-primary text-sm py-3"
+                                            className={`btn-primary text-sm py-3 ${styles.buttonClass}`}
                                         >
                                             Save Changes
                                         </button>
                                     </div>
 
                                     {/* Danger Zone */}
-                                    <div className="mt-8 p-6 border border-red-200 rounded-xl">
-                                        <h3 className="text-sm font-medium text-foreground mb-2">Sign Out</h3>
+                                    <div className="mt-8 p-6 border border-red-500/20 rounded-xl bg-red-500/5">
+                                        <h3 className="text-sm font-medium text-red-500 mb-2">Sign Out</h3>
                                         <p className="text-text-secondary text-xs mb-4">You will be signed out of your account on this device.</p>
                                         <button
                                             onClick={async () => { await logout(); router.push("/"); }}
-                                            className="text-sm text-red-600 border border-red-200 px-4 py-2 rounded-lg hover:bg-red-50 transition-colors"
+                                            className="text-sm text-red-500 border border-red-500/20 px-4 py-2 rounded-lg hover:bg-red-500/10 transition-colors"
                                         >
                                             Sign Out
                                         </button>

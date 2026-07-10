@@ -174,7 +174,7 @@ export default function AdminOrdersPage() {
     return (
         <div className="space-y-6">
             {/* Page Header */}
-            <div className="flex items-center justify-between">
+            <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                     <h1 className="text-2xl font-bold text-gray-900">Orders</h1>
                     <p className="text-[13px] text-gray-500 mt-0.5">
@@ -183,7 +183,7 @@ export default function AdminOrdersPage() {
                 </div>
                 <button
                     onClick={() => setShowStatusManager(!showStatusManager)}
-                    className="inline-flex items-center gap-2 px-3.5 py-2 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer"
+                    className="inline-flex items-center gap-2 px-3.5 py-2 border border-gray-300 hover:border-gray-400 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-lg shadow-xs transition-colors cursor-pointer whitespace-nowrap"
                 >
                     <Settings className={`w-4 h-4 transition-transform duration-500 ${showStatusManager ? "rotate-90 text-indigo-600" : "text-gray-500"}`} />
                     {showStatusManager ? "Hide Status Settings" : "Status Settings"}

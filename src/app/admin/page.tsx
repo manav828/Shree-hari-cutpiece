@@ -555,7 +555,7 @@ export default function AdminDashboard() {
                         </div>
                     </div>
 
-                    <div className="mt-4 pt-4 border-t border-gray-100 text-[10px] text-slate-400 font-bold flex items-center justify-between">
+                    <div className="mt-4 pt-4 border-t border-gray-100 text-[10px] text-slate-400 font-bold flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
                         <span>Graph Type: Cubic Bezier (Snake Line)</span>
                         <span>Axis: Double Y (Revenue Left / Orders Right)</span>
                     </div>

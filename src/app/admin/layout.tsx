@@ -33,6 +33,8 @@ import AdminCacheControls from "@/components/admin/layout/AdminCacheControls";
 import AdminNotificationsBell from "@/components/admin/layout/AdminNotificationsBell";
 import GlobalToastContainer from "@/components/admin/layout/GlobalToastContainer";
 
+import { supabase } from "@/lib/supabase";
+
 function AdminLayoutContent({ children }: { children: ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
@@ -80,8 +82,32 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
 
     useEffect(() => {
         if (pathname === "/admin/login") { setIsChecking(false); return; }
-        setIsAuthorized(true);
-        setIsChecking(false);
+        
+        async function checkClientAuth() {
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data } = await supabase
+                        .from("user_profiles")
+                        .select("role")
+                        .eq("id", user.id)
+                        .maybeSingle();
+                    
+                    const profile = data as any;
+                    if (profile?.role !== "admin") {
+                        console.warn("Detected active customer session on admin panel. Signing out client-side Supabase session to prevent RLS write blocks...");
+                        await supabase.auth.signOut();
+                    }
+                }
+            } catch (err) {
+                console.error("Client auth sync error:", err);
+            }
+        }
+
+        checkClientAuth().finally(() => {
+            setIsAuthorized(true);
+            setIsChecking(false);
+        });
     }, [pathname]);
 
     useEffect(() => { setMobileMenuOpen(false); }, [pathname]);
@@ -357,8 +383,8 @@ function AdminLayoutContent({ children }: { children: ReactNode }) {
                 </header>
 
                 {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-y-auto">
-                    <div className="px-5 md:px-10 py-6 md:py-8">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden">
+                    <div className="px-4 sm:px-6 md:px-10 py-5 md:py-8">
                         {children}
                     </div>
                 </div>

@@ -3,6 +3,16 @@ import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
 import { calculateCheckoutDetails, getShippingRatesConfig } from "@/lib/shipping/rates";
+import { 
+    validateName, 
+    validatePhone, 
+    validatePincode, 
+    validateEmail, 
+    validateAddressLine, 
+    validateCity, 
+    validateState, 
+    validateNotes 
+} from "@/lib/validation";
 
 type CheckoutItem = {
   id: string;
@@ -202,6 +212,42 @@ export default async function handleCreateOrder(req: NextRequest) {
     const missingField = requiredFields.find((field) => !String(formData[field] || "").trim());
     if (missingField) {
       return NextResponse.json({ error: "Please complete all required shipping fields." }, { status: 400 });
+    }
+
+    const nameErr = validateName(formData.fullName);
+    if (nameErr) return NextResponse.json({ error: nameErr }, { status: 400 });
+
+    const phoneErr = validatePhone(formData.phone);
+    if (phoneErr) return NextResponse.json({ error: phoneErr }, { status: 400 });
+
+    const addrErr = validateAddressLine(formData.addressLine1, "Street Address");
+    if (addrErr) return NextResponse.json({ error: addrErr }, { status: 400 });
+
+    const areaErr = validateAddressLine(formData.area, "Area / Locality");
+    if (areaErr) return NextResponse.json({ error: areaErr }, { status: 400 });
+
+    if (formData.landmark) {
+        const landmarkErr = validateAddressLine(formData.landmark, "Landmark", false);
+        if (landmarkErr) return NextResponse.json({ error: landmarkErr }, { status: 400 });
+    }
+
+    const cityErr = validateCity(formData.city);
+    if (cityErr) return NextResponse.json({ error: cityErr }, { status: 400 });
+
+    const stateErr = validateState(formData.state);
+    if (stateErr) return NextResponse.json({ error: stateErr }, { status: 400 });
+
+    const pinErr = validatePincode(formData.pincode);
+    if (pinErr) return NextResponse.json({ error: pinErr }, { status: 400 });
+
+    if (formData.email) {
+        const emailErr = validateEmail(formData.email, false);
+        if (emailErr) return NextResponse.json({ error: emailErr }, { status: 400 });
+    }
+
+    if (formData.notes) {
+        const notesErr = validateNotes(formData.notes);
+        if (notesErr) return NextResponse.json({ error: notesErr }, { status: 400 });
     }
 
     const config = await getPaymentConfig();

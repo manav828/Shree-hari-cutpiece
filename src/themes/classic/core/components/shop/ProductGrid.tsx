@@ -376,7 +376,7 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
         <p className="text-red-600 text-sm mb-4">{loadError}</p>
       )}
 
-      <div className="sticky top-[66px] sm:top-[88px] z-20 mb-8 bg-white border border-border/70 shadow-[0_6px_20px_rgba(0,0,0,0.06)]">
+      <div className="mb-8 bg-white border border-border/70 shadow-[0_6px_20px_rgba(0,0,0,0.06)]">
         <div className="flex items-center justify-between gap-3 px-4 py-3 sm:px-5 sm:py-4">
           <div>
             <p className="text-xs tracking-[0.18em] uppercase text-text-secondary">Collection View</p>
@@ -423,32 +423,23 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center flex-wrap gap-2 border-t border-border/70 px-5 py-4 bg-[#faf7f4]">
-          <button
-            type="button"
-            onClick={() => setSelectedCategory("all")}
-            aria-pressed={selectedCategory === "all"}
-            className={`px-4 py-2 text-xs tracking-[0.12em] uppercase transition-colors ${selectedCategory === "all"
-              ? "bg-foreground text-white"
-              : "bg-white text-foreground border border-border hover:border-foreground"
-              }`}
+        <div className="hidden sm:flex items-center gap-3 border-t border-border/70 px-5 py-4 bg-[#faf7f4]">
+          <label htmlFor="category-select" className="text-xs tracking-[0.12em] uppercase text-text-secondary whitespace-nowrap">
+            Category:
+          </label>
+          <select
+            id="category-select"
+            value={selectedCategory}
+            onChange={(event) => setSelectedCategory(event.target.value)}
+            className="px-4 py-2 text-xs tracking-[0.12em] uppercase bg-white text-foreground border border-border outline-none cursor-pointer flex-1 max-w-xs"
           >
-            All Fabrics
-          </button>
-          {categories.map((category: any) => (
-            <button
-              key={category.id}
-              type="button"
-              onClick={() => setSelectedCategory(category.slug)}
-              aria-pressed={selectedCategory === category.slug}
-              className={`px-4 py-2 text-xs tracking-[0.12em] uppercase transition-colors ${selectedCategory === category.slug
-                ? "bg-foreground text-white"
-                : "bg-white text-foreground border border-border hover:border-foreground"
-                }`}
-            >
-              {category.name}
-            </button>
-          ))}
+            <option value="all">All Fabrics</option>
+            {categories.map((category: any) => (
+              <option key={category.id} value={category.slug}>
+                {category.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="hidden sm:grid grid-cols-2 lg:grid-cols-5 gap-3 border-t border-border/60 px-5 py-4 bg-white">
@@ -631,33 +622,22 @@ export default function ProductGrid({ initialCategory }: ProductGridProps) {
                 </select>
               </div>
 
-              <p className="text-[10px] tracking-[0.16em] uppercase text-text-secondary pt-2">Category</p>
-              <button
-                type="button"
-                onClick={() => setSelectedCategory("all")}
-                aria-pressed={selectedCategory === "all"}
-                className={`w-full text-left px-4 py-3 text-sm border transition-colors ${selectedCategory === "all"
-                  ? "bg-foreground text-white border-foreground"
-                  : "bg-white border-border text-foreground"
-                  }`}
-              >
-                All Fabrics
-              </button>
-
-              {categories.map((category: any) => (
-                <button
-                  key={category.id}
-                  type="button"
-                  onClick={() => setSelectedCategory(category.slug)}
-                  aria-pressed={selectedCategory === category.slug}
-                  className={`w-full text-left px-4 py-3 text-sm border transition-colors ${selectedCategory === category.slug
-                    ? "bg-foreground text-white border-foreground"
-                    : "bg-white border-border text-foreground"
-                    }`}
+              <div>
+                <p className="text-[10px] tracking-[0.16em] uppercase text-text-secondary mb-2">Category</p>
+                <select
+                  id="mobile-category"
+                  value={selectedCategory}
+                  onChange={(event) => setSelectedCategory(event.target.value)}
+                  className="w-full border border-border bg-white px-3 py-2 text-sm text-foreground"
                 >
-                  {category.name}
-                </button>
-              ))}
+                  <option value="all">All Fabrics</option>
+                  {categories.map((category: any) => (
+                    <option key={category.id} value={category.slug}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <button
                 type="button"

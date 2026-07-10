@@ -1,6 +1,6 @@
 import Image from "next/image";
-import ClassicNavbar from "@/components/layout/Navbar";
-import ClassicFooter from "@/components/layout/Footer";
+import ClassicNavbar from "@/themes/classic/components/layout/Navbar";
+import ClassicFooter from "@/themes/classic/components/layout/Footer";
 import ClassicCartSidebar from "@/components/cart/CartSidebar";
 import Container from "@/components/ui/Container";
 import { getActiveTheme } from "@/lib/theme";

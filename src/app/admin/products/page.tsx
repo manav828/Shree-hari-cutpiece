@@ -207,16 +207,16 @@ export default function AdminProducts() {
     return (
         <div>
             {/* ─── Header ─── */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="text-xl font-semibold text-gray-900">Products</h1>
                     <p className="text-[13px] text-gray-400 mt-0.5">{products.length} products</p>
                 </div>
-                <div className="flex items-center gap-2">
-                    <Link href="/admin/products/stock" className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-                        <SlidersHorizontal className="h-3.5 w-3.5" /> Manage Stock
+                <div className="flex flex-wrap items-center gap-2">
+                    <Link href="/admin/products/stock" className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                        <SlidersHorizontal className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Manage </span>Stock
                     </Link>
-                    <Link href="/admin/products/categories" className="hidden sm:inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <Link href="/admin/products/categories" className="inline-flex items-center gap-1.5 px-3 py-2 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                         <Package className="h-3.5 w-3.5" /> Categories
                     </Link>
                     <Link href="/admin/products/new" className="inline-flex items-center gap-1.5 px-4 py-2 text-[13px] font-semibold text-white bg-gray-900 rounded-lg hover:bg-gray-800 transition-colors">
@@ -248,7 +248,7 @@ export default function AdminProducts() {
             </div>
 
             {showFilters && (
-                <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-white border border-gray-200 rounded-lg">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 p-3 bg-white border border-gray-200 rounded-lg">
                     {/* Searchable Category Filter */}
                     <div className="relative" ref={catDropdownRef}>
                         <button
@@ -331,7 +331,7 @@ export default function AdminProducts() {
                 </div>
             ) : (
                 <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                    <Table wrapperClassName="border-0 rounded-none">
+                    <Table wrapperClassName="border-0 rounded-none overflow-x-auto">
                         <TableHeader>
                             <TableRow>
                                 <TableHead className="w-12 pr-0"></TableHead> {/* Thumbnail */}

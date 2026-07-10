@@ -40,6 +40,14 @@ export async function getActiveTheme(): Promise<ThemeName> {
         return cookieTheme;
     }
 
+    return getDbActiveTheme();
+}
+
+/**
+ * Returns the theme from the database (or default) without checking the cookie.
+ * Used by the root layout's sync script to detect stale cookies.
+ */
+export async function getDbActiveTheme(): Promise<ThemeName> {
     const cacheEnabled = await getCacheEnabled();
     return cacheEnabled ? fetchActiveThemeCached() : fetchActiveTheme();
 }

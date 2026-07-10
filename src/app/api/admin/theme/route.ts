@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { getDefaultTheme, parseThemeValue, STOREFRONT_THEME_COOKIE } from "@/lib/themeSelection";
 
@@ -79,6 +80,14 @@ export async function PUT(req: NextRequest) {
             .upsert({ key: "active_theme", value: requestedTheme }, { onConflict: "key" });
 
         if (error) throw error;
+
+        // Bust Next.js caches so theme updates are immediately active storefront-wide
+        try {
+            revalidateTag("active_theme");
+            revalidatePath("/");
+        } catch {
+            // Non-fatal if cache revalidation fails during static build checks
+        }
 
         return jsonWithTheme({
             theme: requestedTheme,

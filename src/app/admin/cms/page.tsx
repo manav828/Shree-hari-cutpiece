@@ -47,12 +47,19 @@ const storeFields: SiteConfigField[] = [
   { key: "store_embed_url", label: "Maps Embed URL", type: "url", group: "store", required: true },
 ];
 
+const THEME_OPTIONS = [
+  { value: "classic", label: "Classic" },
+  { value: "bohemian", label: "Bohemian" },
+  { value: "luxury", label: "Luxury" },
+] as const;
+
 export default function AdminCmsPage() {
   const [activeTab, setActiveTab] = useState<TabId>("sections");
   const [activeSection, setActiveSection] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [selectedCmsTheme, setSelectedCmsTheme] = useState<string>("classic");
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Meta datasets
@@ -76,6 +83,12 @@ export default function AdminCmsPage() {
   const [savingTestimonial, setSavingTestimonial] = useState(false);
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
+  // Local state for Follow Us (Instagram Reels)
+  const [reelsData, setReelsData] = useState<Array<{ id: string; title: string; thumbnail: string; url: string }>>([]);
+
+  // Track which section's product/blog selections are being edited
+  const [editingSelectionFor, setEditingSelectionFor] = useState<string | null>(null);
+
   const loadAllData = async () => {
     setLoading(true);
     setMessage(null);
@@ -86,8 +99,13 @@ export default function AdminCmsPage() {
       if (!resConfig.ok) throw new Error(jsonConfig.error || "Failed to load config");
       setValues(jsonConfig.map || {});
 
-      // Initialize Spaces items from config
-      const spacesJsonStr = jsonConfig.map?.bohemian_spaces_items || "";
+      // Set the default CMS theme from the active theme in the API response
+      const apiTheme = jsonConfig.activeTheme || "classic";
+      setSelectedCmsTheme((prev) => prev || apiTheme);
+
+      // Initialize Spaces items from the active theme's config
+      const apiKey = (suffix: string) => apiTheme === "classic" ? suffix : `${apiTheme}_${suffix}`;
+      const spacesJsonStr = jsonConfig.map?.[apiKey("spaces_items")] || "";
       if (spacesJsonStr) {
         try {
           const parsed = JSON.parse(spacesJsonStr);
@@ -99,8 +117,8 @@ export default function AdminCmsPage() {
         setSpacesItems([]);
       }
 
-      // Initialize Selected Blogs
-      const blogJsonStr = jsonConfig.map?.bohemian_journal_selected || "";
+      // Initialize Selected Blogs from the active theme's config
+      const blogJsonStr = jsonConfig.map?.[apiKey("journal_selected")] || "";
       if (blogJsonStr) {
         try {
           const parsed = JSON.parse(blogJsonStr);
@@ -112,8 +130,8 @@ export default function AdminCmsPage() {
         setSelectedBlogs([]);
       }
 
-      // Initialize Selected Products
-      const productJsonStr = jsonConfig.map?.bohemian_freshly_harvested_products || "";
+      // Initialize Selected Products from the active theme's config
+      const productJsonStr = jsonConfig.map?.[apiKey("freshly_harvested_products")] || "";
       if (productJsonStr) {
         try {
           const parsed = JSON.parse(productJsonStr);
@@ -188,6 +206,47 @@ export default function AdminCmsPage() {
     }
   };
 
+  // Helper: returns the full site_config key for the selected theme
+  // Classic uses unprefixed keys from the original seed data (e.g. "hero_badge")
+  // Bohemian/Luxury use prefixed keys (e.g. "bohemian_hero_badge")
+  const themeKey = (suffix: string) => {
+    if (selectedCmsTheme === "classic") return suffix;
+    return `${selectedCmsTheme}_${suffix}`;
+  };
+
+  // Helper: returns the value for a themed key
+  const themeValue = (suffix: string, fallback = "") => values[themeKey(suffix)] ?? fallback;
+
+  // Helper: returns the value for a key without theme prefix (shared/global)
+  const globalValue = (key: string, fallback = "") => values[key] ?? fallback;
+
+  // When the selected CMS theme changes, reload the theme-specific local state
+  const handleThemeChange = (newTheme: string) => {
+    setSelectedCmsTheme(newTheme);
+
+    // Classic uses unprefixed keys, other themes use {theme}_ prefix
+    const tk = (suffix: string) => newTheme === "classic" ? suffix : `${newTheme}_${suffix}`;
+
+    // Reload theme-specific local state from values
+    const spacesStr = values[tk("spaces_items")] || "";
+    if (spacesStr) {
+      try { const parsed = JSON.parse(spacesStr); if (Array.isArray(parsed)) setSpacesItems(parsed); else setSpacesItems([]); }
+      catch { setSpacesItems([]); }
+    } else { setSpacesItems([]); }
+
+    const blogStr = values[tk("journal_selected")] || "";
+    if (blogStr) {
+      try { const parsed = JSON.parse(blogStr); if (Array.isArray(parsed)) setSelectedBlogs(parsed); else setSelectedBlogs([]); }
+      catch { setSelectedBlogs([]); }
+    } else { setSelectedBlogs([]); }
+
+    const prodStr = values[tk("freshly_harvested_products")] || "";
+    if (prodStr) {
+      try { const parsed = JSON.parse(prodStr); if (Array.isArray(parsed)) setSelectedProducts(parsed); else setSelectedProducts([]); }
+      catch { setSelectedProducts([]); }
+    } else { setSelectedProducts([]); }
+  };
+
   // Spaces to Inhabit Helpers
   const addSpaceItem = () => {
     if (!newSpaceSlug) return;
@@ -224,7 +283,7 @@ export default function AdminCmsPage() {
     const jsonStr = JSON.stringify(updatedList);
     const updates: SaveUpdate[] = [
       {
-        key: "bohemian_spaces_items",
+        key: themeKey("spaces_items"),
         value: jsonStr,
         type: "textarea",
         label: "Spaces to Inhabit Items List",
@@ -331,63 +390,170 @@ export default function AdminCmsPage() {
     }
   };
 
-  // Section List items data
-  const landingSections = [
-    {
-      id: "banner",
-      name: "1. Hero Banner & Slider",
-      type: "Hero Section",
-      description: "Manage high-resolution banners, promotional slider settings, and schedule visibility parameters.",
-      status: "Active",
-      icon: <LayoutGrid className="w-5 h-5 text-[#9f3f29]" />,
-      readOnly: false
-    },
-    {
-      id: "archive",
-      name: "2. The Curated Archive",
-      type: "Category Showcase",
-      description: "Position categories dynamically to showcase Textiles, Ceramics, and Wall Art layouts.",
-      status: values.bohemian_archive_pos1_slug ? "Configured" : "Default Fallbacks Active",
-      icon: <Sparkles className="w-5 h-5 text-amber-600" />,
-      readOnly: false
-    },
-    {
-      id: "spaces",
-      name: "3. Spaces to Inhabit",
-      type: "Flexible Collections Grid",
-      description: `Showcase round cards highlighting room-based categories or specific craft products. (${spacesItems.length} items configured)`,
-      status: spacesItems.length > 0 ? "Configured" : "Default Fallbacks Active",
-      icon: <Sliders className="w-5 h-5 text-emerald-600" />,
-      readOnly: false
-    },
-    {
-      id: "journal",
-      name: "4. Journal Highlights",
-      type: "Blog Suggestions Carousel",
-      description: `Control max slider display limit and select published blog posts manually or load dynamic recent posts. (Limit: ${values.bohemian_journal_limit || "3"} posts)`,
-      status: values.bohemian_journal_mode === "manual" ? "Manually Selected" : "Auto (Recent Published)",
-      icon: <Bookmark className="w-5 h-5 text-blue-600" />,
-      readOnly: false
-    },
-    {
-      id: "harvested",
-      name: "5. Freshly Harvested",
-      type: "New Arrivals / Selected Products Grid",
-      description: "Showcase the latest product catalog additions or pin specific collections manually.",
-      status: values.bohemian_freshly_harvested_mode === "manual" ? "Manually Selected" : "Auto (Recent Arrivals)",
-      icon: <Heart className="w-5 h-5 text-rose-600" />,
-      readOnly: false
-    },
-    {
-      id: "testimonials",
-      name: "6. Community Stories",
-      type: "Testimonial Reviews Marquee",
-      description: "Infinite sliding marquee layout featuring community and expert verified reviews. (Database-Driven CRUD)",
-      status: `${testimonials.length} reviews configured`,
-      icon: <Eye className="w-5 h-5 text-[#9f3f29]" />,
-      readOnly: false
-    }
-  ];
+  // Section List items data — changes based on selected theme
+  const landingSections = selectedCmsTheme === "classic"
+    ? [
+        {
+          id: "banner",
+          name: "1. Hero Banner & Slider",
+          type: "Hero Section",
+          description: "Manage hero text, CTA buttons, stats, and background images.",
+          preview: `Headline: "${themeValue("hero_headline", "Not set")}" • Badge: "${themeValue("hero_badge", "Not set")}"`,
+          status: "Active",
+          icon: <LayoutGrid className="w-5 h-5 text-[#9f3f29]" />,
+          readOnly: false
+        },
+        {
+          id: "shop-categories",
+          name: "2. Shop by Category + Fabric Categories",
+          type: "Category Bento + Grid",
+          description: "Select which categories appear in the bento showcase and the full fabric grid.",
+          preview: `Bento: ${[themeValue("shop_cat_pos1_slug"), themeValue("shop_cat_pos2_slug"), themeValue("shop_cat_pos3_slug")].filter(Boolean).length || "auto (top 3)"} categories selected`,
+          status: themeValue("shop_cat_pos1_slug") ? "Custom Selection" : "Auto (top 3 from DB)",
+          icon: <Sparkles className="w-5 h-5 text-amber-600" />,
+          readOnly: false
+        },
+        {
+          id: "description",
+          name: "3. Why Choose Us",
+          type: "Description Section",
+          description: "Edit the 'Why Choose Us' section headline, description text, feature points, and images.",
+          preview: `Headline: "${themeValue("desc_headline", "Not set")}" • Badge: "${themeValue("desc_badge", "Not set")}"`,
+          status: "Active",
+          icon: <Info className="w-5 h-5 text-blue-600" />,
+          readOnly: false
+        },
+        {
+          id: "premium-collection",
+          name: "4. Premium Collection",
+          type: "Curated Product Bento",
+          description: "Showcase featured product bundles or manually select products to display.",
+          preview: `Mode: ${themeValue("premium_collection_mode") === "manual" ? "Manual" : "Auto (latest)"}`,
+          status: themeValue("premium_collection_mode") === "manual" ? `${selectedProducts.length} products selected` : "Auto (Latest Products)",
+          icon: <Heart className="w-5 h-5 text-rose-600" />,
+          readOnly: false
+        },
+        {
+          id: "best-sellers",
+          name: "5. Best Sellers",
+          type: "Featured Products Slider",
+          description: "Showcase featured products or manually select best-selling products to display.",
+          preview: `Mode: ${themeValue("best_sellers_mode") === "manual" ? "Manual" : "Auto (featured)"}`,
+          status: themeValue("best_sellers_mode") === "manual" ? `${selectedProducts.length} products selected` : "Auto (Featured Products)",
+          icon: <Eye className="w-5 h-5 text-[#9f3f29]" />,
+          readOnly: false
+        },
+        {
+          id: "fabric-guides",
+          name: "6. Fabric Guides for Smarter Buying",
+          type: "Blog Preview",
+          description: "Select blog posts manually or load dynamically from recent published articles.",
+          preview: `Mode: ${themeValue("fabric_guides_mode") === "manual" ? "Manual" : "Auto (recent)"}`,
+          status: themeValue("fabric_guides_mode") === "manual" ? `${selectedBlogs.length} posts selected` : "Auto (Recent Published)",
+          icon: <Bookmark className="w-5 h-5 text-blue-600" />,
+          readOnly: false
+        },
+        {
+          id: "follow-us",
+          name: "7. Follow Us",
+          type: "Instagram Reels",
+          description: "Manage Instagram reels/feed shown on the homepage. Add reel URLs, thumbnails, and titles.",
+          preview: `${(() => { try { const d = JSON.parse(themeValue("instagram_reels_data", "[]") || "[]"); return Array.isArray(d) ? `${d.length} reels configured` : "No reels"; } catch { return "No reels"; } })()}`,
+          status: "Configured via Editor",
+          icon: <Heart className="w-5 h-5 text-pink-600" />,
+          readOnly: false
+        },
+        {
+          id: "trust",
+          name: "8. Trust Badges",
+          type: "Feature Icons Grid",
+          description: "Hardcoded trust signals (WhatsApp Confirmation, Physical Store, Quality Assured, Easy Returns).",
+          status: "Hardcoded",
+          icon: <Star className="w-5 h-5 text-green-600" />,
+          readOnly: true
+        },
+        {
+          id: "design-dream",
+          name: "9. Design Your Dream",
+          type: "Inspiration Gallery",
+          description: "Hardcoded inspiration images with WhatsApp consultation CTA.",
+          status: "Hardcoded",
+          icon: <Sparkles className="w-5 h-5 text-amber-600" />,
+          readOnly: true
+        },
+        {
+          id: "store",
+          name: "10. Store Information",
+          type: "Contact & Location",
+          description: "Manage store address, hours, phone, email, and Google Maps embed.",
+          preview: `Phone: "${themeValue("store_phone", "Not set")}"`,
+          status: "Active",
+          icon: <Star className="w-5 h-5 text-emerald-600" />,
+          readOnly: false
+        },
+      ]
+    : [
+      {
+        id: "banner",
+        name: "1. Hero Banner & Slider",
+        type: "Hero Section",
+        description: `Manage high-resolution banners, promotional slider settings, and schedule visibility parameters.`,
+        preview: `Headline: "${themeValue("hero_headline", "Not set")}"`,
+        status: "Active",
+        icon: <LayoutGrid className="w-5 h-5 text-[#9f3f29]" />,
+        readOnly: false
+      },
+      {
+        id: "archive",
+        name: "2. The Curated Archive",
+        type: "Category Showcase",
+        description: `Position categories dynamically to showcase layouts.`,
+        preview: `Title: "${themeValue("archive_title", "Not set")}"`,
+        status: themeValue("archive_pos1_slug") ? "Configured" : "Default Fallbacks Active",
+        icon: <Sparkles className="w-5 h-5 text-amber-600" />,
+        readOnly: false
+      },
+      {
+        id: "spaces",
+        name: "3. Spaces to Inhabit",
+        type: "Flexible Collections Grid",
+        description: `Showcase round cards highlighting room-based categories or specific craft products.`,
+        preview: `Title: "${themeValue("spaces_title", "Not set")}" • ${spacesItems.length} items`,
+        status: spacesItems.length > 0 ? "Configured" : "Default Fallbacks Active",
+        icon: <Sliders className="w-5 h-5 text-emerald-600" />,
+        readOnly: false
+      },
+      {
+        id: "journal",
+        name: "4. Journal Highlights",
+        type: "Blog Suggestions Carousel",
+        description: `Control max slider display limit and select published blog posts manually or load dynamic recent posts.`,
+        preview: `Title: "${themeValue("journal_title", "Not set")}" • Mode: ${themeValue("journal_mode") === "manual" ? "Manual" : "Auto"}`,
+        status: themeValue("journal_mode") === "manual" ? "Manually Selected" : "Auto (Recent Published)",
+        icon: <Bookmark className="w-5 h-5 text-blue-600" />,
+        readOnly: false
+      },
+      {
+        id: "harvested",
+        name: "5. Freshly Harvested",
+        type: "New Arrivals / Selected Products Grid",
+        description: `Showcase the latest product catalog additions or pin specific collections manually.`,
+        preview: `Title: "${themeValue("freshly_harvested_title", "Not set")}" • Mode: ${themeValue("freshly_harvested_mode") === "manual" ? "Manual" : "Auto"}`,
+        status: themeValue("freshly_harvested_mode") === "manual" ? "Manually Selected" : "Auto (Recent Arrivals)",
+        icon: <Heart className="w-5 h-5 text-rose-600" />,
+        readOnly: false
+      },
+      {
+        id: "testimonials",
+        name: "6. Community Stories",
+        type: "Testimonial Reviews Marquee",
+        description: `Infinite sliding marquee layout featuring community and expert verified reviews. (Database-Driven CRUD)`,
+        preview: `${testimonials.length} reviews configured`,
+        status: `${testimonials.length} reviews configured`,
+        icon: <Eye className="w-5 h-5 text-[#9f3f29]" />,
+        readOnly: false
+      }
+    ];
 
   return (
     <div className="space-y-6">
@@ -472,8 +638,27 @@ export default function AdminCmsPage() {
           {activeTab === "sections" && activeSection === null && (
             <div className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm">
               <div className="p-5 border-b border-gray-200 bg-gray-50">
-                <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Landing Page Section Managers</h3>
-                <p className="text-xs text-gray-500 mt-1">Configure layout, sources, and display behaviors for each homepage section.</p>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-gray-800 uppercase tracking-wider">Landing Page Section Managers</h3>
+                    <p className="text-xs text-gray-500 mt-1">Configure layout, sources, and display behaviors for each homepage section.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="cms-theme-select" className="text-xs font-semibold text-gray-600 whitespace-nowrap">
+                      Managing:
+                    </label>
+                    <select
+                      id="cms-theme-select"
+                      value={selectedCmsTheme}
+                      onChange={(e) => handleThemeChange(e.target.value)}
+                      className="px-3 py-1.5 rounded-lg border border-gray-300 bg-white text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900/10 cursor-pointer"
+                    >
+                      {THEME_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
               <div className="divide-y divide-gray-100">
                 {landingSections.map((section) => (
@@ -485,6 +670,11 @@ export default function AdminCmsPage() {
                       <div>
                         <h4 className="text-base font-semibold text-gray-900">{section.name}</h4>
                         <p className="text-sm text-gray-500 mt-0.5">{section.description}</p>
+                        {section.preview && (
+                          <p className="text-xs text-gray-400 mt-1 font-mono bg-gray-50 inline-block px-2 py-0.5 rounded border border-gray-200/60">
+                            {section.preview}
+                          </p>
+                        )}
                         <span className={`inline-flex items-center gap-1.5 mt-2.5 px-2.5 py-0.5 rounded-full text-xs font-medium border ${section.readOnly
                             ? "bg-gray-50 border-gray-200 text-gray-600"
                             : section.status.includes("Default")
@@ -505,13 +695,37 @@ export default function AdminCmsPage() {
                       {!section.readOnly ? (
                         <button
                           onClick={() => {
+                            // Load section-specific selections into local state
+                            if (selectedCmsTheme === "classic") {
+                              if (section.id === "premium-collection" || section.id === "best-sellers") {
+                                const key = section.id === "premium-collection" ? "premium_collection_products" : "best_sellers_products";
+                                const raw = values[key] || "[]";
+                                try { const p = JSON.parse(raw); setSelectedProducts(Array.isArray(p) ? p : []); } catch { setSelectedProducts([]); }
+                                setEditingSelectionFor(section.id);
+                              }
+                              if (section.id === "fabric-guides") {
+                                const raw = values["fabric_guides_selected"] || "[]";
+                                try { const p = JSON.parse(raw); setSelectedBlogs(Array.isArray(p) ? p : []); } catch { setSelectedBlogs([]); }
+                                setEditingSelectionFor(section.id);
+                              }
+                              if (section.id === "follow-us") {
+                                const raw = values["instagram_reels_data"] || "[]";
+                                try { const p = JSON.parse(raw); setReelsData(Array.isArray(p) ? p : []); } catch { setReelsData([]); }
+                              }
+                            }
+                            // For classic "Store Information", switch to Store tab
+                            if (section.id === "store") {
+                              setActiveTab("store");
+                              setMessage(null);
+                              return;
+                            }
                             setActiveSection(section.id);
                             setMessage(null);
                           }}
                           className="inline-flex items-center gap-1.5 px-4 py-2 text-sm font-semibold text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                         >
                           <Pencil className="w-3.5 h-3.5" />
-                          Edit Section
+                          {section.id === "store" ? "Edit in Store Tab" : "Edit Section"}
                         </button>
                       ) : (
                         <span className="text-xs text-gray-400 font-medium italic">Managed by Code</span>
@@ -545,8 +759,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Hero Badge Text</label>
                     <input
                       type="text"
-                      value={values.bohemian_hero_badge || ""}
-                      onChange={(e) => onChangeValue("bohemian_hero_badge", e.target.value)}
+                      value={themeValue("hero_badge")}
+                      onChange={(e) => onChangeValue(themeKey("hero_badge"), e.target.value)}
                       placeholder="e.g. TERRA & LOOM PRESENTS"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                     />
@@ -556,8 +770,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Hero Headline</label>
                     <input
                       type="text"
-                      value={values.bohemian_hero_headline || ""}
-                      onChange={(e) => onChangeValue("bohemian_hero_headline", e.target.value)}
+                      value={themeValue("hero_headline")}
+                      onChange={(e) => onChangeValue(themeKey("hero_headline"), e.target.value)}
                       placeholder="e.g. Embrace the Warmth."
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                     />
@@ -566,8 +780,8 @@ export default function AdminCmsPage() {
                   <div className="flex flex-col gap-1.5 md:col-span-2">
                     <label className="text-sm font-medium text-gray-700">Hero Description</label>
                     <textarea
-                      value={values.bohemian_hero_description || ""}
-                      onChange={(e) => onChangeValue("bohemian_hero_description", e.target.value)}
+                      value={themeValue("hero_description")}
+                      onChange={(e) => onChangeValue(themeKey("hero_description"), e.target.value)}
                       placeholder="e.g. Curating the finest bohemian treasures..."
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                       rows={3}
@@ -578,8 +792,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">CTA Button Label</label>
                     <input
                       type="text"
-                      value={values.bohemian_hero_cta1_label || ""}
-                      onChange={(e) => onChangeValue("bohemian_hero_cta1_label", e.target.value)}
+                      value={themeValue("hero_cta1_label")}
+                      onChange={(e) => onChangeValue(themeKey("hero_cta1_label"), e.target.value)}
                       placeholder="e.g. Explore Collection"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                     />
@@ -589,8 +803,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">CTA Button URL</label>
                     <input
                       type="text"
-                      value={values.bohemian_hero_cta1_url || ""}
-                      onChange={(e) => onChangeValue("bohemian_hero_cta1_url", e.target.value)}
+                      value={themeValue("hero_cta1_url")}
+                      onChange={(e) => onChangeValue(themeKey("hero_cta1_url"), e.target.value)}
                       placeholder="e.g. /shop"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900/5"
                     />
@@ -601,11 +815,11 @@ export default function AdminCmsPage() {
                   <button
                     onClick={async () => {
                       const updates: SaveUpdate[] = [
-                        { key: "bohemian_hero_badge", value: values.bohemian_hero_badge || "", type: "text", label: "Hero Badge", group: "hero" },
-                        { key: "bohemian_hero_headline", value: values.bohemian_hero_headline || "", type: "text", label: "Hero Headline", group: "hero" },
-                        { key: "bohemian_hero_description", value: values.bohemian_hero_description || "", type: "textarea", label: "Hero Description", group: "hero" },
-                        { key: "bohemian_hero_cta1_label", value: values.bohemian_hero_cta1_label || "", type: "text", label: "Hero CTA Label", group: "hero" },
-                        { key: "bohemian_hero_cta1_url", value: values.bohemian_hero_cta1_url || "", type: "url", label: "Hero CTA URL", group: "hero" },
+                        { key: themeKey("hero_badge"), value: themeValue("hero_badge"), type: "text", label: "Hero Badge", group: "hero" },
+                        { key: themeKey("hero_headline"), value: themeValue("hero_headline"), type: "text", label: "Hero Headline", group: "hero" },
+                        { key: themeKey("hero_description"), value: themeValue("hero_description"), type: "textarea", label: "Hero Description", group: "hero" },
+                        { key: themeKey("hero_cta1_label"), value: themeValue("hero_cta1_label"), type: "text", label: "Hero CTA Label", group: "hero" },
+                        { key: themeKey("hero_cta1_url"), value: themeValue("hero_cta1_url"), type: "url", label: "Hero CTA URL", group: "hero" },
                       ];
                       await handleSaveConfig(updates);
                     }}
@@ -620,6 +834,408 @@ export default function AdminCmsPage() {
               {/* Banners listing manager */}
               <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm">
                 <BannersManager />
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Why Choose Us Description Editor */}
+          {activeSection === "description" && (
+            <div className="space-y-6">
+              <button
+                onClick={() => setActiveSection(null)}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Sections List
+              </button>
+
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Why Choose Us — Section Editor</h3>
+                  <p className="text-sm text-gray-500">Edit the headline, description text, feature points, and images for the classic theme's Why Choose Us section.</p>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Badge Text</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_badge")}
+                      onChange={(e) => onChangeValue(themeKey("desc_badge"), e.target.value)}
+                      placeholder="Why Choose Us"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Headline</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_headline")}
+                      onChange={(e) => onChangeValue(themeKey("desc_headline"), e.target.value)}
+                      placeholder="Crafting Dreams,"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Headline Accent</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_headline_accent")}
+                      onChange={(e) => onChangeValue(themeKey("desc_headline_accent"), e.target.value)}
+                      placeholder="One Fabric at a Time"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5 md:col-span-2">
+                    <label className="text-sm font-medium text-gray-700">Paragraph</label>
+                    <textarea
+                      value={themeValue("desc_paragraph")}
+                      onChange={(e) => onChangeValue(themeKey("desc_paragraph"), e.target.value)}
+                      placeholder="At Shree Hari Cutpiece..."
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                      rows={4}
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 1 — Title</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point1_title")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point1_title"), e.target.value)}
+                      placeholder="Premium Quality"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 1 — Text</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point1_text")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point1_text"), e.target.value)}
+                      placeholder="Sourced from trusted manufacturers"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 2 — Title</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point2_title")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point2_title"), e.target.value)}
+                      placeholder="Sold Per Meter"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 2 — Text</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point2_text")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point2_text"), e.target.value)}
+                      placeholder="Buy exactly what you need"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 3 — Title</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point3_title")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point3_title"), e.target.value)}
+                      placeholder="Design Freedom"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Feature Point 3 — Text</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_point3_text")}
+                      onChange={(e) => onChangeValue(themeKey("desc_point3_text"), e.target.value)}
+                      placeholder="Create outfits that are uniquely yours"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Stat Number</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_stat_number")}
+                      onChange={(e) => onChangeValue(themeKey("desc_stat_number"), e.target.value)}
+                      placeholder="10+"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Stat Label</label>
+                    <input
+                      type="text"
+                      value={themeValue("desc_stat_label")}
+                      onChange={(e) => onChangeValue(themeKey("desc_stat_label"), e.target.value)}
+                      placeholder="Years of Excellence"
+                      className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button
+                    onClick={async () => {
+                      const updates: SaveUpdate[] = [
+                        { key: themeKey("desc_badge"), value: themeValue("desc_badge"), type: "text", label: "Why Choose Us Badge", group: "description" },
+                        { key: themeKey("desc_headline"), value: themeValue("desc_headline"), type: "text", label: "Why Choose Us Headline", group: "description" },
+                        { key: themeKey("desc_headline_accent"), value: themeValue("desc_headline_accent"), type: "text", label: "Why Choose Us Headline Accent", group: "description" },
+                        { key: themeKey("desc_paragraph"), value: themeValue("desc_paragraph"), type: "textarea", label: "Why Choose Us Paragraph", group: "description" },
+                        { key: themeKey("desc_point1_title"), value: themeValue("desc_point1_title"), type: "text", label: "Feature Point 1 Title", group: "description" },
+                        { key: themeKey("desc_point1_text"), value: themeValue("desc_point1_text"), type: "text", label: "Feature Point 1 Text", group: "description" },
+                        { key: themeKey("desc_point2_title"), value: themeValue("desc_point2_title"), type: "text", label: "Feature Point 2 Title", group: "description" },
+                        { key: themeKey("desc_point2_text"), value: themeValue("desc_point2_text"), type: "text", label: "Feature Point 2 Text", group: "description" },
+                        { key: themeKey("desc_point3_title"), value: themeValue("desc_point3_title"), type: "text", label: "Feature Point 3 Title", group: "description" },
+                        { key: themeKey("desc_point3_text"), value: themeValue("desc_point3_text"), type: "text", label: "Feature Point 3 Text", group: "description" },
+                        { key: themeKey("desc_stat_number"), value: themeValue("desc_stat_number"), type: "text", label: "Stat Number", group: "description" },
+                        { key: themeKey("desc_stat_label"), value: themeValue("desc_stat_label"), type: "text", label: "Stat Label", group: "description" },
+                      ];
+                      await handleSaveConfig(updates);
+                    }}
+                    disabled={saving}
+                    className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors disabled:opacity-50"
+                  >
+                    {saving ? "Saving Changes..." : "Save Why Choose Us"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Shop by Category + Fabric Categories Editor */}
+          {activeSection === "shop-categories" && (
+            <div className="space-y-6">
+              <button
+                onClick={() => setActiveSection(null)}
+                className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"
+              >
+                <ArrowLeft className="w-4 h-4" />
+                Back to Sections List
+              </button>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Shop by Category + Fabric Categories</h3>
+                  <p className="text-sm text-gray-500">Select which categories appear in the bento showcase (3 slots) and the full fabric grid below. Leave empty to auto-pick from DB.</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Bento Slot 1 (Large Card)</label>
+                    <select value={themeValue("shop_cat_pos1_slug")} onChange={(e) => onChangeValue("shop_cat_pos1_slug", e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none">
+                      <option value="">-- Auto (top category) --</option>
+                      {categories.map((c: any) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Bento Slot 2 (Small Right Top)</label>
+                    <select value={themeValue("shop_cat_pos2_slug")} onChange={(e) => onChangeValue("shop_cat_pos2_slug", e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none">
+                      <option value="">-- Auto (2nd category) --</option>
+                      {categories.map((c: any) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
+                    </select>
+                  </div>
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-medium text-gray-700">Bento Slot 3 (Small Right Bottom)</label>
+                    <select value={themeValue("shop_cat_pos3_slug")} onChange={(e) => onChangeValue("shop_cat_pos3_slug", e.target.value)} className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none">
+                      <option value="">-- Auto (3rd category) --</option>
+                      {categories.map((c: any) => (<option key={c.slug} value={c.slug}>{c.name}</option>))}
+                    </select>
+                  </div>
+                </div>
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button onClick={async () => { await handleSaveConfig([{ key: "shop_cat_pos1_slug", value: themeValue("shop_cat_pos1_slug"), type: "text", label: "Bento Slot 1 Category", group: "description" }, { key: "shop_cat_pos2_slug", value: themeValue("shop_cat_pos2_slug"), type: "text", label: "Bento Slot 2 Category", group: "description" }, { key: "shop_cat_pos3_slug", value: themeValue("shop_cat_pos3_slug"), type: "text", label: "Bento Slot 3 Category", group: "description" }]); }} disabled={saving} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+                    {saving ? "Saving..." : "Save Category Selection"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Premium Collection Editor */}
+          {activeSection === "premium-collection" && (
+            <div className="space-y-6">
+              <button onClick={() => setActiveSection(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"><ArrowLeft className="w-4 h-4" /> Back to Sections List</button>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Premium Collection</h3>
+                  <p className="text-sm text-gray-500">Choose to show latest products automatically or manually select specific products to feature.</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Product Selection Mode</label>
+                  <div className="flex gap-4 mt-1">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="premium_mode" checked={(themeValue("premium_collection_mode", "auto")) === "auto"} onChange={() => onChangeValue("premium_collection_mode", "auto")} className="w-4 h-4 accent-gray-900" /> Auto (Latest Products)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="premium_mode" checked={themeValue("premium_collection_mode") === "manual"} onChange={() => onChangeValue("premium_collection_mode", "manual")} className="w-4 h-4 accent-gray-900" /> Manually Select Products
+                    </label>
+                  </div>
+                </div>
+                {themeValue("premium_collection_mode") === "manual" && (
+                  <div className="border-t border-gray-100 pt-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800">Select Products</h4>
+                    <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                      {products.length === 0 ? <div className="p-6 text-center text-sm text-gray-500">No products found.</div> : products.map((p: any) => (
+                        <label key={p.slug} className="flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer bg-white">
+                          <input type="checkbox" checked={selectedProducts.includes(p.slug)} onChange={() => { const u = selectedProducts.includes(p.slug) ? selectedProducts.filter((s: string) => s !== p.slug) : [...selectedProducts, p.slug]; setSelectedProducts(u); }} className="mt-1 w-4 h-4 accent-gray-900 rounded" />
+                          <div><p className="text-sm font-bold text-gray-900">{p.name}</p><p className="text-xs text-gray-500">{p.slug}</p></div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button onClick={async () => { await handleSaveConfig([{ key: "premium_collection_mode", value: themeValue("premium_collection_mode", "auto"), type: "text", label: "Premium Collection Mode", group: "description" }, { key: "premium_collection_products", value: JSON.stringify(selectedProducts), type: "textarea", label: "Premium Collection Products (JSON)", group: "description" }]); }} disabled={saving} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+                    {saving ? "Saving..." : "Save Premium Collection"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Best Sellers Editor */}
+          {activeSection === "best-sellers" && (
+            <div className="space-y-6">
+              <button onClick={() => setActiveSection(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"><ArrowLeft className="w-4 h-4" /> Back to Sections List</button>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Best Sellers</h3>
+                  <p className="text-sm text-gray-500">Show featured products automatically or manually pick best-selling products.</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Product Selection Mode</label>
+                  <div className="flex gap-4 mt-1">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="bestsellers_mode" checked={(themeValue("best_sellers_mode", "auto")) === "auto"} onChange={() => onChangeValue("best_sellers_mode", "auto")} className="w-4 h-4 accent-gray-900" /> Auto (Featured Products)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="bestsellers_mode" checked={themeValue("best_sellers_mode") === "manual"} onChange={() => onChangeValue("best_sellers_mode", "manual")} className="w-4 h-4 accent-gray-900" /> Manually Select Products
+                    </label>
+                  </div>
+                </div>
+                {themeValue("best_sellers_mode") === "manual" && (
+                  <div className="border-t border-gray-100 pt-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800">Select Products</h4>
+                    <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                      {products.length === 0 ? <div className="p-6 text-center text-sm text-gray-500">No products found.</div> : products.map((p: any) => (
+                        <label key={p.slug} className="flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer bg-white">
+                          <input type="checkbox" checked={selectedProducts.includes(p.slug)} onChange={() => { const u = selectedProducts.includes(p.slug) ? selectedProducts.filter((s: string) => s !== p.slug) : [...selectedProducts, p.slug]; setSelectedProducts(u); }} className="mt-1 w-4 h-4 accent-gray-900 rounded" />
+                          <div><p className="text-sm font-bold text-gray-900">{p.name}</p><p className="text-xs text-gray-500">{p.slug}</p></div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button onClick={async () => { await handleSaveConfig([{ key: "best_sellers_mode", value: themeValue("best_sellers_mode", "auto"), type: "text", label: "Best Sellers Mode", group: "description" }, { key: "best_sellers_products", value: JSON.stringify(selectedProducts), type: "textarea", label: "Best Sellers Products (JSON)", group: "description" }]); }} disabled={saving} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+                    {saving ? "Saving..." : "Save Best Sellers"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Fabric Guides for Smarter Buying Editor */}
+          {activeSection === "fabric-guides" && (
+            <div className="space-y-6">
+              <button onClick={() => setActiveSection(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"><ArrowLeft className="w-4 h-4" /> Back to Sections List</button>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div>
+                  <h3 className="text-lg font-bold text-gray-900">Fabric Guides for Smarter Buying</h3>
+                  <p className="text-sm text-gray-500">Choose to show recent blog posts automatically or manually select specific guides.</p>
+                </div>
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-sm font-medium text-gray-700">Blog Selection Mode</label>
+                  <div className="flex gap-4 mt-1">
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="guides_mode" checked={(themeValue("fabric_guides_mode", "auto")) === "auto"} onChange={() => onChangeValue("fabric_guides_mode", "auto")} className="w-4 h-4 accent-gray-900" /> Auto (Recent Published Posts)
+                    </label>
+                    <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 cursor-pointer">
+                      <input type="radio" name="guides_mode" checked={themeValue("fabric_guides_mode") === "manual"} onChange={() => onChangeValue("fabric_guides_mode", "manual")} className="w-4 h-4 accent-gray-900" /> Manually Select Blog Posts
+                    </label>
+                  </div>
+                </div>
+                {themeValue("fabric_guides_mode") === "manual" && (
+                  <div className="border-t border-gray-100 pt-6 space-y-4">
+                    <h4 className="text-sm font-bold text-gray-800">Select Blog Posts</h4>
+                    <div className="border border-gray-200 rounded-xl divide-y divide-gray-100 max-h-[300px] overflow-y-auto">
+                      {blogs.length === 0 ? <div className="p-6 text-center text-sm text-gray-500">No blog posts found.</div> : blogs.map((post: any) => (
+                        <label key={post.slug} className="flex items-start gap-3 p-4 hover:bg-gray-50 cursor-pointer bg-white">
+                          <input type="checkbox" checked={selectedBlogs.includes(post.slug)} onChange={() => handleToggleBlogSelection(post.slug)} className="mt-1 w-4 h-4 accent-gray-900 rounded" />
+                          <div><p className="text-sm font-bold text-gray-900">{post.title}</p><p className="text-xs text-gray-500">{post.slug}</p></div>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button onClick={async () => { await handleSaveConfig([{ key: "fabric_guides_mode", value: themeValue("fabric_guides_mode", "auto"), type: "text", label: "Fabric Guides Mode", group: "description" }, { key: "fabric_guides_selected", value: JSON.stringify(selectedBlogs), type: "textarea", label: "Fabric Guides Selected Posts (JSON)", group: "description" }]); }} disabled={saving} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+                    {saving ? "Saving..." : "Save Fabric Guides"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Classic: Follow Us (Instagram Reels) Editor */}
+          {activeSection === "follow-us" && (
+            <div className="space-y-6">
+              <button onClick={() => setActiveSection(null)} className="inline-flex items-center gap-2 text-sm font-semibold text-gray-600 hover:text-gray-900 transition-colors"><ArrowLeft className="w-4 h-4" /> Back to Sections List</button>
+              <div className="bg-white border border-gray-200 rounded-xl p-6 shadow-sm space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-lg font-bold text-gray-900">Follow Us — Instagram Reels</h3>
+                    <p className="text-sm text-gray-500">Manage the Instagram reels/feed displayed on the homepage. Add, remove, or reorder reels.</p>
+                  </div>
+                  <button onClick={() => setReelsData([...reelsData, { id: `reel-${Date.now()}`, title: "", thumbnail: "", url: "" }])} className="inline-flex items-center gap-1.5 px-3 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800">
+                    <Plus className="w-4 h-4" /> Add Reel
+                  </button>
+                </div>
+                {reelsData.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-gray-200 rounded-xl">
+                    <p className="text-sm text-gray-500">No reels configured. Click "Add Reel" to add Instagram content.</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {reelsData.map((reel, idx) => (
+                      <div key={reel.id} className="border border-gray-200 rounded-xl p-4 space-y-3 bg-gray-50">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold text-gray-400 uppercase tracking-wide">Reel #{idx + 1}</span>
+                          <button onClick={() => setReelsData(reelsData.filter((_, i) => i !== idx))} className="text-red-500 hover:text-red-700 text-xs font-semibold">Remove</button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-gray-600">Title</label>
+                            <input type="text" value={reel.title} onChange={(e) => { const d = [...reelsData]; d[idx] = { ...d[idx], title: e.target.value }; setReelsData(d); }} className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none" placeholder="Fabric Showcase" />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-gray-600">Thumbnail URL</label>
+                            <input type="text" value={reel.thumbnail} onChange={(e) => { const d = [...reelsData]; d[idx] = { ...d[idx], thumbnail: e.target.value }; setReelsData(d); }} className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none" placeholder="https://images.pexels.com/..." />
+                          </div>
+                          <div className="flex flex-col gap-1.5">
+                            <label className="text-xs font-medium text-gray-600">Reel URL</label>
+                            <input type="text" value={reel.url} onChange={(e) => { const d = [...reelsData]; d[idx] = { ...d[idx], url: e.target.value }; setReelsData(d); }} className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none" placeholder="https://instagram.com/..." />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="flex justify-end border-t border-gray-100 pt-4">
+                  <button onClick={async () => { await handleSaveConfig([{ key: "instagram_reels_data", value: JSON.stringify(reelsData), type: "textarea", label: "Instagram Reels Data (JSON)", group: "description" }]); }} disabled={saving} className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm font-medium hover:bg-gray-800 disabled:opacity-50">
+                    {saving ? "Saving..." : "Save Reels"}
+                  </button>
+                </div>
               </div>
             </div>
           )}
@@ -646,8 +1262,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Section Title</label>
                     <input
                       type="text"
-                      value={values.bohemian_archive_title || ""}
-                      onChange={(e) => onChangeValue("bohemian_archive_title", e.target.value)}
+                      value={themeValue("archive_title")}
+                      onChange={(e) => onChangeValue(themeKey("archive_title"), e.target.value)}
                       placeholder="e.g. The Curated Archive"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                     />
@@ -657,8 +1273,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Section Subtitle</label>
                     <input
                       type="text"
-                      value={values.bohemian_archive_subtitle || ""}
-                      onChange={(e) => onChangeValue("bohemian_archive_subtitle", e.target.value)}
+                      value={themeValue("archive_subtitle")}
+                      onChange={(e) => onChangeValue(themeKey("archive_subtitle"), e.target.value)}
                       placeholder="e.g. Discovery of ancient techniques in modern forms."
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                     />
@@ -667,8 +1283,8 @@ export default function AdminCmsPage() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-gray-700">Position 1 Category (Large Left Card)</label>
                     <select
-                      value={values.bohemian_archive_pos1_slug || ""}
-                      onChange={(e) => onChangeValue("bohemian_archive_pos1_slug", e.target.value)}
+                      value={themeValue("archive_pos1_slug")}
+                      onChange={(e) => onChangeValue(themeKey("archive_pos1_slug"), e.target.value)}
                       className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none"
                     >
                       <option value="">-- Choose Category --</option>
@@ -681,8 +1297,8 @@ export default function AdminCmsPage() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-gray-700">Position 2 Category (Small Top Right Card)</label>
                     <select
-                      value={values.bohemian_archive_pos2_slug || ""}
-                      onChange={(e) => onChangeValue("bohemian_archive_pos2_slug", e.target.value)}
+                      value={themeValue("archive_pos2_slug")}
+                      onChange={(e) => onChangeValue(themeKey("archive_pos2_slug"), e.target.value)}
                       className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none"
                     >
                       <option value="">-- Choose Category --</option>
@@ -695,8 +1311,8 @@ export default function AdminCmsPage() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-gray-700">Position 3 Category (Small Bottom Right Card)</label>
                     <select
-                      value={values.bohemian_archive_pos3_slug || ""}
-                      onChange={(e) => onChangeValue("bohemian_archive_pos3_slug", e.target.value)}
+                      value={themeValue("archive_pos3_slug")}
+                      onChange={(e) => onChangeValue(themeKey("archive_pos3_slug"), e.target.value)}
                       className="px-3 py-2 rounded-lg border border-gray-300 bg-white text-sm focus:outline-none"
                     >
                       <option value="">-- Choose Category --</option>
@@ -711,11 +1327,11 @@ export default function AdminCmsPage() {
                   <button
                     onClick={async () => {
                       const updates: SaveUpdate[] = [
-                        { key: "bohemian_archive_title", value: values.bohemian_archive_title || "", type: "text", label: "Archive Section Title", group: "description" },
-                        { key: "bohemian_archive_subtitle", value: values.bohemian_archive_subtitle || "", type: "text", label: "Archive Section Subtitle", group: "description" },
-                        { key: "bohemian_archive_pos1_slug", value: values.bohemian_archive_pos1_slug || "", type: "text", label: "Archive Position 1 Category", group: "description" },
-                        { key: "bohemian_archive_pos2_slug", value: values.bohemian_archive_pos2_slug || "", type: "text", label: "Archive Position 2 Category", group: "description" },
-                        { key: "bohemian_archive_pos3_slug", value: values.bohemian_archive_pos3_slug || "", type: "text", label: "Archive Position 3 Category", group: "description" },
+                        { key: themeKey("archive_title"), value: themeValue("archive_title"), type: "text", label: "Archive Section Title", group: "description" },
+                        { key: themeKey("archive_subtitle"), value: themeValue("archive_subtitle"), type: "text", label: "Archive Section Subtitle", group: "description" },
+                        { key: themeKey("archive_pos1_slug"), value: themeValue("archive_pos1_slug"), type: "text", label: "Archive Position 1 Category", group: "description" },
+                        { key: themeKey("archive_pos2_slug"), value: themeValue("archive_pos2_slug"), type: "text", label: "Archive Position 2 Category", group: "description" },
+                        { key: themeKey("archive_pos3_slug"), value: themeValue("archive_pos3_slug"), type: "text", label: "Archive Position 3 Category", group: "description" },
                       ];
                       await handleSaveConfig(updates);
                     }}
@@ -751,8 +1367,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Section Title</label>
                     <input
                       type="text"
-                      value={values.bohemian_spaces_title || ""}
-                      onChange={(e) => onChangeValue("bohemian_spaces_title", e.target.value)}
+                      value={themeValue("spaces_title")}
+                      onChange={(e) => onChangeValue(themeKey("spaces_title"), e.target.value)}
                       placeholder="e.g. Spaces to Inhabit"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                     />
@@ -761,8 +1377,8 @@ export default function AdminCmsPage() {
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-medium text-gray-700">Section Description</label>
                     <textarea
-                      value={values.bohemian_spaces_description || ""}
-                      onChange={(e) => onChangeValue("bohemian_spaces_description", e.target.value)}
+                      value={themeValue("spaces_description")}
+                      onChange={(e) => onChangeValue(themeKey("spaces_description"), e.target.value)}
                       placeholder="e.g. Find harmony in every corner of your sanctuary..."
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                       rows={2}
@@ -774,8 +1390,8 @@ export default function AdminCmsPage() {
                   <button
                     onClick={async () => {
                       const updates: SaveUpdate[] = [
-                        { key: "bohemian_spaces_title", value: values.bohemian_spaces_title || "", type: "text", label: "Spaces Title", group: "description" },
-                        { key: "bohemian_spaces_description", value: values.bohemian_spaces_description || "", type: "textarea", label: "Spaces Description", group: "description" },
+                        { key: themeKey("spaces_title"), value: themeValue("spaces_title"), type: "text", label: "Spaces Title", group: "description" },
+                        { key: themeKey("spaces_description"), value: themeValue("spaces_description"), type: "textarea", label: "Spaces Description", group: "description" },
                       ];
                       await handleSaveConfig(updates);
                     }}
@@ -917,8 +1533,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Section Title</label>
                     <input
                       type="text"
-                      value={values.bohemian_journal_title || ""}
-                      onChange={(e) => onChangeValue("bohemian_journal_title", e.target.value)}
+                      value={themeValue("journal_title")}
+                      onChange={(e) => onChangeValue(themeKey("journal_title"), e.target.value)}
                       placeholder="Journal Highlights"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                     />
@@ -931,8 +1547,8 @@ export default function AdminCmsPage() {
                         <input
                           type="radio"
                           name="blog_mode"
-                          checked={(values.bohemian_journal_mode || "recent") === "recent"}
-                          onChange={() => onChangeValue("bohemian_journal_mode", "recent")}
+                          checked={(themeValue("journal_mode", "recent")) === "recent"}
+                          onChange={() => onChangeValue(themeKey("journal_mode"), "recent")}
                           className="w-4 h-4 accent-gray-900"
                         />
                         Auto (Recent Published Entries)
@@ -941,8 +1557,8 @@ export default function AdminCmsPage() {
                         <input
                           type="radio"
                           name="blog_mode"
-                          checked={values.bohemian_journal_mode === "manual"}
-                          onChange={() => onChangeValue("bohemian_journal_mode", "manual")}
+                          checked={themeValue("journal_mode") === "manual"}
+                          onChange={() => onChangeValue(themeKey("journal_mode"), "manual")}
                           className="w-4 h-4 accent-gray-900"
                         />
                         Manually Select Blog Posts
@@ -951,7 +1567,7 @@ export default function AdminCmsPage() {
                   </div>
                 </div>
 
-                {values.bohemian_journal_mode === "manual" && (
+                {themeValue("journal_mode") === "manual" && (
                   <div className="border-t border-gray-100 pt-6 space-y-4">
                     <div>
                       <h4 className="text-sm font-bold text-gray-800">Select Published Blog Posts</h4>
@@ -986,12 +1602,12 @@ export default function AdminCmsPage() {
                 <div className="flex justify-end border-t border-gray-100 pt-4">
                   <button
                     onClick={async () => {
-                      const limitVal = values.bohemian_journal_mode === "manual" ? String(selectedBlogs.length) : "3";
+                      const limitVal = themeValue("journal_mode") === "manual" ? String(selectedBlogs.length) : "3";
                       const updates: SaveUpdate[] = [
-                        { key: "bohemian_journal_title", value: values.bohemian_journal_title || "", type: "text", label: "Journal Section Title", group: "description" },
-                        { key: "bohemian_journal_limit", value: limitVal, type: "number", label: "Journal Section Limit", group: "description" },
-                        { key: "bohemian_journal_mode", value: values.bohemian_journal_mode || "recent", type: "text", label: "Journal Section Selection Mode", group: "description" },
-                        { key: "bohemian_journal_selected", value: JSON.stringify(selectedBlogs), type: "textarea", label: "Journal Featured Selected Posts", group: "description" },
+                        { key: themeKey("journal_title"), value: themeValue("journal_title"), type: "text", label: "Journal Section Title", group: "description" },
+                        { key: themeKey("journal_limit"), value: limitVal, type: "number", label: "Journal Section Limit", group: "description" },
+                        { key: themeKey("journal_mode"), value: themeValue("journal_mode", "recent"), type: "text", label: "Journal Section Selection Mode", group: "description" },
+                        { key: themeKey("journal_selected"), value: JSON.stringify(selectedBlogs), type: "textarea", label: "Journal Featured Selected Posts", group: "description" },
                       ];
                       await handleSaveConfig(updates);
                     }}
@@ -1027,8 +1643,8 @@ export default function AdminCmsPage() {
                     <label className="text-sm font-medium text-gray-700">Section Title</label>
                     <input
                       type="text"
-                      value={values.bohemian_freshly_harvested_title || ""}
-                      onChange={(e) => onChangeValue("bohemian_freshly_harvested_title", e.target.value)}
+                      value={themeValue("freshly_harvested_title")}
+                      onChange={(e) => onChangeValue(themeKey("freshly_harvested_title"), e.target.value)}
                       placeholder="Freshly Harvested"
                       className="px-3 py-2 rounded-lg border border-gray-300 text-sm focus:outline-none"
                     />
@@ -1041,8 +1657,8 @@ export default function AdminCmsPage() {
                         <input
                           type="radio"
                           name="product_mode"
-                          checked={(values.bohemian_freshly_harvested_mode || "recent") === "recent"}
-                          onChange={() => onChangeValue("bohemian_freshly_harvested_mode", "recent")}
+                          checked={(themeValue("freshly_harvested_mode", "recent")) === "recent"}
+                          onChange={() => onChangeValue(themeKey("freshly_harvested_mode"), "recent")}
                           className="w-4 h-4 accent-gray-900"
                         />
                         Auto (Recent New Arrivals)
@@ -1051,8 +1667,8 @@ export default function AdminCmsPage() {
                         <input
                           type="radio"
                           name="product_mode"
-                          checked={values.bohemian_freshly_harvested_mode === "manual"}
-                          onChange={() => onChangeValue("bohemian_freshly_harvested_mode", "manual")}
+                          checked={themeValue("freshly_harvested_mode") === "manual"}
+                          onChange={() => onChangeValue(themeKey("freshly_harvested_mode"), "manual")}
                           className="w-4 h-4 accent-gray-900"
                         />
                         Manually Select Products
@@ -1061,7 +1677,7 @@ export default function AdminCmsPage() {
                   </div>
                 </div>
 
-                {values.bohemian_freshly_harvested_mode === "manual" && (
+                {themeValue("freshly_harvested_mode") === "manual" && (
                   <div className="border-t border-gray-100 pt-6 space-y-4">
                     <div>
                       <h4 className="text-sm font-bold text-gray-800">Select Pinned Products</h4>
@@ -1095,9 +1711,9 @@ export default function AdminCmsPage() {
                   <button
                     onClick={async () => {
                       const updates: SaveUpdate[] = [
-                        { key: "bohemian_freshly_harvested_title", value: values.bohemian_freshly_harvested_title || "", type: "text", label: "Freshly Harvested Title", group: "description" },
-                        { key: "bohemian_freshly_harvested_mode", value: values.bohemian_freshly_harvested_mode || "recent", type: "text", label: "Freshly Harvested Mode", group: "description" },
-                        { key: "bohemian_freshly_harvested_products", value: JSON.stringify(selectedProducts), type: "textarea", label: "Freshly Harvested Pinned Products", group: "description" },
+                        { key: themeKey("freshly_harvested_title"), value: themeValue("freshly_harvested_title"), type: "text", label: "Freshly Harvested Title", group: "description" },
+                        { key: themeKey("freshly_harvested_mode"), value: themeValue("freshly_harvested_mode", "recent"), type: "text", label: "Freshly Harvested Mode", group: "description" },
+                        { key: themeKey("freshly_harvested_products"), value: JSON.stringify(selectedProducts), type: "textarea", label: "Freshly Harvested Pinned Products", group: "description" },
                       ];
                       await handleSaveConfig(updates);
                     }}
