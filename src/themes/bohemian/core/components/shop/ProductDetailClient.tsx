@@ -92,6 +92,12 @@ type RelatedProductCard = {
 
 interface ProductDetailClientProps {
 	slug: string;
+	serverData?: {
+		product: any;
+		relatedProducts: any[];
+		reviewsSettings: { showProductReviews: boolean; allowUserReviews: boolean };
+		reviews: any[];
+	};
 }
 
 function normalizeSpecKey(value: string): string {
@@ -314,32 +320,86 @@ function buildDummyProduct(slug: string) {
 	};
 }
 
-export default function ProductDetailClient({ slug }: ProductDetailClientProps) {
+export default function ProductDetailClient({ slug, serverData }: ProductDetailClientProps) {
 	const router = useRouter();
 	const { addToCart, setIsCartOpen } = useCart();
 
-	const [product, setProduct] = useState<any>(null);
-	const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>([]);
-	const [loading, setLoading] = useState(true);
+	// Initialize state from server-prefetched data when available (skips shimmer + client fetch)
+	const hasServerData = !!serverData?.product;
+
+	function initProduct() {
+		if (!hasServerData) return null;
+		return serverData!.product;
+	}
+
+	function initRelated(): RelatedProductCard[] {
+		if (!hasServerData || !serverData!.relatedProducts) return [];
+		return mapRelatedProducts(serverData!.relatedProducts).slice(0, 8);
+	}
+
+	function initSelectedVariant() {
+		if (!hasServerData) return null;
+		const variants = Array.isArray(serverData!.product.product_variants) ? serverData!.product.product_variants : [];
+		return variants.find((v: any) => v.is_default) || variants[0] || null;
+	}
+
+	function initActiveTab(): string {
+		if (!hasServerData) return "";
+		const p = serverData!.product;
+		const tabsList = (Array.isArray(p.custom_tabs) ? p.custom_tabs : []).filter((tab: any) => tab && tab.type !== "reviews");
+		if (tabsList.length > 0) return tabsList[0].id;
+		const longDesc = p.long_description || p.description || "";
+		const highlightItemsList = Array.isArray(p.highlights) ? p.highlights : [];
+		const hasSpecInfo = p.fabric || p.width || p.care_instructions || (Array.isArray(p.fabric_details) && p.fabric_details.length > 0);
+		const faqItemsList = Array.isArray(p.faqs) ? p.faqs : [];
+		if (longDesc.trim() || highlightItemsList.length > 0) return "description";
+		if (hasSpecInfo) return "materials";
+		if (faqItemsList.length > 0) return "faq";
+		return "";
+	}
+
+	function initSelectedOptions(): Record<string, string | string[] | number> {
+		if (!hasServerData) return {};
+		const groups = Array.isArray(serverData!.product.product_option_groups) ? serverData!.product.product_option_groups : [];
+		const defaults: Record<string, string | string[]> = {};
+		groups.forEach((group: any) => {
+			if (group?.is_active === false) return;
+			const values = Array.isArray(group.product_option_values) ? group.product_option_values.filter((v: any) => v.is_active !== false) : [];
+			if (group.input_type === "multi") {
+				const def = values.filter((v: any) => v.is_default).map((v: any) => v.id);
+				if (def.length) defaults[group.id] = def;
+			} else if (group.input_type === "radio" || group.input_type === "dropdown") {
+				const def = values.find((v: any) => v.is_default);
+				if (def) defaults[group.id] = def.id;
+			}
+		});
+		return defaults;
+	}
+
+	const [product, setProduct] = useState<any>(initProduct);
+	const [relatedProducts, setRelatedProducts] = useState<RelatedProductCard[]>(initRelated);
+	const [loading, setLoading] = useState(!hasServerData);
 	const [isAdding, setIsAdding] = useState(false);
 	const [isBuying, setIsBuying] = useState(false);
 	const [meters, setMeters] = useState(1);
 	const [showCalculator, setShowCalculator] = useState(false);
-	const [activeTab, setActiveTab] = useState<string>("");
+	const [activeTab, setActiveTab] = useState<string>(initActiveTab);
 	const [activeMedia, setActiveMedia] = useState(0);
-	const [selectedVariant, setSelectedVariant] = useState<any>(null);
-	const [selectedOptions, setSelectedOptions] = useState<Record<string, string | string[] | number>>({});
+	const [selectedVariant, setSelectedVariant] = useState<any>(initSelectedVariant);
+	const [selectedOptions, setSelectedOptions] = useState<Record<string, string | string[] | number>>(initSelectedOptions);
 	const [optionErrors, setOptionErrors] = useState<Record<string, string>>({});
 	const [expandedAccordionItems, setExpandedAccordionItems] = useState<Record<string, boolean>>({});
 	const viewedProductVariantRef = useRef<string | null>(null);
 
 	const [shareText, setShareText] = useState("Share Product");
-	const [dynamicReviews, setDynamicReviews] = useState<any[]>([]);
-	const [showProductReviews, setShowProductReviews] = useState(true);
-	const [allowUserReviews, setAllowUserReviews] = useState(true);
+	const [dynamicReviews, setDynamicReviews] = useState<any[]>(serverData?.reviews ?? []);
+	const [showProductReviews, setShowProductReviews] = useState(serverData?.reviewsSettings?.showProductReviews ?? true);
+	const [allowUserReviews, setAllowUserReviews] = useState(serverData?.reviewsSettings?.allowUserReviews ?? true);
 	const [activeMediaIndex, setActiveMediaIndex] = useState<number | null>(null);
 
 	useEffect(() => {
+		// Skip client-side reviews fetch when server data was already provided
+		if (hasServerData) return;
 		if (product?.id) {
 			// Fetch reviews settings + reviews data together
 			Promise.all([
@@ -353,6 +413,7 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 				})
 				.catch((err) => console.error("Error loading reviews:", err));
 		}
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [product?.id]);
 
 	const handleShareProduct = async () => {
@@ -386,129 +447,143 @@ export default function ProductDetailClient({ slug }: ProductDetailClientProps) 
 	};
 
 	useEffect(() => {
-		async function fetchProduct() {
-			const { data, error } = await supabase
-				.from("products")
-				.select(`
-					id, name, slug, description, short_description, long_description, description_html, description_css, use_custom_description, related_product_ids,
-					artisan_headline, artisan_description, artisan_image, artisan_quote, custom_tabs,
-					highlights, faqs, fabric, width, care_instructions, fabric_details,
-					sell_mode,
-					categories ( id, name, slug ),
-					product_variants ( id, color_name, color_hex, material_label, price, original_price, stock, sku, is_default, variant_images ( image_url, is_primary, media_type ) ),
-					product_option_groups ( id, name, input_type, input_data_type, required, min_selections, max_selections, placeholder, help_text, input_min_length, input_max_length, input_min_value, input_max_value, sort_order, is_active, product_option_values ( id, label, value, is_default, sort_order, is_active ) )
-				`)
-				.eq("slug", slug)
-				.single();
+		// Skip client-side product fetch when server data was already provided
+		if (hasServerData) return;
 
-			if (error || !data) {
+		async function fetchProduct() {
+			try {
+				const { data, error } = await supabase
+					.from("products")
+					.select(`
+						id, name, slug, description, short_description, long_description, description_html, description_css, use_custom_description, related_product_ids,
+						artisan_headline, artisan_description, artisan_image, artisan_quote, custom_tabs,
+						highlights, faqs, fabric, width, care_instructions, fabric_details,
+						sell_mode,
+						categories ( id, name, slug ),
+						product_variants ( id, color_name, color_hex, material_label, price, original_price, stock, sku, is_default, variant_images ( image_url, is_primary, media_type ) ),
+						product_option_groups ( id, name, input_type, input_data_type, required, min_selections, max_selections, placeholder, help_text, input_min_length, input_max_length, input_min_value, input_max_value, sort_order, is_active, product_option_values ( id, label, value, is_default, sort_order, is_active ) )
+					`)
+					.eq("slug", slug)
+					.single();
+
+				if (error || !data) {
+					const dummyProduct = buildDummyProduct(slug);
+					setProduct(dummyProduct);
+					setSelectedOptions({});
+					setOptionErrors({});
+					setSelectedVariant(dummyProduct.product_variants[0]);
+					setRelatedProducts(DUMMY_RELATED_PRODUCTS);
+					const dummyTabs = (dummyProduct.custom_tabs && dummyProduct.custom_tabs.length > 0)
+						? dummyProduct.custom_tabs.filter((tab: any) => tab && tab.type !== "reviews")
+						: [];
+					if (dummyTabs.length > 0) {
+						setActiveTab(dummyTabs[0].id);
+					} else {
+						setActiveTab("description");
+					}
+					setLoading(false);
+					return;
+				}
+
+				const resData = data as any;
+				setProduct(resData);
+				const tabsList = (Array.isArray(resData.custom_tabs) ? resData.custom_tabs : [])
+					.filter((tab: any) => tab && tab.type !== "reviews");
+				if (tabsList.length > 0) {
+					setActiveTab(tabsList[0].id);
+				} else {
+					const longDesc = resData.long_description || resData.description || "";
+					const highlightItemsList = Array.isArray(resData.highlights) ? resData.highlights : [];
+					const hasSpecInfo = resData.fabric || resData.width || resData.care_instructions || (Array.isArray(resData.fabric_details) && resData.fabric_details.length > 0);
+					const faqItemsList = Array.isArray(resData.faqs) ? resData.faqs : [];
+					
+					if (longDesc.trim() || highlightItemsList.length > 0) {
+						setActiveTab("description");
+					} else if (hasSpecInfo) {
+						setActiveTab("materials");
+					} else if (faqItemsList.length > 0) {
+						setActiveTab("faq");
+					}
+				}
+				const groups = Array.isArray(resData.product_option_groups) ? resData.product_option_groups : [];
+				const defaults: Record<string, string | string[]> = {};
+				groups.forEach((group: any) => {
+					if (group?.is_active === false) return;
+					const values = Array.isArray(group.product_option_values)
+						? group.product_option_values.filter((v: any) => v.is_active !== false)
+						: [];
+					if (group.input_type === "multi") {
+						const def = values.filter((v: any) => v.is_default).map((v: any) => v.id);
+						if (def.length) defaults[group.id] = def;
+					} else if (group.input_type === "radio" || group.input_type === "dropdown") {
+						const def = values.find((v: any) => v.is_default);
+						if (def) defaults[group.id] = def.id;
+					}
+				});
+				setSelectedOptions(defaults);
+				setOptionErrors({});
+				const defVariant = resData.product_variants.find((v: any) => v.is_default) || resData.product_variants[0];
+				setSelectedVariant(defVariant);
+
+				const relatedIds = Array.isArray(resData.related_product_ids)
+					? resData.related_product_ids.filter((id: string) => id && id !== resData.id)
+					: [];
+				let finalRelatedProducts: RelatedProductCard[] = [];
+
+				if (relatedIds.length > 0) {
+					const { data: related } = await supabase
+						.from("products")
+						.select("id, name, slug, sell_mode, fabric, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
+						.in("id", relatedIds)
+						.eq("is_active", true)
+						.limit(8);
+
+					if (related) {
+						const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
+						const orderedRelated = related
+							.sort((a: any, b: any) => Number(orderMap.get(a.id) ?? 0) - Number(orderMap.get(b.id) ?? 0))
+							.slice(0, 8);
+
+						finalRelatedProducts = mapRelatedProducts(orderedRelated);
+					}
+				}
+
+				if (relatedIds.length === 0) {
+					let fallbackQuery = supabase
+						.from("products")
+						.select("id, name, slug, sell_mode, fabric, is_featured, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
+						.eq("is_active", true)
+						.neq("id", resData.id)
+						.limit(16);
+
+					if (resData.fabric) {
+						fallbackQuery = fallbackQuery.ilike("fabric", `%${resData.fabric}%`);
+					}
+
+					const { data: fallbackProducts } = await fallbackQuery;
+
+					if (fallbackProducts && fallbackProducts.length > 0) {
+						const fallbackMapped = mapRelatedProducts(fallbackProducts);
+						finalRelatedProducts = mergeUniqueRelated(finalRelatedProducts, fallbackMapped);
+					}
+				}
+
+				setRelatedProducts(finalRelatedProducts.slice(0, 8));
+			} catch (err) {
+				console.error("Error fetching product:", err);
+				// Fallback to dummy product on error so shimmer doesn't hang
 				const dummyProduct = buildDummyProduct(slug);
 				setProduct(dummyProduct);
-				setSelectedOptions({});
-				setOptionErrors({});
 				setSelectedVariant(dummyProduct.product_variants[0]);
 				setRelatedProducts(DUMMY_RELATED_PRODUCTS);
-				const dummyTabs = (dummyProduct.custom_tabs && dummyProduct.custom_tabs.length > 0)
-					? dummyProduct.custom_tabs.filter((tab: any) => tab && tab.type !== "reviews")
-					: [];
-				if (dummyTabs.length > 0) {
-					setActiveTab(dummyTabs[0].id);
-				} else {
-					setActiveTab("description");
-				}
+				setActiveTab("description");
+			} finally {
 				setLoading(false);
-				return;
 			}
-
-			const resData = data as any;
-			setProduct(resData);
-			const tabsList = (Array.isArray(resData.custom_tabs) ? resData.custom_tabs : [])
-				.filter((tab: any) => tab && tab.type !== "reviews");
-			if (tabsList.length > 0) {
-				setActiveTab(tabsList[0].id);
-			} else {
-				// Set default active tab based on available fallback data
-				const longDesc = resData.long_description || resData.description || "";
-				const highlightItemsList = Array.isArray(resData.highlights) ? resData.highlights : [];
-				const hasSpecInfo = resData.fabric || resData.width || resData.care_instructions || (Array.isArray(resData.fabric_details) && resData.fabric_details.length > 0);
-				const faqItemsList = Array.isArray(resData.faqs) ? resData.faqs : [];
-				
-				if (longDesc.trim() || highlightItemsList.length > 0) {
-					setActiveTab("description");
-				} else if (hasSpecInfo) {
-					setActiveTab("materials");
-				} else if (faqItemsList.length > 0) {
-					setActiveTab("faq");
-				}
-			}
-			const groups = Array.isArray(resData.product_option_groups) ? resData.product_option_groups : [];
-			const defaults: Record<string, string | string[]> = {};
-			groups.forEach((group: any) => {
-				if (group?.is_active === false) return;
-				const values = Array.isArray(group.product_option_values)
-					? group.product_option_values.filter((v: any) => v.is_active !== false)
-					: [];
-				if (group.input_type === "multi") {
-					const def = values.filter((v: any) => v.is_default).map((v: any) => v.id);
-					if (def.length) defaults[group.id] = def;
-				} else if (group.input_type === "radio" || group.input_type === "dropdown") {
-					const def = values.find((v: any) => v.is_default);
-					if (def) defaults[group.id] = def.id;
-				}
-			});
-			setSelectedOptions(defaults);
-			setOptionErrors({});
-			const defVariant = resData.product_variants.find((v: any) => v.is_default) || resData.product_variants[0];
-			setSelectedVariant(defVariant);
-
-			const relatedIds = Array.isArray(resData.related_product_ids)
-				? resData.related_product_ids.filter((id: string) => id && id !== resData.id)
-				: [];
-			let finalRelatedProducts: RelatedProductCard[] = [];
-
-			if (relatedIds.length > 0) {
-				const { data: related } = await supabase
-					.from("products")
-					.select("id, name, slug, sell_mode, fabric, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
-					.in("id", relatedIds)
-					.eq("is_active", true)
-					.limit(8);
-
-				if (related) {
-					const orderMap = new Map(relatedIds.map((id: string, idx: number) => [id, idx]));
-					const orderedRelated = related
-						.sort((a: any, b: any) => Number(orderMap.get(a.id) ?? 0) - Number(orderMap.get(b.id) ?? 0))
-						.slice(0, 8);
-
-					finalRelatedProducts = mapRelatedProducts(orderedRelated);
-				}
-			}
-
-			if (relatedIds.length === 0) {
-				let fallbackQuery = supabase
-					.from("products")
-					.select("id, name, slug, sell_mode, fabric, is_featured, product_variants ( price, original_price, is_default, variant_images ( image_url, is_primary ) )")
-					.eq("is_active", true)
-					.neq("id", resData.id)
-					.limit(16);
-
-				if (resData.fabric) {
-					fallbackQuery = fallbackQuery.ilike("fabric", `%${resData.fabric}%`);
-				}
-
-				const { data: fallbackProducts } = await fallbackQuery;
-
-				if (fallbackProducts && fallbackProducts.length > 0) {
-					const fallbackMapped = mapRelatedProducts(fallbackProducts);
-					finalRelatedProducts = mergeUniqueRelated(finalRelatedProducts, fallbackMapped);
-				}
-			}
-
-			setRelatedProducts(finalRelatedProducts.slice(0, 8));
-			setLoading(false);
 		}
 
 		fetchProduct();
+	// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [slug]);
 
 	useEffect(() => {

@@ -1,8 +1,7 @@
 import { Metadata } from "next";
-import { getActiveTheme } from "@/lib/theme";
 import { buildPageMetadata } from "@/lib/seo";
 import { buildOrganizationSchema, buildWebPageSchema, buildWebSiteSchema } from "@/lib/seoSchema";
-import themes from "@/themes/registry";
+import { getThemePage } from "@/themes/themeResolver";
 
 const homeTitle = "Shree Hari Cutpiece | Premium Fabric Per Meter";
 const homeDescription = "Discover premium cutpiece fabrics at Shree Hari. Shop cotton, silk, georgette, and occasion-ready textiles sold per meter.";
@@ -15,8 +14,7 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default async function Home() {
-  const activeTheme = await getActiveTheme();
-  const ThemeHomePage = themes[activeTheme]?.HomePage || themes.classic.HomePage;
+  const ThemeHomePage = await getThemePage("HomePage");
 
   const schemaMarkup = [
     buildOrganizationSchema(),

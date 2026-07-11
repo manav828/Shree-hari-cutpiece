@@ -49,6 +49,10 @@ export default function AdminSettings() {
     const [loadingReviews, setLoadingReviews] = useState<boolean>(true);
     const [savingReviews, setSavingReviews] = useState<boolean>(false);
 
+    const [websiteName, setWebsiteName] = useState("The Artisanal Archive");
+    const [loadingGeneral, setLoadingGeneral] = useState(true);
+    const [savingGeneral, setSavingGeneral] = useState(false);
+
     useEffect(() => {
         let cancelled = false;
 
@@ -97,8 +101,25 @@ export default function AdminSettings() {
             }
         };
 
+        const fetchGeneralSetting = async () => {
+            try {
+                const res = await fetch("/api/admin/settings/general", { cache: "no-store" });
+                const payload = await res.json();
+                if (res.ok && !cancelled) {
+                    setWebsiteName(payload.websiteName || "The Artisanal Archive");
+                }
+            } catch (error) {
+                console.error("Error fetching general setting:", error);
+            } finally {
+                if (!cancelled) {
+                    setLoadingGeneral(false);
+                }
+            }
+        };
+
         fetchSettings();
         fetchReviewsSetting();
+        fetchGeneralSetting();
 
         return () => {
             cancelled = true;
@@ -147,6 +168,30 @@ export default function AdminSettings() {
             alert("Error updating theme: " + e.message);
         } finally {
             setSaving(false);
+        }
+    };
+
+    const handleSaveGeneralSettings = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setSavingGeneral(true);
+        try {
+            const response = await fetch("/api/admin/settings/general", {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ websiteName }),
+            });
+
+            if (!response.ok) {
+                const payload = await response.json();
+                throw new Error(payload.error || "Failed to update general settings.");
+            }
+
+            setToast("Website name successfully updated.");
+        } catch (error: any) {
+            console.error("Failed to update general settings", error);
+            alert("Error updating general settings: " + error.message);
+        } finally {
+            setSavingGeneral(false);
         }
     };
 
@@ -212,6 +257,53 @@ export default function AdminSettings() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2 space-y-6">
+                    {/* GENERAL CONFIGURATION CARD */}
+                    <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+                        <div className="mb-5">
+                            <h2 className="text-lg font-semibold text-gray-900">General Configuration</h2>
+                            <p className="text-sm text-gray-500 mt-1">
+                                Update the global settings for your storefront.
+                            </p>
+                        </div>
+
+                        {loadingGeneral ? (
+                            <div className="flex items-center justify-center p-6">
+                                <Loader2 className="h-5 w-5 animate-spin text-gray-400" />
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSaveGeneralSettings} className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                                        Website / Brand Name
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={websiteName}
+                                            onChange={(e) => setWebsiteName(e.target.value)}
+                                            placeholder="The Artisanal Archive"
+                                            maxLength={80}
+                                            required
+                                            className="h-11 flex-1 rounded-lg border border-gray-200 px-4 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent transition-all"
+                                        />
+                                        <button
+                                            type="submit"
+                                            disabled={savingGeneral}
+                                            className="h-11 px-5 rounded-lg bg-gray-900 hover:bg-gray-800 text-white text-sm font-bold shadow-sm hover:shadow transition-all cursor-pointer flex items-center justify-center disabled:opacity-60"
+                                        >
+                                            {savingGeneral ? (
+                                                <Loader2 className="h-4 w-4 animate-spin" />
+                                            ) : (
+                                                "Save"
+                                            )}
+                                        </button>
+                                    </div>
+                                    <p className="text-xs text-gray-400 mt-1">This name is shown in the headers, footers, and page titles across the site.</p>
+                                </div>
+                            </form>
+                        )}
+                    </div>
+
                     {/* THEME SELECTOR SECTION */}
                     <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
                         <div className="mb-5">

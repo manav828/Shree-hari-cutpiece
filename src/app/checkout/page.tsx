@@ -20,6 +20,9 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { bohemianBodyFont, bohemianHeadingFont } from "@/themes/bohemian/components/layout/premiumFonts";
 import { BOHEMIAN_SITE_CONTAINER } from "@/themes/bohemian/components/layout/siteStyles";
+import ClassicFooter from "@/components/layout/Footer";
+import BohemianFooter from "@/themes/bohemian/components/layout/Footer";
+import LuxuryFooter from "@/themes/luxury/components/layout/Footer";
 import { paymentClientHandlers } from "@/payments/client";
 import { 
   validateName, 
@@ -148,6 +151,9 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderReference, setOrderReference] = useState("");
+  const [step, setStep] = useState(1);
+  const [siteName, setSiteName] = useState("The Artisanal Archive");
+  const [activeTheme, setActiveTheme] = useState("bohemian");
 
   const [shippingConfig, setShippingConfig] = useState<{
     defaultFee: number;
@@ -250,6 +256,27 @@ export default function CheckoutPage() {
       }),
     [],
   );
+
+  useEffect(() => {
+    // Fetch website name
+    fetch("/api/admin/settings/general")
+      .then(res => res.json())
+      .then(data => {
+        if (data.websiteName) {
+          setSiteName(data.websiteName);
+        }
+      })
+      .catch(err => console.error("Error loading website name:", err));
+
+    // Fetch theme from cookie
+    const themeMatch = document.cookie.match(/(?:^|; )storefront_theme=([^;]*)/);
+    if (themeMatch) {
+      const val = decodeURIComponent(themeMatch[1]).replace(/"/g, "").trim().toLowerCase();
+      if (["classic", "luxury", "bohemian"].includes(val)) {
+        setActiveTheme(val);
+      }
+    }
+  }, []);
 
   useEffect(() => {
     setIsCartOpen(false);
@@ -559,8 +586,8 @@ export default function CheckoutPage() {
       <div className={`${bohemianBodyFont.className} min-h-screen bg-[#fcf9f4] text-[#1c1c19]`}>
         <header className="fixed top-0 z-40 w-full border-b border-[#ece3dc] bg-[#fcf9f4]/95 backdrop-blur">
           <div className={`${BOHEMIAN_SITE_CONTAINER} flex h-20 items-center justify-between`}>
-            <Link href="/" className={`${bohemianHeadingFont.className} text-3xl italic text-[#9f3f29]`}>
-              The Artisanal Archive
+            <Link href="/" className={`${bohemianHeadingFont.className} text-[20px] sm:text-[27px] font-semibold leading-none text-[#9f3f29] whitespace-nowrap`}>
+              {siteName}
             </Link>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">
               <Lock className="h-4 w-4" />
@@ -594,8 +621,8 @@ export default function CheckoutPage() {
       <div className={`${bohemianBodyFont.className} min-h-screen bg-[#fcf9f4] text-[#1c1c19]`}>
         <header className="fixed top-0 z-40 w-full border-b border-[#ece3dc] bg-[#fcf9f4]/95 backdrop-blur">
           <div className={`${BOHEMIAN_SITE_CONTAINER} flex h-20 items-center justify-between`}>
-            <Link href="/" className={`${bohemianHeadingFont.className} text-3xl italic text-[#9f3f29]`}>
-              The Artisanal Archive
+            <Link href="/" className={`${bohemianHeadingFont.className} text-[20px] sm:text-[27px] font-semibold leading-none text-[#9f3f29] whitespace-nowrap`}>
+              {siteName}
             </Link>
             <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">
               <Lock className="h-4 w-4" />
@@ -643,8 +670,8 @@ export default function CheckoutPage() {
     <div className={`${bohemianBodyFont.className} min-h-screen bg-[#fcf9f4] text-[#1c1c19]`}>
       <header className="fixed top-0 z-40 w-full border-b border-[#ece3dc] bg-[#fcf9f4]/95 backdrop-blur">
         <div className={`${BOHEMIAN_SITE_CONTAINER} flex h-20 items-center justify-between`}>
-          <Link href="/" className={`${bohemianHeadingFont.className} text-3xl italic text-[#9f3f29]`}>
-            The Artisanal Archive
+          <Link href="/" className={`${bohemianHeadingFont.className} text-[20px] sm:text-[27px] font-semibold leading-none text-[#9f3f29] whitespace-nowrap`}>
+            {siteName}
           </Link>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68]">
             <Lock className="h-4 w-4" />
@@ -657,20 +684,21 @@ export default function CheckoutPage() {
         <form onSubmit={handlePlaceOrder}>
           <div className={`${BOHEMIAN_SITE_CONTAINER} grid grid-cols-1 gap-12 lg:grid-cols-12 lg:gap-10`}>
             <section className="lg:col-span-8">
-              <nav aria-label="Checkout Steps" className="mb-10 flex flex-wrap items-center gap-5 text-[#5f544d]">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#9f3f29] text-xs font-semibold text-white">1</span>
-                  <span className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>Shipping</span>
+              {/* Step Navigation Bar */}
+              <nav aria-label="Checkout Steps" className="mb-10 flex items-center justify-between md:justify-start md:gap-5 text-[#5f544d] border-b border-[#ece3dc] pb-6">
+                <div className="flex items-center gap-2">
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 1 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>1</span>
+                  <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 1 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Review Items</span>
                 </div>
-                <span className="h-px w-10 bg-[#ddcfc4]" />
-                <div className="flex items-center gap-3 opacity-45">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#ebe8e3] text-xs font-semibold text-[#7a6f68]">2</span>
-                  <span className={`${bohemianHeadingFont.className} text-2xl`}>Payment</span>
+                <span className="flex-1 md:flex-none h-px max-w-[40px] md:w-8 bg-[#ddcfc4]" />
+                <div className="flex items-center gap-2">
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 2 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>2</span>
+                  <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 2 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Shipping</span>
                 </div>
-                <span className="h-px w-10 bg-[#ddcfc4]" />
-                <div className="flex items-center gap-3 opacity-45">
-                  <span className="flex h-7 w-7 items-center justify-center rounded-full bg-[#ebe8e3] text-xs font-semibold text-[#7a6f68]">3</span>
-                  <span className={`${bohemianHeadingFont.className} text-2xl`}>Review</span>
+                <span className="flex-1 md:flex-none h-px max-w-[40px] md:w-8 bg-[#ddcfc4]" />
+                <div className="flex items-center gap-2">
+                  <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 3 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>3</span>
+                  <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 3 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Payment</span>
                 </div>
               </nav>
 
@@ -690,206 +718,322 @@ export default function CheckoutPage() {
                 </div>
               ) : null}
 
-              <section className="rounded-xl bg-[#f6f3ee] p-6 md:p-8">
-                <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Shipping Information</h2>
-
-                <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2">
-                  <label className="md:col-span-2">
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Full Name</span>
-                    <input
-                      name="fullName"
-                      value={formData.fullName}
-                      onChange={handleFieldChange}
-                      maxLength={100}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="Arjun Sharma"
-                    />
-                  </label>
-
-                  <label className="md:col-span-2">
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Street Address / House No.</span>
-                    <input
-                      name="addressLine1"
-                      value={formData.addressLine1}
-                      onChange={handleFieldChange}
-                      maxLength={100}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="Flat 402, Lotus Apartments"
-                    />
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Area / Locality</span>
-                    <input
-                      name="area"
-                      value={formData.area}
-                      onChange={handleFieldChange}
-                      maxLength={100}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="Bandra West"
-                    />
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Landmark (Optional)</span>
-                    <input
-                      name="landmark"
-                      value={formData.landmark}
-                      onChange={handleFieldChange}
-                      maxLength={100}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="Near Mount Mary Church"
-                    />
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">City</span>
-                    <input
-                      name="city"
-                      value={formData.city}
-                      onChange={handleFieldChange}
-                      maxLength={50}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="Mumbai"
-                    />
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Pincode</span>
-                    <input
-                      name="pincode"
-                      value={formData.pincode}
-                      onChange={handleFieldChange}
-                      maxLength={6}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="400050"
-                    />
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">State</span>
-                    <select
-                      name="state"
-                      value={formData.state}
-                      onChange={handleFieldChange}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                    >
-                      {ALL_INDIAN_STATES.map((state) => (
-                        <option key={state} value={state}>{state}</option>
-                      ))}
-                    </select>
-                  </label>
-
-                  <label>
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Phone Number</span>
-                    <div className="flex overflow-hidden rounded-lg">
-                      <span className="inline-flex h-11 items-center bg-[#ddd7d2] px-3 text-xs text-[#6f645d]">+91</span>
-                      <input
-                        name="phone"
-                        value={formData.phone}
-                        onChange={handleFieldChange}
-                        maxLength={10}
-                        className="h-11 w-full border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                        placeholder="98765 43210"
-                      />
+              {/* STEP 1: Review Items */}
+              {step === 1 && (
+                <div className="space-y-6 animate-fade-in">
+                  <section className="rounded-xl bg-[#f6f3ee] p-6 md:p-8">
+                    <div className="flex items-center justify-between border-b border-[#ddcfc4] pb-4 mb-6">
+                      <h2 className={`${bohemianHeadingFont.className} text-3xl text-[#1c1c19] md:text-4xl`}>Review Your Items</h2>
+                      <button
+                        type="button"
+                        onClick={() => setIsCartOpen(true)}
+                        className="text-sm font-semibold text-[#9f3f29] underline hover:text-[#bf573f] cursor-pointer"
+                      >
+                        Edit Cart
+                      </button>
                     </div>
-                  </label>
 
-                  <label className="md:col-span-2">
-                    <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Email (Optional)</span>
-                    <input
-                      type="email"
-                      name="email"
-                      value={formData.email}
-                      onChange={handleFieldChange}
-                      maxLength={254}
-                      className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
-                      placeholder="name@email.com"
-                    />
-                  </label>
-                </div>
-              </section>
-
-              <section className="mt-8 rounded-xl bg-[#f6f3ee] p-6 md:p-8">
-                <div className="flex items-end justify-between gap-4">
-                  <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Payment Method</h2>
-                  <p className="text-[11px] uppercase tracking-[0.1em] text-[#8a7c74]">Secure Checkout</p>
-                </div>
-
-                <div className="mt-6 space-y-3">
-                  {loadingMethods ? (
-                    <div className="flex items-center justify-center py-6 text-[#7a6f68] text-sm">
-                      <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                      Loading payment methods...
-                    </div>
-                  ) : selectableOptions.length === 0 ? (
-                    <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 text-center text-sm text-red-700">
-                      <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-500" />
-                      Checkout is currently disabled. Please contact the administrator.
-                    </div>
-                  ) : (
-                    selectableOptions.map((option, idx) => {
-                      const isSelected = selectedGateway === option.gatewayId && 
-                        (!option.subOptionId || selectedPaymentSubOption === option.subOptionId);
-                      const Icon = option.icon;
-
-                      return (
-                        <button
-                          key={`${option.gatewayId}-${option.subOptionId || idx}`}
-                          type="button"
-                          onClick={() => {
-                            setSelectedGateway(option.gatewayId);
-                            if (option.subOptionId) {
-                              setSelectedPaymentSubOption(option.subOptionId);
-                            }
-                          }}
-                          className={`flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors ${
-                            isSelected
-                              ? "border-[#9f3f29] bg-white"
-                              : "border-transparent bg-[#ece7e1] hover:border-[#d4c2b8]"
-                          }`}
-                        >
-                          <div className="flex items-center gap-3">
-                            <span
-                              className={`h-4 w-4 rounded-full border ${isSelected ? "border-[#9f3f29]" : "border-[#9f8f86]"}`}
-                            >
-                              {isSelected ? <span className="mx-auto mt-[3px] block h-2 w-2 rounded-full bg-[#9f3f29]" /> : null}
-                            </span>
-                            <div>
-                              <p className="text-sm font-semibold text-[#1c1c19]">{option.label}</p>
-                              <p className="text-xs text-[#7a6f68]">{option.subtitle}</p>
-                            </div>
+                    <div className="space-y-4">
+                      {items.map((item) => (
+                        <article key={item.id} className="flex gap-4 border-b border-[#ddcfc4]/30 pb-4 last:border-b-0 last:pb-0">
+                          <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#dfd8d1]">
+                            <Image src={getThumbnailUrl(item.image)} alt={item.name} width={140} height={180} className="h-full w-full object-cover" />
                           </div>
-                          <Icon className="h-4 w-4 text-[#6f645d]" />
-                        </button>
-                      );
-                    })
-                  )}
+                          <div className="flex-1">
+                            <h4 className="text-sm font-semibold text-[#1c1c19]">{item.name}</h4>
+                            <p className="mt-0.5 text-[11px] text-[#7a6f68]">Quantity: {item.meters} {item.selling_mode === "piece" ? "piece(s)" : "meter(s)"}</p>
+                            <p className="mt-0.5 text-[11px] text-[#7a6f68]">{formatItemMeta(item as CheckoutCartItem)}</p>
+                            <p className="mt-1 text-sm font-semibold text-[#9f3f29]">{currencyFormatter.format(item.price * item.meters)}</p>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  </section>
+
+                  <div className="flex justify-center">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMsg("");
+                        setStep(2);
+                      }}
+                      className="inline-flex h-12 items-center justify-center rounded-lg bg-[#9f3f29] px-8 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] cursor-pointer"
+                    >
+                      Continue to Shipping
+                    </button>
+                  </div>
                 </div>
-              </section>
+              )}
+
+              {/* STEP 2: Shipping Information */}
+              {step === 2 && (
+                <div className="space-y-6 animate-fade-in">
+                  <section className="rounded-xl bg-[#f6f3ee] p-6 md:p-8">
+                    <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Shipping Information</h2>
+
+                    <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2">
+                      <label className="md:col-span-2">
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Full Name</span>
+                        <input
+                          name="fullName"
+                          value={formData.fullName}
+                          onChange={handleFieldChange}
+                          maxLength={100}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="Arjun Sharma"
+                        />
+                      </label>
+
+                      <label className="md:col-span-2">
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Street Address / House No.</span>
+                        <input
+                          name="addressLine1"
+                          value={formData.addressLine1}
+                          onChange={handleFieldChange}
+                          maxLength={100}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="Flat 402, Lotus Apartments"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Area / Locality</span>
+                        <input
+                          name="area"
+                          value={formData.area}
+                          onChange={handleFieldChange}
+                          maxLength={100}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="Bandra West"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Landmark (Optional)</span>
+                        <input
+                          name="landmark"
+                          value={formData.landmark}
+                          onChange={handleFieldChange}
+                          maxLength={100}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="Near Mount Mary Church"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">City</span>
+                        <input
+                          name="city"
+                          value={formData.city}
+                          onChange={handleFieldChange}
+                          maxLength={50}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="Mumbai"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Pincode</span>
+                        <input
+                          name="pincode"
+                          value={formData.pincode}
+                          onChange={handleFieldChange}
+                          maxLength={6}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="400050"
+                        />
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">State</span>
+                        <select
+                          name="state"
+                          value={formData.state}
+                          onChange={handleFieldChange}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                        >
+                          {ALL_INDIAN_STATES.map((state) => (
+                            <option key={state} value={state}>{state}</option>
+                          ))}
+                        </select>
+                      </label>
+
+                      <label>
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Phone Number</span>
+                        <div className="flex overflow-hidden rounded-lg">
+                          <span className="inline-flex h-11 items-center bg-[#ddd7d2] px-3 text-xs text-[#6f645d]">+91</span>
+                          <input
+                            name="phone"
+                            value={formData.phone}
+                            onChange={handleFieldChange}
+                            maxLength={10}
+                            className="h-11 w-full border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                            placeholder="98765 43210"
+                          />
+                        </div>
+                      </label>
+
+                      <label className="md:col-span-2">
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Email (Optional)</span>
+                        <input
+                          type="email"
+                          name="email"
+                          value={formData.email}
+                          onChange={handleFieldChange}
+                          maxLength={254}
+                          className="h-11 w-full rounded-lg border-none bg-[#ebe8e3] px-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29]"
+                          placeholder="name@email.com"
+                        />
+                      </label>
+
+                      <label className="md:col-span-2">
+                        <span className="mb-2 block text-[10px] font-semibold uppercase tracking-[0.12em] text-[#8a7c74]">Order Notes (Optional)</span>
+                        <textarea
+                          name="notes"
+                          value={formData.notes}
+                          onChange={handleFieldChange}
+                          maxLength={500}
+                          rows={3}
+                          className="w-full rounded-lg border-none bg-[#ebe8e3] p-4 text-sm text-[#1c1c19] focus:outline-none focus:ring-1 focus:ring-[#9f3f29] resize-none"
+                          placeholder="Add any instructions for delivery (e.g. door code, ring bell...)"
+                        />
+                      </label>
+                    </div>
+                  </section>
+
+                  <div className="flex flex-col items-center gap-4 pt-4 md:flex-row md:justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMsg("");
+                        setStep(1);
+                      }}
+                      className="order-2 md:order-1 text-sm font-bold uppercase tracking-[0.08em] text-[#7a6f68] hover:text-[#1c1c19] cursor-pointer"
+                    >
+                      &larr; Back to Items
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const err = getMissingFieldMessage();
+                        if (err) {
+                          setErrorMsg(err);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                          setErrorMsg("");
+                          setStep(3);
+                        }
+                      }}
+                      className="order-1 md:order-2 w-full md:w-auto inline-flex h-12 items-center justify-center rounded-lg bg-[#9f3f29] px-8 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] cursor-pointer"
+                    >
+                      Continue to Payment
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: Payment Method */}
+              {step === 3 && (
+                <div className="space-y-6 animate-fade-in">
+                  <section className="rounded-xl bg-[#f6f3ee] p-6 md:p-8">
+                    <div className="flex items-end justify-between gap-4">
+                      <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Payment Method</h2>
+                      <p className="text-[11px] uppercase tracking-[0.1em] text-[#8a7c74]">Secure Checkout</p>
+                    </div>
+
+                    <div className="mt-6 space-y-3">
+                      {loadingMethods ? (
+                        <div className="flex items-center justify-center py-6 text-[#7a6f68] text-sm">
+                          <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                          Loading payment methods...
+                        </div>
+                      ) : selectableOptions.length === 0 ? (
+                        <div className="rounded-xl border border-red-200 bg-red-50/50 p-4 text-center text-sm text-red-700">
+                          <AlertCircle className="w-6 h-6 mx-auto mb-2 text-red-500" />
+                          Checkout is currently disabled. Please contact the administrator.
+                        </div>
+                      ) : (
+                        selectableOptions.map((option, idx) => {
+                          const isSelected = selectedGateway === option.gatewayId && 
+                            (!option.subOptionId || selectedPaymentSubOption === option.subOptionId);
+                          const Icon = option.icon;
+
+                          return (
+                            <button
+                              key={`${option.gatewayId}-${option.subOptionId || idx}`}
+                              type="button"
+                              onClick={() => {
+                                setSelectedGateway(option.gatewayId);
+                                if (option.subOptionId) {
+                                  setSelectedPaymentSubOption(option.subOptionId);
+                                }
+                              }}
+                              className={`flex w-full items-center justify-between rounded-xl border px-4 py-4 text-left transition-colors ${
+                                isSelected
+                                  ? "border-[#9f3f29] bg-white"
+                                  : "border-transparent bg-[#ece7e1] hover:border-[#d4c2b8]"
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <span
+                                  className={`flex h-4 w-4 items-center justify-center rounded-full border ${isSelected ? "border-[#9f3f29]" : "border-[#9f8f86]"}`}
+                                >
+                                  {isSelected ? <span className="block h-2 w-2 rounded-full bg-[#9f3f29]" /> : null}
+                                </span>
+                                <div>
+                                  <p className="text-sm font-semibold text-[#1c1c19]">{option.label}</p>
+                                  <p className="text-xs text-[#7a6f68]">{option.subtitle}</p>
+                                </div>
+                              </div>
+                              <Icon className="h-4 w-4 text-[#6f645d]" />
+                            </button>
+                          );
+                        })
+                      )}
+                    </div>
+                  </section>
+
+                  <div className="flex flex-col items-center gap-4 pt-4 md:flex-row md:justify-between">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setErrorMsg("");
+                        setStep(2);
+                      }}
+                      className="text-sm font-bold uppercase tracking-[0.08em] text-[#7a6f68] hover:text-[#1c1c19] cursor-pointer"
+                    >
+                      &larr; Back to Shipping
+                    </button>
+                  </div>
+                </div>
+              )}
             </section>
 
-            <aside className="lg:col-span-4">
+            {/* Sidebar Summary - Side-by-side on desktop, or conditional on mobile step 3 */}
+            <aside className={`lg:col-span-4 ${step === 3 ? "block" : "hidden lg:block"}`}>
               <div className="rounded-xl bg-[#f0ece7] p-6 lg:sticky lg:top-28">
-                <h3 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19]`}>Order Summary</h3>
+                <h3 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] mb-5`}>Order Summary</h3>
 
-                <div className="mt-5 space-y-4">
-                  {items.map((item) => (
-                    <article key={item.id} className="flex gap-3">
-                      <div className="h-20 w-16 flex-shrink-0 overflow-hidden rounded-lg bg-[#dfd8d1]">
-                        <Image src={getThumbnailUrl(item.image)} alt={item.name} width={140} height={180} className="h-full w-full object-cover" />
-                      </div>
-                      <div>
-                        <h4 className="text-sm font-semibold text-[#1c1c19]">{item.name}</h4>
-                        <p className="mt-0.5 text-[11px] text-[#7a6f68]">Quantity: {item.meters}</p>
-                        <p className="mt-0.5 text-[11px] text-[#7a6f68]">{formatItemMeta(item as CheckoutCartItem)}</p>
-                        <p className="mt-1 text-sm font-semibold text-[#9f3f29]">{currencyFormatter.format(item.price * item.meters)}</p>
-                      </div>
-                    </article>
-                  ))}
-                </div>
+                {/* Show items in sidebar only if not in step 1, to prevent duplicated item lists on mobile */}
+                {step !== 1 && (
+                  <div className="space-y-4 max-h-[220px] overflow-y-auto mb-5 pr-2">
+                    {items.map((item) => (
+                      <article key={item.id} className="flex gap-3">
+                        <div className="h-16 w-12 flex-shrink-0 overflow-hidden rounded bg-[#dfd8d1]">
+                          <Image src={getThumbnailUrl(item.image)} alt={item.name} width={140} height={180} className="h-full w-full object-cover" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-xs font-semibold text-[#1c1c19] truncate">{item.name}</h4>
+                          <p className="text-[10px] text-[#7a6f68]">Qty: {item.meters}</p>
+                          <p className="text-[10px] text-[#7a6f68] truncate">{formatItemMeta(item as CheckoutCartItem)}</p>
+                          <p className="text-xs font-semibold text-[#9f3f29] mt-0.5">{currencyFormatter.format(item.price * item.meters)}</p>
+                        </div>
+                      </article>
+                    ))}
+                  </div>
+                )}
 
-                <div className="mt-6 space-y-2 border-y border-[#dccfc4]/70 py-5 text-sm text-[#6f645d]">
+                <div className="space-y-2 border-y border-[#dccfc4]/70 py-5 text-sm text-[#6f645d]">
                   <div className="flex items-center justify-between">
                     <span>Subtotal</span>
                     <span className="text-[#1c1c19]">{currencyFormatter.format(subtotal)}</span>
@@ -931,31 +1075,57 @@ export default function CheckoutPage() {
                   )}
                 </div>
 
-                {!user ? (
-                  <Link
-                    href="/login?redirect=/checkout"
-                    className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] text-center"
-                  >
-                    Login to Place Order
-                  </Link>
+                {/* Show Action Button */}
+                {step === 3 ? (
+                  <>
+                    {!user ? (
+                      <Link
+                        href="/login?redirect=/checkout"
+                        className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] text-center cursor-pointer"
+                      >
+                        Login to Place Order
+                      </Link>
+                    ) : (
+                      <button
+                        type="submit"
+                        disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
+                        className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65 cursor-pointer"
+                      >
+                        {isSubmitting ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
+                          </span>
+                        ) : selectedGateway === "cod" && advanceAmount > 0 ? (
+                          "Pay Advance & Place Order"
+                        ) : selectedGateway === "cod" ? (
+                          "Place Order (Cash on Delivery)"
+                        ) : (
+                          "Place Order & Pay"
+                        )}
+                      </button>
+                    )}
+                  </>
                 ) : (
                   <button
-                    type="submit"
-                    disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
-                    className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65"
+                    type="button"
+                    onClick={() => {
+                      if (step === 1) {
+                        setStep(2);
+                      } else if (step === 2) {
+                        const err = getMissingFieldMessage();
+                        if (err) {
+                          setErrorMsg(err);
+                          window.scrollTo({ top: 0, behavior: 'smooth' });
+                        } else {
+                          setErrorMsg("");
+                          setStep(3);
+                        }
+                      }
+                    }}
+                    className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] cursor-pointer flex items-center justify-center"
                   >
-                    {isSubmitting ? (
-                      <span className="inline-flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        {selectedGateway === "cod" ? "Placing Order..." : "Processing Payment..."}
-                      </span>
-                    ) : selectedGateway === "cod" && advanceAmount > 0 ? (
-                      "Pay Advance & Place Order"
-                    ) : selectedGateway === "cod" ? (
-                      "Place Order (Cash on Delivery)"
-                    ) : (
-                      "Place Order & Pay"
-                    )}
+                    Continue
                   </button>
                 )}
 
@@ -969,17 +1139,13 @@ export default function CheckoutPage() {
         </form>
       </main>
 
-      <footer className="border-t border-[#eee4dd]/80 bg-[#fcf9f4] py-10">
-        <div className={`${BOHEMIAN_SITE_CONTAINER} flex flex-col items-center justify-between gap-6 text-center md:flex-row md:text-left`}>
-          <p className={`${bohemianHeadingFont.className} text-2xl text-[#1c1c19]`}>The Artisanal Archive</p>
-          <p className="text-xs text-[#8a7c74]">© 2026 The Artisanal Archive. Curating warmth for the modern home.</p>
-          <div className="flex items-center gap-5 text-xs text-[#8a7c74]">
-            <Link href="/privacy-policy" className="transition-colors hover:text-[#1c1c19]">Privacy</Link>
-            <Link href="/terms-of-service" className="transition-colors hover:text-[#1c1c19]">Terms</Link>
-            <Link href="/shipping-policy" className="transition-colors hover:text-[#1c1c19]">Shipping Info</Link>
-          </div>
-        </div>
-      </footer>
+      {activeTheme === "bohemian" ? (
+        <BohemianFooter />
+      ) : activeTheme === "luxury" ? (
+        <LuxuryFooter />
+      ) : (
+        <ClassicFooter />
+      )}
     </div>
   );
 }

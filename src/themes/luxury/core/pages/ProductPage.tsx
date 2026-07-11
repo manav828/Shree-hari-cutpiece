@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 
-export default function ProductPage({ slug }: { slug: string }) {
+export default function ProductPage({ slug, serverData }: { slug: string; serverData?: any }) {
     const [selectedFabric, setSelectedFabric] = useState("boucle");
 
     return (

@@ -87,6 +87,7 @@ export default function ShippingSettingsPage() {
     const [codFee, setCodFee] = useState(0);
     const [codAdvanceType, setCodAdvanceType] = useState<"none" | "flat" | "percent">("none");
     const [codAdvanceValue, setCodAdvanceValue] = useState(0);
+    const [codAvailable, setCodAvailable] = useState(true);
 
     // Tax Settings
     const [taxMode, setTaxMode] = useState<"none" | "add_extra" | "included">("none");
@@ -130,6 +131,7 @@ export default function ShippingSettingsPage() {
                     setCodFee(Number(data.codFee ?? 0));
                     setCodAdvanceType((data.codAdvanceType || "none") as "none" | "flat" | "percent");
                     setCodAdvanceValue(Number(data.codAdvanceValue ?? 0));
+                    setCodAvailable(data.codAvailable !== false);
 
                     setTaxMode((data.taxMode || "none") as "none" | "add_extra" | "included");
                     setTaxRate(Number(data.taxRate ?? 0));
@@ -182,6 +184,7 @@ export default function ShippingSettingsPage() {
                     codFee,
                     codAdvanceType,
                     codAdvanceValue,
+                    codAvailable,
                     stateGroups,
                     taxMode,
                     taxRate
@@ -499,6 +502,19 @@ export default function ShippingSettingsPage() {
                         <IndianRupee className="h-4 w-4 text-emerald-600" />
                         Cash on Delivery (COD)
                     </h3>
+
+                    <div className="flex items-center gap-3 p-4 bg-indigo-50/40 border border-indigo-100/60 rounded-xl mb-4">
+                        <input
+                            id="cod-available"
+                            type="checkbox"
+                            checked={codAvailable}
+                            onChange={(e) => setCodAvailable(e.target.checked)}
+                            className="h-4.5 w-4.5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 cursor-pointer"
+                        />
+                        <label htmlFor="cod-available" className="text-sm font-semibold text-slate-700 select-none cursor-pointer">
+                            Allow Cash on Delivery (COD) Option at Checkout
+                        </label>
+                    </div>
 
                     <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">

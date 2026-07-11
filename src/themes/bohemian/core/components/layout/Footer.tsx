@@ -38,9 +38,9 @@ export default function BohemianFooter() {
 					<div>
 						<h4 className={`${bohemianHeadingFont.className} mb-6 font-bold text-[#9f3f29]`}>Support</h4>
 						<ul className="space-y-4 text-sm text-stone-500">
-							<li><Link href="/shipping-policy" className="underline decoration-[#9f3f29]/30 underline-offset-4">Shipping & Returns</Link></li>
-							<li><Link href="/privacy-policy" className="underline decoration-[#9f3f29]/30 underline-offset-4">Privacy Policy</Link></li>
-							<li><Link href="/contact" className="underline decoration-[#9f3f29]/30 underline-offset-4">Contact Us</Link></li>
+							<li><Link href="/shipping-policy" prefetch={false} className="underline decoration-[#9f3f29]/30 underline-offset-4">Shipping & Returns</Link></li>
+							<li><Link href="/privacy-policy" prefetch={false} className="underline decoration-[#9f3f29]/30 underline-offset-4">Privacy Policy</Link></li>
+							<li><Link href="/contact" prefetch={false} className="underline decoration-[#9f3f29]/30 underline-offset-4">Contact Us</Link></li>
 						</ul>
 					</div>
 

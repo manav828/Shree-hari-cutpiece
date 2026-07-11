@@ -5,7 +5,7 @@ import { getSiteUrl } from "@/lib/siteUrl";
 import { filterPublicContentPosts, isPublicContentPost } from "@/lib/blogPublicContent";
 import { buildArticleSchema, buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
 import { getActiveTheme } from "@/lib/theme";
-import themes from "@/themes/registry";
+import { getThemePage } from "@/themes/themeResolver";
 
 export const dynamic = "force-dynamic";
 
@@ -408,9 +408,7 @@ export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
         );
     }
 
-    // Resolve visual component based on the active theme
-    const themeConfig = themes[activeTheme] || themes["classic"];
-    const ThemeBlogDetailPage = themeConfig.BlogDetailPage;
+    const ThemeBlogDetailPage = await getThemePage("BlogDetailPage");
 
     return (
         <>

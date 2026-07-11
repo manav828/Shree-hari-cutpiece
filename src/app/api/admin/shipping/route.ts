@@ -15,6 +15,7 @@ const SETTING_KEYS = [
     "shipping_cod_fee",
     "shipping_cod_advance_type",
     "shipping_cod_advance_value",
+    "shipping_cod_available",
     "shipping_state_groups",
     "tax_mode",
     "tax_rate"
@@ -53,6 +54,7 @@ export async function GET() {
             codFee: settingsMap["shipping_cod_fee"] || "0",
             codAdvanceType: settingsMap["shipping_cod_advance_type"] || "none",
             codAdvanceValue: settingsMap["shipping_cod_advance_value"] || "0",
+            codAvailable: settingsMap["shipping_cod_available"] !== "false", // default to true if not set
             stateGroups: settingsMap["shipping_state_groups"] || "[]",
             taxMode: settingsMap["tax_mode"] || "none",
             taxRate: settingsMap["tax_rate"] || "0",
@@ -110,6 +112,10 @@ export async function POST(req: NextRequest) {
 
         if (body.codAdvanceValue !== undefined) {
             upserts.push({ key: "shipping_cod_advance_value", value: JSON.stringify(String(body.codAdvanceValue)) });
+        }
+
+        if (body.codAvailable !== undefined) {
+            upserts.push({ key: "shipping_cod_available", value: JSON.stringify(String(body.codAvailable)) });
         }
 
         if (body.stateGroups !== undefined) {

@@ -1,10 +1,9 @@
 import { Metadata } from "next";
-import { getActiveTheme } from "@/lib/theme";
-import themes from "@/themes/registry";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { filterPublicContentPosts } from "@/lib/blogPublicContent";
 import { buildPageMetadata } from "@/lib/seo";
 import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
+import { getThemePage } from "@/themes/themeResolver";
 
 const blogsTitle = "Blog & Fashion Guides | Shree Hari Cutpiece";
 const blogsDescription = "Read our latest articles on fabric care, buying guides, and trending styles for premium cotton, silk, and georgette.";
@@ -81,10 +80,7 @@ export default async function BlogsPage({ searchParams }: BlogsPageProps) {
         ? posts.filter((post) => (post.category?.name || "").trim().toLocaleLowerCase("en-US") === normalizedCategory)
         : posts;
     const activeCategoryLabel = filteredPosts[0]?.category?.name || requestedCategory;
-    const activeTheme = await getActiveTheme();
-
-    const themeConfig = themes[activeTheme] || themes["classic"];
-    const ThemeBlogPage = themeConfig.BlogPage;
+    const ThemeBlogPage = await getThemePage("BlogPage");
 
     const schemaMarkup = [
         buildWebPageSchema({

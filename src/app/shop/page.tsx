@@ -1,8 +1,7 @@
 import { Metadata } from "next";
-import { getActiveTheme } from "@/lib/theme";
 import { buildPageMetadata } from "@/lib/seo";
 import { buildBreadcrumbSchema, buildWebPageSchema } from "@/lib/seoSchema";
-import themes from "@/themes/registry";
+import { getThemePage } from "@/themes/themeResolver";
 
 const shopTitle = "Shop All Fabrics | Shree Hari Cutpiece";
 const shopDescription = "Browse premium cutpiece fabrics by category, style, and price. Shop cotton, silk, georgette, rayon, and more sold per meter.";
@@ -21,11 +20,7 @@ type ShopAppPageProps = {
 };
 
 export default async function ShopAppPage({ searchParams }: ShopAppPageProps) {
-  const activeTheme = await getActiveTheme();
-
-  // ThemeResolver handles resolving the correct page UI
-  const themeConfig = themes[activeTheme] || themes["classic"];
-  const ThemeShopPage = themeConfig.ShopPage;
+  const ThemeShopPage = await getThemePage("ShopPage");
 
   const schemaMarkup = [
     buildWebPageSchema({

@@ -1,8 +1,7 @@
 import { Metadata } from "next";
 import { buildPageMetadata } from "@/lib/seo";
 import { buildBreadcrumbSchema, buildOrganizationSchema, buildWebPageSchema } from "@/lib/seoSchema";
-import { getActiveTheme } from "@/lib/theme";
-import themes from "@/themes/registry";
+import { getThemePage } from "@/themes/themeResolver";
 
 const aboutTitle = "About Us | Shree Hari Cutpiece";
 const aboutDescription = "Learn about Shree Hari Cutpiece, a trusted Ahmedabad-based premium cutpiece fabric brand focused on quality and guidance.";
@@ -53,8 +52,7 @@ const values = [
 ];
 
 export default async function AboutPage() {
-  const activeTheme = await getActiveTheme();
-  const ThemeAboutPage = themes[activeTheme]?.AboutPage || themes.classic.AboutPage;
+  const ThemeAboutPage = await getThemePage("AboutPage");
 
   const schemaMarkup = [
     buildOrganizationSchema(),

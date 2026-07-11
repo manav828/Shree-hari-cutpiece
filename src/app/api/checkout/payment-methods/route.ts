@@ -43,6 +43,9 @@ export async function GET() {
           if (config.id === "razorpay") {
             dbKeysToFetch.push("payment_razorpay_key_id");
           }
+          if (config.id === "cod") {
+            dbKeysToFetch.push("shipping_cod_available");
+          }
         } catch (e) {
           console.error(`Error loading payment config for directory ${dir}:`, e);
         }
@@ -75,7 +78,14 @@ export async function GET() {
 
     for (const [, config] of Object.entries(gatewayConfigs)) {
       const isEnabled = settingsMap[config.isEnabledKey] === "true";
-      if (isEnabled) {
+      
+      // If COD, also check if COD is enabled in shipping settings
+      let isCodAllowed = true;
+      if (config.id === "cod") {
+        isCodAllowed = settingsMap["shipping_cod_available"] !== "false";
+      }
+
+      if (isEnabled && isCodAllowed) {
         const methodData: any = {
           id: config.id,
           name: config.name,

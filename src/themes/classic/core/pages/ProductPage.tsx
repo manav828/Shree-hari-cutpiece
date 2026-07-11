@@ -2,8 +2,9 @@ import ProductDetailClient from "@/themes/classic/components/shop/ProductDetailC
 
 interface ProductPageProps {
     slug: string;
+    serverData?: any;
 }
 
-export default function ProductPage({ slug }: ProductPageProps) {
-    return <ProductDetailClient slug={slug} />;
+export default function ProductPage({ slug, serverData }: ProductPageProps) {
+    return <ProductDetailClient slug={slug} serverData={serverData} />;
 }
