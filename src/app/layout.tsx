@@ -3,6 +3,7 @@ import { Playfair_Display, Inter } from "next/font/google";
 import NextTopLoader from "nextjs-toploader";
 import Providers from "@/components/Providers";
 import { getActiveTheme, getDbActiveTheme } from "@/lib/theme";
+import { ReticleDev } from "./reticle-dev";
 import "./globals.css";
 
 const playfair = Playfair_Display({
@@ -54,6 +55,7 @@ export default async function RootLayout({
         <NextTopLoader color="#9f3f29" height={3} showSpinner={false} />
         <Providers activeTheme={activeTheme}>
           {children}
+          {process.env.NODE_ENV === "development" && <ReticleDev />}
         </Providers>
       </body>
     </html>

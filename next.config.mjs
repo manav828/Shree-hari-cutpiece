@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import { withReticle } from "@reticlehq/next";
 
 class ThemeFallbackResolverPlugin {
   apply(resolver) {
@@ -112,4 +113,4 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+export default withReticle(nextConfig);
