@@ -6,7 +6,7 @@ export const paymentClientHandlers: Record<string, () => Promise<{
     items: any[];
     couponCode: string;
     accessToken: string;
-    onSuccess: (orderNumber: string) => void;
+    onSuccess: (orderNumber: string, orderId: string) => void;
     onError: (msg: string) => void;
     onSubmitting: (loading: boolean) => void;
     paymentSubOption?: string;

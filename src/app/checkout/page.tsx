@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { getThumbnailUrl } from "@/lib/imageOptimization";
 import Link from "next/link";
-import { FormEvent, useEffect, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   AlertCircle,
@@ -151,9 +151,87 @@ export default function CheckoutPage() {
   const [errorMsg, setErrorMsg] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
   const [orderReference, setOrderReference] = useState("");
+  const [createdOrderId, setCreatedOrderId] = useState("");
   const [step, setStep] = useState(1);
   const [siteName, setSiteName] = useState("The Artisanal Archive");
   const [activeTheme, setActiveTheme] = useState("bohemian");
+  const [previousAddress, setPreviousAddress] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchPreviousAddress = async () => {
+      if (!user) {
+        setPreviousAddress(null);
+        return;
+      }
+      try {
+        // 1. Fetch from user_addresses first
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (token) {
+          const res = await fetch("/api/account/addresses", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) {
+            const json = await res.json();
+            const defaultShip = (json.addresses?.find((addr: any) => addr.is_default_shipping) || json.addresses?.[0]) as any;
+            if (defaultShip) {
+              setPreviousAddress({
+                fullName: defaultShip.full_name,
+                addressLine1: defaultShip.address_line1,
+                area: defaultShip.address_line2 || "",
+                landmark: "",
+                city: defaultShip.city,
+                state: defaultShip.state,
+                pincode: defaultShip.pincode,
+                phone: defaultShip.phone ? defaultShip.phone.replace(/^\+91/, "").replace(/\s+/g, "").trim() : "",
+              });
+              return;
+            }
+          }
+        }
+
+        // 2. Fallback to their last order address
+        const { data: latestOrder } = await supabase
+          .from("orders")
+          .select("id")
+          .eq("user_id", user.id)
+          .order("created_at", { ascending: false })
+          .limit(1) as any;
+
+        if (latestOrder && latestOrder.length > 0) {
+          const { data: addrData } = await supabase
+            .from("order_addresses")
+            .select("*")
+            .eq("order_id", (latestOrder[0] as any).id)
+            .eq("type", "shipping")
+            .maybeSingle() as any;
+
+          if (addrData) {
+            // Split address_line2 if it contains area and landmark
+            const line2 = (addrData as any).address_line2 || "";
+            const parts = line2.split(",").map((s: string) => s.trim());
+            const area = parts[0] || "";
+            const landmark = parts[1] || "";
+
+            setPreviousAddress({
+              fullName: (addrData as any).full_name,
+              addressLine1: (addrData as any).address_line1,
+              area: area,
+              landmark: landmark,
+              city: (addrData as any).city,
+              state: (addrData as any).state,
+              pincode: (addrData as any).pincode,
+              phone: (addrData as any).phone ? (addrData as any).phone.replace(/^\+91/, "").replace(/\s+/g, "").trim() : "",
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Failed to load previous address:", err);
+      }
+    };
+
+    fetchPreviousAddress();
+  }, [user]);
 
   const [shippingConfig, setShippingConfig] = useState<{
     defaultFee: number;
@@ -183,6 +261,52 @@ export default function CheckoutPage() {
     loading: boolean;
     error: string;
   } | null>(null);
+
+  const isFormMounted = useRef(false);
+  const isStepMounted = useRef(false);
+
+  // Restore checkout state from localStorage on mount
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const savedForm = localStorage.getItem("checkout_form_data");
+      const savedStep = localStorage.getItem("checkout_step");
+      if (savedForm) {
+        try {
+          setFormData(JSON.parse(savedForm));
+        } catch (e) {
+          console.error("Error parsing saved form data:", e);
+        }
+      }
+      if (savedStep) {
+        const parsedStep = parseInt(savedStep, 10);
+        if (parsedStep >= 1 && parsedStep <= 3) {
+          setStep(parsedStep);
+        }
+      }
+    }
+  }, []);
+
+  // Save formData to localStorage on change (after initial mount check)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!isFormMounted.current) {
+        isFormMounted.current = true;
+        return;
+      }
+      localStorage.setItem("checkout_form_data", JSON.stringify(formData));
+    }
+  }, [formData]);
+
+  // Save step to localStorage on change (after initial mount check)
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      if (!isStepMounted.current) {
+        isStepMounted.current = true;
+        return;
+      }
+      localStorage.setItem("checkout_step", String(step));
+    }
+  }, [step]);
 
   useEffect(() => {
     const pincode = formData.pincode.trim();
@@ -408,29 +532,12 @@ export default function CheckoutPage() {
     const hasCod = availableMethods.find((m) => m.id === "cod");
 
     if (hasRazorpay) {
-      list.push(
-        {
-          gatewayId: "razorpay",
-          subOptionId: "upi",
-          label: "UPI Payment",
-          subtitle: "Google Pay, PhonePe, Paytm (via Razorpay)",
-          icon: Smartphone,
-        },
-        {
-          gatewayId: "razorpay",
-          subOptionId: "card",
-          label: "Credit / Debit Card",
-          subtitle: "Visa, Mastercard, RuPay, Amex (via Razorpay)",
-          icon: CreditCard,
-        },
-        {
-          gatewayId: "razorpay",
-          subOptionId: "netbanking",
-          label: "Net Banking",
-          subtitle: "All major Indian banks (via Razorpay)",
-          icon: Landmark,
-        }
-      );
+      list.push({
+        gatewayId: "razorpay",
+        label: "Pay Online (UPI, Card, Net Banking)",
+        subtitle: "Pay securely via Razorpay with your preferred online method.",
+        icon: CreditCard,
+      });
     }
 
     const isCodSupported = !liveShippingDetails || liveShippingDetails.codAvailable !== false;
@@ -510,25 +617,57 @@ export default function CheckoutPage() {
     return null;
   }
 
-  async function handlePlaceOrder(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
+  function handleStepClick(targetStep: number) {
+    if (targetStep === step) return;
+
+    if (targetStep === 1) {
+      setErrorMsg("");
+      setStep(1);
+    } else if (targetStep === 2) {
+      setErrorMsg("");
+      setStep(2);
+    } else if (targetStep === 3) {
+      const err = getMissingFieldMessage();
+      if (err) {
+        setErrorMsg(err);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setErrorMsg("");
+        setStep(3);
+      }
+    }
+  }
+
+  async function handlePlaceOrder(event?: FormEvent<HTMLFormElement>) {
+    if (event) {
+      event.preventDefault();
+    }
 
     setErrorMsg("");
 
     if (!user) {
       setErrorMsg("Please sign in to continue checkout.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       setTimeout(() => router.push("/login"), 1200);
       return;
     }
 
     if (items.length === 0) {
       setErrorMsg("Your cart is empty.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
     const missingFieldMessage = getMissingFieldMessage();
     if (missingFieldMessage) {
       setErrorMsg(missingFieldMessage);
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
@@ -537,17 +676,26 @@ export default function CheckoutPage() {
 
     if (!accessToken) {
       setErrorMsg("Your session has expired. Please sign in again.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
     if (!selectedGateway) {
       setErrorMsg("Please select a payment method.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
     const loader = paymentClientHandlers[selectedGateway];
     if (!loader) {
       setErrorMsg("Selected payment gateway is not configured correctly in the codebase.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
       return;
     }
 
@@ -560,15 +708,23 @@ export default function CheckoutPage() {
         items,
         couponCode: "",
         accessToken,
-        onSuccess: (orderNumber) => {
+        onSuccess: (orderNumber, orderId) => {
           clearCart();
+          if (typeof window !== "undefined") {
+            localStorage.removeItem("checkout_form_data");
+            localStorage.removeItem("checkout_step");
+          }
           setOrderReference(orderNumber);
+          setCreatedOrderId(orderId);
           setIsSuccess(true);
           setIsSubmitting(false);
         },
         onError: (msg) => {
           setIsSubmitting(false);
           setErrorMsg(msg);
+          if (typeof window !== "undefined") {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+          }
         },
         onSubmitting: (loading) => {
           setIsSubmitting(loading);
@@ -578,6 +734,9 @@ export default function CheckoutPage() {
     } catch (startPaymentError: unknown) {
       setIsSubmitting(false);
       setErrorMsg(startPaymentError instanceof Error ? startPaymentError.message : "Unable to process payment.");
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     }
   }
 
@@ -647,10 +806,10 @@ export default function CheckoutPage() {
               ) : null}
               <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
-                  href="/account/orders"
+                  href={createdOrderId ? `/account/orders/${createdOrderId}` : "/account"}
                   className="inline-flex min-w-[180px] items-center justify-center rounded-lg bg-[#9f3f29] px-6 py-3 text-sm font-semibold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f]"
                 >
-                  View Orders
+                  {createdOrderId ? "View Order" : "View Orders"}
                 </Link>
                 <Link
                   href="/shop"
@@ -686,20 +845,32 @@ export default function CheckoutPage() {
             <section className="lg:col-span-8">
               {/* Step Navigation Bar */}
               <nav aria-label="Checkout Steps" className="mb-10 flex items-center justify-between md:justify-start md:gap-5 text-[#5f544d] border-b border-[#ece3dc] pb-6">
-                <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(1)}
+                  className="flex items-center gap-2 cursor-pointer text-left hover:opacity-85 transition-opacity focus:outline-none"
+                >
                   <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 1 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>1</span>
                   <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 1 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Review Items</span>
-                </div>
+                </button>
                 <span className="flex-1 md:flex-none h-px max-w-[40px] md:w-8 bg-[#ddcfc4]" />
-                <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(2)}
+                  className="flex items-center gap-2 cursor-pointer text-left hover:opacity-85 transition-opacity focus:outline-none"
+                >
                   <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 2 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>2</span>
                   <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 2 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Shipping</span>
-                </div>
+                </button>
                 <span className="flex-1 md:flex-none h-px max-w-[40px] md:w-8 bg-[#ddcfc4]" />
-                <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleStepClick(3)}
+                  className="flex items-center gap-2 cursor-pointer text-left hover:opacity-85 transition-opacity focus:outline-none"
+                >
                   <span className={`flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold ${step >= 3 ? "bg-[#9f3f29] text-white" : "bg-[#ebe8e3] text-[#7a6f68]"}`}>3</span>
                   <span className={`${bohemianHeadingFont.className} text-base md:text-xl ${step === 3 ? "text-[#1c1c19] font-bold block" : "hidden md:block text-[#5f544d] opacity-50"}`}>Payment</span>
-                </div>
+                </button>
               </nav>
 
               {errorMsg ? (
@@ -770,6 +941,31 @@ export default function CheckoutPage() {
                 <div className="space-y-6 animate-fade-in">
                   <section className="rounded-xl bg-[#f6f3ee] p-6 md:p-8">
                     <h2 className={`${bohemianHeadingFont.className} text-4xl text-[#1c1c19] md:text-[42px]`}>Shipping Information</h2>
+
+                    {previousAddress && (
+                      <div className="mt-5 rounded-lg border border-[#dccfc4] bg-[#fdfbf7] p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="space-y-1">
+                          <span className="block text-[10px] font-bold uppercase tracking-[0.12em] text-[#9f3f29]">Use Last Shipping Address?</span>
+                          <p className="text-xs text-[#5f544d] leading-relaxed">
+                            <strong>{previousAddress.fullName}</strong><br />
+                            {previousAddress.addressLine1}, {previousAddress.area ? `${previousAddress.area}, ` : ""}{previousAddress.city}, {previousAddress.state} - {previousAddress.pincode}<br />
+                            Phone: {previousAddress.phone}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({
+                              ...prev,
+                              ...previousAddress
+                            }));
+                          }}
+                          className="inline-flex h-9 items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] cursor-pointer whitespace-nowrap self-start sm:self-center"
+                        >
+                          Use Address
+                        </button>
+                      </div>
+                    )}
 
                     <div className="mt-7 grid grid-cols-1 gap-4 md:grid-cols-2">
                       <label className="md:col-span-2">
@@ -1088,6 +1284,10 @@ export default function CheckoutPage() {
                     ) : (
                       <button
                         type="submit"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          handlePlaceOrder();
+                        }}
                         disabled={isSubmitting || loadingMethods || selectableOptions.length === 0}
                         className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-lg bg-[#9f3f29] px-4 text-sm font-bold uppercase tracking-[0.08em] text-white transition hover:bg-[#bf573f] disabled:cursor-not-allowed disabled:opacity-65 cursor-pointer"
                       >

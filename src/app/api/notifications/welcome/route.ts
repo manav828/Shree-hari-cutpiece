@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { triggerRegistrationNotification } from "@/lib/notifications";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+    // Rate limit: Max 5 registration notifications per hour per IP to prevent spamming
+    if (isRateLimited(req, 5, 3600000, "welcome_notification")) {
+        return NextResponse.json(
+            { error: "Too many registration notification requests. Please try again later." },
+            { status: 429 }
+        );
+    }
+
     try {
         const body = await req.json();
         const { email, phone, name, userId } = body;

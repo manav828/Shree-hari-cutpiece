@@ -412,19 +412,21 @@ export default function BohemianProductListing({
                   </div>
                 </Link>
 
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <Link href={`/shop/${product.slug}`} className={`${bohemianHeadingFont.className} text-[34px] leading-[1.05] text-[#1c1c19] transition-colors hover:text-[#9f3f29]`}>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-start justify-between gap-3">
+                    <Link href={`/shop/${product.slug}`} className={`${bohemianHeadingFont.className} text-[28px] sm:text-[34px] leading-[1.05] text-[#1c1c19] transition-colors hover:text-[#9f3f29] flex-1`}>
                       {product.name}
                     </Link>
-                    <p className="mt-2 text-sm text-[#6f645d]">{product.subtitle}</p>
+                    <p className={`${bohemianHeadingFont.className} text-xl sm:text-2xl text-[#9f3f29] whitespace-nowrap pt-1`}>
+                      {priceFormatter.format(product.price)}
+                    </p>
                   </div>
-                  <div className="text-right">
-                    <p className={`${bohemianHeadingFont.className} text-2xl text-[#9f3f29]`}>{priceFormatter.format(product.price)}</p>
+                  <p className="text-sm text-[#6f645d] line-clamp-2">{product.subtitle}</p>
+                  <div className="mt-1 flex justify-end">
                     <button
                       type="button"
                       onClick={() => handleQuickAdd(product)}
-                      className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68] transition-colors hover:text-[#9f3f29]"
+                      className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68] transition-colors hover:text-[#9f3f29] whitespace-nowrap"
                     >
                       + Quick Add
                     </button>
@@ -610,7 +612,7 @@ export default function BohemianProductListing({
                     <button
                       type="button"
                       onClick={() => handleQuickAdd(product)}
-                      className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68] transition-colors hover:text-[#9f3f29]"
+                      className="text-xs font-semibold uppercase tracking-[0.14em] text-[#7a6f68] transition-colors hover:text-[#9f3f29] whitespace-nowrap"
                     >
                       + Quick Add
                     </button>

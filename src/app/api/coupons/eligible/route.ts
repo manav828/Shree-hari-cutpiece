@@ -2,8 +2,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
 import { evaluateCouponEligibility, calculateCouponDiscount } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
+import { isRateLimited } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
+    // Rate limit: Max 20 requests per minute per IP
+    if (isRateLimited(req, 20, 60000, "eligible_coupons")) {
+        return NextResponse.json(
+            { error: "Too many requests. Please try again later." },
+            { status: 429 }
+        );
+    }
+
     try {
         const body = await req.json();
         const subtotal = Number(body?.subtotal || 0);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdminClient";
+import { isRateLimited } from "@/lib/rateLimit";
 import { calculateCouponDiscount, evaluateCouponEligibility, normalizeCouponCode } from "@/lib/coupons";
 import type { Coupon } from "@/types/coupons";
 import { triggerOrderNotification } from "@/lib/notifications";
@@ -132,6 +133,14 @@ async function createRazorpayOrder(
 }
 
 export default async function handlePlaceOrder(req: NextRequest) {
+    // Rate limit: Max 5 order submissions per 10 minutes per IP
+    if (isRateLimited(req, 5, 600000, "cod_checkout")) {
+        return NextResponse.json(
+            { error: "Too many checkout requests. Please try again in 10 minutes." },
+            { status: 429 }
+        );
+    }
+
     try {
         const token = getAuthToken(req);
         if (!token) {

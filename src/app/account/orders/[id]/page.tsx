@@ -569,7 +569,7 @@ export default function OrderDetailPage() {
                                             <div key={item.id} className="flex items-start gap-4 sm:gap-6 py-6 first:pt-0 last:pb-0">
                                                 <div className={`w-16 h-20 relative flex-shrink-0 rounded-lg overflow-hidden bg-background-secondary border ${styles.accentBorder}`}>
                                                     <Image
-                                                        src={getThumbnailUrl(item.image_url || "/placeholder-image.jpg", 100)}
+                                                        src={getThumbnailUrl(item.image_url) || "/placeholder-image.jpg"}
                                                         alt={item.product_name}
                                                         fill
                                                         unoptimized

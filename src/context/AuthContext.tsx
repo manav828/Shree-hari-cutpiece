@@ -77,75 +77,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     /* Fetch profile from our profiles table */
     const fetchProfile = useCallback(async (su: SupabaseUser) => {
-        const { data } = await supabase
-            .from("profiles")
-            .select("full_name, phone, avatar_url")
-            .eq("id", su.id)
-            .single();
-        setUser(mapUser(su, data || undefined));
+        try {
+            const queryPromise = supabase
+                .from("profiles")
+                .select("full_name, phone, avatar_url")
+                .eq("id", su.id)
+                .single();
+            
+            // Timeout after 5 seconds
+            const timeoutPromise = new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error("fetchProfile timeout")), 5000)
+            );
+
+            const { data } = await Promise.race([queryPromise, timeoutPromise]) as any;
+            setUser(mapUser(su, data || undefined));
+        } catch (err) {
+            console.error("fetchProfile error:", err);
+            // Fallback to mapping user using metadata only
+            setUser(mapUser(su, undefined));
+        }
     }, []);
 
     /* Fetch orders from Supabase */
     const fetchOrdersByUserId = useCallback(async (currentUserId: string | null) => {
+        try {
+            if (!currentUserId) {
+                setOrders([]);
+                return;
+            }
 
-        if (!currentUserId) {
-            setOrders([]);
-            return;
-        }
+            const timeoutPromise = new Promise<never>((_, reject) => 
+                setTimeout(() => reject(new Error("fetchOrdersByUserId timeout")), 6000)
+            );
 
-        const { data: ordersData } = await supabase
-            .from("orders")
-            .select("*")
-            .eq("user_id", currentUserId)
-            .order("created_at", { ascending: false });
+            const ordersPromise = supabase
+                .from("orders")
+                .select("*")
+                .eq("user_id", currentUserId)
+                .order("created_at", { ascending: false });
 
-        if (!ordersData || ordersData.length === 0) {
-            setOrders([]);
-            return;
-        }
+            const { data: ordersData, error: ordersError } = await Promise.race([ordersPromise, timeoutPromise]) as any;
 
-        // Fetch items for all orders
-        const ordersDataList = ordersData as any[];
-        const orderIds = ordersDataList.map((o) => o.id);
-        const { data: itemsData } = await supabase
-            .from("order_items")
-            .select("*")
-            .in("order_id", orderIds);
+            if (ordersError) throw ordersError;
+            if (!ordersData || ordersData.length === 0) {
+                setOrders([]);
+                return;
+            }
 
-        const itemsByOrder: Record<string, OrderItem[]> = {};
-        const itemsDataList = (itemsData as any[]) || [];
-        itemsDataList.forEach((item) => {
-            if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
-            itemsByOrder[item.order_id].push({
-                id: item.id,
-                product_id: item.product_id || null,
-                product_name: item.product_name,
-                color_name: item.color_name,
-                image_url: item.image_url,
-                quantity_or_meters: item.quantity_or_meters,
-                price_per_unit: item.price_per_unit,
-                variant_id: item.variant_id,
-                selling_mode: item.selling_mode || "meter",
-                selected_options_json: item.selected_options_json || null,
+            const ordersDataList = ordersData as any[];
+            const orderIds = ordersDataList.map((o) => o.id);
+
+            const itemsPromise = supabase
+                .from("order_items")
+                .select("*")
+                .in("order_id", orderIds);
+
+            const { data: itemsData, error: itemsError } = await Promise.race([itemsPromise, timeoutPromise]) as any;
+
+            if (itemsError) throw itemsError;
+
+            const itemsByOrder: Record<string, OrderItem[]> = {};
+            const itemsDataList = (itemsData as any[]) || [];
+            itemsDataList.forEach((item) => {
+                if (!itemsByOrder[item.order_id]) itemsByOrder[item.order_id] = [];
+                itemsByOrder[item.order_id].push({
+                    id: item.id,
+                    product_id: item.product_id || null,
+                    product_name: item.product_name,
+                    color_name: item.color_name,
+                    image_url: item.image_url,
+                    quantity_or_meters: item.quantity_or_meters,
+                    price_per_unit: item.price_per_unit,
+                    variant_id: item.variant_id,
+                    selling_mode: item.selling_mode || "meter",
+                    selected_options_json: item.selected_options_json || null,
+                });
             });
-        });
 
-        const mapped: Order[] = ordersDataList.map((o) => ({
-            id: o.id,
-            order_number: o.order_number,
-            date: o.created_at,
-            status: o.status,
-            paymentStatus: o.payment_status,
-            paymentMethod: o.payment_method || "",
-            trackingUrl: o.tracking_url || undefined,
-            items: itemsByOrder[o.id] || [],
-            total: o.total_amount,
-            shippingCost: o.shipping_cost,
-            address: o.delivery_address,
-            phone: o.contact_phone,
-        }));
+            const mapped: Order[] = ordersDataList.map((o) => ({
+                id: o.id,
+                order_number: o.order_number,
+                date: o.created_at,
+                status: o.status,
+                paymentStatus: o.payment_status,
+                paymentMethod: o.payment_method || "",
+                trackingUrl: o.tracking_url || undefined,
+                items: itemsByOrder[o.id] || [],
+                total: o.total_amount,
+                shippingCost: o.shipping_cost,
+                address: o.delivery_address,
+                phone: o.contact_phone,
+            }));
 
-        setOrders(mapped);
+            setOrders(mapped);
+        } catch (err) {
+            console.error("fetchOrdersByUserId error:", err);
+            // On error, keep existing orders or set to empty but do not block loading
+            setOrders((prev) => prev.length > 0 ? prev : []);
+        }
     }, []);
 
     /* Listen for auth state changes */

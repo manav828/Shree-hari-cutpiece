@@ -72,7 +72,7 @@ export async function handleCheckout(options: {
   items: any[];
   couponCode: string;
   accessToken: string;
-  onSuccess: (orderNumber: string) => void;
+  onSuccess: (orderNumber: string, orderId: string) => void;
   onError: (msg: string) => void;
   onSubmitting: (loading: boolean) => void;
   paymentSubOption?: string; // upi | card | netbanking
@@ -102,13 +102,6 @@ export async function handleCheckout(options: {
       throw new Error("Razorpay SDK failed to load. Please check your connection and retry.");
     }
 
-    const methodConfig: Record<string, boolean> = {};
-    if (options.paymentSubOption) {
-      methodConfig[options.paymentSubOption] = true;
-    } else {
-      methodConfig["upi"] = true; // Fallback
-    }
-
     const razorpayOptions: RazorpayOptions = {
       key: createJson.keyId,
       amount: createJson.amount,
@@ -124,9 +117,8 @@ export async function handleCheckout(options: {
       notes: {
         internal_order_id: createJson.internalOrderId,
         order_number: createJson.orderNumber || "",
-        selected_method: options.paymentSubOption || "upi",
+        selected_method: options.paymentSubOption || "online",
       },
-      method: methodConfig,
       theme: {
         color: "#9f3f29",
       },
@@ -157,7 +149,7 @@ export async function handleCheckout(options: {
             throw new Error(verifyJson.error || "Payment verification failed.");
           }
 
-          options.onSuccess(createJson.orderNumber || "");
+          options.onSuccess(createJson.orderNumber || "", verifyJson.orderId || createJson.internalOrderId || "");
         } catch (verifyError: any) {
           options.onError(verifyError.message || "Payment verification failed.");
         } finally {

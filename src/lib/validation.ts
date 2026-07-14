@@ -2,6 +2,31 @@
  * Shared input validation utilities for client and server side.
  */
 
+export function containsSuspiciousPatterns(value: string): boolean {
+    if (!value) return false;
+    const lower = value.toLowerCase();
+    
+    // Scan for script tags, HTML injection vectors, JavaScript handlers/properties, and SQL injection strings
+    const suspiciousTokens = [
+        "<script",
+        "javascript:",
+        "onload=",
+        "onerror=",
+        "onclick=",
+        "onmouseover=",
+        "onfocus=",
+        "<iframe",
+        "document.cookie",
+        "window.location",
+        "union select",
+        "select * from",
+        "delete from",
+        "drop table"
+    ];
+    
+    return suspiciousTokens.some((token) => lower.includes(token));
+}
+
 export function validateName(name: string): string | null {
     const trimmed = (name || "").trim();
     if (!trimmed) {
@@ -9,6 +34,9 @@ export function validateName(name: string): string | null {
     }
     if (trimmed.length > 100) {
         return "Name must be 100 characters or less.";
+    }
+    if (containsSuspiciousPatterns(trimmed)) {
+        return "Name contains suspicious characters or script patterns.";
     }
     return null;
 }
@@ -82,6 +110,9 @@ export function validateAddressLine(line: string, label: string = "Address line"
     if (trimmed.length > 100) {
         return `${label} must be 100 characters or less.`;
     }
+    if (containsSuspiciousPatterns(trimmed)) {
+        return `${label} contains suspicious characters or script patterns.`;
+    }
     return null;
 }
 
@@ -92,6 +123,9 @@ export function validateCity(city: string): string | null {
     }
     if (trimmed.length > 50) {
         return "City must be 50 characters or less.";
+    }
+    if (containsSuspiciousPatterns(trimmed)) {
+        return "City contains suspicious characters or script patterns.";
     }
     return null;
 }
@@ -104,6 +138,9 @@ export function validateState(state: string): string | null {
     if (trimmed.length > 50) {
         return "State must be 50 characters or less.";
     }
+    if (containsSuspiciousPatterns(trimmed)) {
+        return "State contains suspicious characters or script patterns.";
+    }
     return null;
 }
 
@@ -111,6 +148,9 @@ export function validateNotes(notes: string): string | null {
     const trimmed = (notes || "").trim();
     if (trimmed.length > 500) {
         return "Notes must be 500 characters or less.";
+    }
+    if (containsSuspiciousPatterns(trimmed)) {
+        return "Notes contain suspicious characters or script patterns.";
     }
     return null;
 }

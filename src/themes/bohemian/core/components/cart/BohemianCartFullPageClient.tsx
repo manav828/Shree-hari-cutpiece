@@ -79,7 +79,7 @@ export default function BohemianCartFullPageClient() {
 
   return (
     <main className={`${bohemianBodyFont.className} bg-[#fcf9f4]`}>
-      <section className={`${BOHEMIAN_SITE_CONTAINER} py-12 md:py-16 lg:py-20`}>
+      <section className={`${BOHEMIAN_SITE_CONTAINER} pt-4 pb-12 md:pt-6 md:pb-16 lg:pt-8 lg:pb-20`}>
         <button
           type="button"
           onClick={handleBack}
@@ -115,7 +115,7 @@ export default function BohemianCartFullPageClient() {
               <div className="divide-y divide-[#dfcdc1]/45">
                 {items.map((item) => (
                   <article key={item.id} className="py-6 md:py-7">
-                    <div className="flex flex-col gap-5 md:flex-row md:items-center md:gap-6">
+                    <div className="flex flex-row items-start gap-4 md:items-center md:gap-6">
                       <div className="h-28 w-24 flex-shrink-0 overflow-hidden rounded-md bg-[#f0ede8] md:h-36 md:w-28">
                         <Image src={getThumbnailUrl(item.image)} alt={item.name} width={220} height={320} className="h-full w-full object-cover" />
                       </div>
