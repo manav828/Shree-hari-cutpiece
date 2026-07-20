@@ -76,7 +76,8 @@ const SOCIAL_PROOF_IMAGES = [
 ];
 
 const LIFESTYLE_BANNER_IMAGE =
-	"https://lh3.googleusercontent.com/aida/ADBb0ui8nOrpG-V9m3I3jbTfJgEmLvjFr4FEh1YoSy3xbocip_LNebo7W6YJ7CmPJZh2Jy_8vJKn5-djR5kuNbr2-dlMgZoDTyCRI_36ImK6ZiqbrhWArIbthgSgShP2RaP2Tb8oaNeWS2QKQWWyv9Mkqs13JmWXhdqUIxN3bPvTgKxTIDy5H9uNQwjmBh97xj8bm1HPtuDOhaL6KE89S9wIBsiQIXrcXQCZJW8tehJanziJYuNDMwsGAVAADbOryAYQPH_SVQIo-Ew66A";
+	"https://images.unsplash.com/photo-1544816155-12df9643f363?q=80&w=1600&auto=format&fit=crop";
+
 
 
 type RelatedProductCard = {
@@ -1787,12 +1788,13 @@ export default function ProductDetailClient({ slug, serverData }: ProductDetailC
 				<section className="mt-24 overflow-hidden">
 					<div className="relative h-[260px] sm:h-[320px] lg:h-[420px]">
 						<Image
-							src={LIFESTYLE_BANNER_IMAGE}
+							src={product?.artisan_image || LIFESTYLE_BANNER_IMAGE}
 							alt="Lifestyle fabric usage"
 							fill
 							sizes="100vw"
 							className="object-cover"
 						/>
+
 						<div className="absolute inset-0 bg-black/25" />
 						<div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
 							<h2 className={`${bohemianHeadingFont.className} text-4xl italic leading-[0.92] md:text-6xl`}>A ritual of slow living.</h2>

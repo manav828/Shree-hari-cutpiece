@@ -1,0 +1,119 @@
+{
+  "home": {
+    "url": "http://localhost:3000/",
+    "logs": [
+      {
+        "level": "warn",
+        "text": "Image with src \"https://images.unsplash.com/photo-1598300042247-d088f8ab3a91?q=80&w=800&auto=format&fit=crop\" has \"fill\" and parent element with invalid \"position\". Provided \"static\" should be one of absolute,fixed,relative."
+      },
+      {
+        "level": "warn",
+        "text": "Image with src \"https://images.unsplash.com/photo-1612196808214-b8e1d6145a8c?q=80&w=800&auto=format&fit=crop\" has \"fill\" and parent element with invalid \"position\". Provided \"static\" should be one of absolute,fixed,relative."
+      },
+      {
+        "level": "warn",
+        "text": "Image with src \"https://images.unsplash.com/photo-1563245372-f21724e3856d?q=80&w=800&auto=format&fit=crop\" has \"fill\" and parent element with invalid \"position\". Provided \"static\" should be one of absolute,fixed,relative."
+      }
+    ],
+    "calls": [
+      {
+        "method": "POST",
+        "url": "/api/cart/sync",
+        "status": 200,
+        "ms": 28
+      }
+    ],
+    "snapshot": {
+      "tree": "- link \"✨dfdsaf₹100 OFFCode: ABC\" (ref=e3)\n- button \"Close offer\" (ref=e4)\n- link \"The Artisanal Archive\" (ref=e5)\n- link \"Shop\" (ref=e6)\n- link \"About\" (ref=e7)\n- link \"Journal\" (ref=e8)\n- button \"Search\" (ref=e9)\n- button \"Shopping bag\" (ref=e10)\n- link \"Login or account\" (ref=e11)\n- link \"Sign Up\" (ref=e12)\n- link \"Explore Collection\" (ref=e13)\n- link \"Explore Collection\" (ref=e14)\n- link \"Explore Collection\" (ref=e15)\n- link \"Explore Collection\" (ref=e16)\n- button \"Previous banner\" (ref=e17)\n- button \"Next banner\" (ref=e18)\n- button \"Go to slide 1\" (ref=e19)\n- button \"Go to slide 2\" (ref=e20)\n- button \"Go to slide 3\" (ref=e21)\n- button \"Go to slide 4\" (ref=e22)\n- link \"View All Categories\" (ref=e23)\n- link \"KitchenFunctional craft for daily rituals.\" (ref=e24)\n- link \"Planters\" (ref=e25)\n- link \"Living\" (ref=e26)\n- link \"Rugs\" (ref=e27)\n- link \"Planters\" (ref=e28)\n- link \"Wall Art\" (ref=e29)\n- link \"Horizon Tapestry\" (ref=e30)\n- link \"READ THE JOURNAL\" (ref=e31)\n- link (ref=e32)\n- link \"Heritage Looms\" (ref=e33)\n- link (ref=e34)\n- link \"The Rhythm of the Wheel\" (ref=e35)\n- link (ref=e36)\n- link \"Indigo Dreams\" (ref=e37)\n- link \"See the full collection\" (ref=e38)\n- link \"Earthen Napkin Set₹45\" (ref=e39)\n- link \"Nomad Wall Tapestry₹320\" (ref=e40)\n- link \"Muted Sage Blanket₹195\" (ref=e41)\n- link \"Horizon Tapestry₹420\" (ref=e42)\n- link \"Shop the Look\" (ref=e43)\n- textbox \"Your email address\" (ref=e44)\n- button \"Subscribe\" (ref=e45)\n- link \"Facebook\" (ref=e46)\n- link \"Instagram\" (ref=e47)\n- link \"YouTube\" (ref=e48)\n- link \"Journal\" (ref=e49)\n- link \"Sustainability\" (ref=e50)\n- link \"Wholesale\" (ref=e51)\n- link \"Shipping & Returns\" (ref=e52)\n- link \"Privacy Policy\" (ref=e53)\n- link \"Contact Us\" (ref=e54)\n- button \"Flag a bug for the agent\" (ref=e55)",
+      "status": {
+        "route": "/",
+        "title": "Shree Hari Cutpiece | Premium Fabric Per Meter",
+        "visibleDialogs": []
+      },
+      "nodes": 53,
+      "truncated": false,
+      "cost": {
+        "bytes": 2069,
+        "tokens": 518
+      }
+    }
+  },
+  "shop": {
+    "url": "http://localhost:3000/shop",
+    "logs": [],
+    "calls": [
+      {
+        "method": "POST",
+        "url": "/api/cart/sync",
+        "status": 200,
+        "ms": 571
+      }
+    ],
+    "snapshot": {
+      "tree": "- link \"The Artisanal Archive\" (ref=e4)\n- link \"Shop\" (ref=e5)\n- link \"About\" (ref=e6)\n- link \"Journal\" (ref=e7)\n- button \"Search\" (ref=e8)\n- button \"Shopping bag\" (ref=e9)\n- link \"Login or account\" (ref=e10)\n- link \"Sign Up\" (ref=e11)\n- textbox \"Search categories...\" (ref=e12)\n- combobox (ref=e13) [value=\"Type\"]\n- combobox (ref=e14) [value=\"Material\"]\n- combobox (ref=e15) [value=\"Price Range\"]\n- link \"All\" (ref=e16)\n- link \"Textiles\" (ref=e17)\n- link \"Kitchen\" (ref=e18)\n- link \"Wall Art\" (ref=e19)\n- link \"Storage\" (ref=e20)\n- link \"Decor\" (ref=e21)\n- link \"13 itemsTextilesExplore\" (ref=e22)\n- link \"1 itemKitchen\" (ref=e23)\n- link \"1 itemWall Art\" (ref=e24)\n- link \"1 itemStorage\" (ref=e25)\n- link \"Discover the Process\" (ref=e26)\n- link \"Shop the Drop\" (ref=e27)\n- link \"View More Collections\" (ref=e28)\n- link \"Decor1 item\" (ref=e29)\n- link \"Facebook\" (ref=e30)\n- link \"Instagram\" (ref=e31)\n- link \"YouTube\" (ref=e32)\n- link \"Journal\" (ref=e33)\n- link \"Sustainability\" (ref=e34)\n- link \"Wholesale\" (ref=e35)\n- link \"Shipping & Returns\" (ref=e36)\n- link \"Privacy Policy\" (ref=e37)\n- link \"Contact Us\" (ref=e38)\n- button \"Flag a bug for the agent\" (ref=e39)",
+      "status": {
+        "route": "/shop",
+        "title": "Shop All Fabrics | Shree Hari Cutpiece",
+        "visibleDialogs": []
+      },
+      "nodes": 36,
+      "truncated": false,
+      "cost": {
+        "bytes": 1408,
+        "tokens": 352
+      }
+    }
+  },
+  "cart": {
+    "url": "http://localhost:3000/cart",
+    "logs": [],
+    "calls": [
+      {
+        "method": "POST",
+        "url": "/api/cart/sync",
+        "status": 200,
+        "ms": 25
+      }
+    ],
+    "snapshot": {
+      "tree": "- link \"The Artisanal Archive\" (ref=e2)\n- link \"Shop\" (ref=e3)\n- link \"About\" (ref=e4)\n- link \"Journal\" (ref=e5)\n- button \"Search\" (ref=e6)\n- button \"Shopping bag\" (ref=e7)\n- link \"Login or account\" (ref=e8)\n- link \"Sign Up\" (ref=e9)\n- button \"Back\" (ref=e10)\n- link \"Explore Collection\" (ref=e11)\n- link \"Facebook\" (ref=e12)\n- link \"Instagram\" (ref=e13)\n- link \"YouTube\" (ref=e14)\n- link \"Journal\" (ref=e15)\n- link \"Sustainability\" (ref=e16)\n- link \"Wholesale\" (ref=e17)\n- link \"Shipping & Returns\" (ref=e18)\n- link \"Privacy Policy\" (ref=e19)\n- link \"Contact Us\" (ref=e20)\n- button \"Flag a bug for the agent\" (ref=e21)",
+      "status": {
+        "route": "/cart",
+        "title": "Your Cart | Shree Hari Cutpiece",
+        "visibleDialogs": []
+      },
+      "nodes": 20,
+      "truncated": false,
+      "cost": {
+        "bytes": 807,
+        "tokens": 202
+      }
+    }
+  },
+  "checkout": {
+    "url": "http://localhost:3000/checkout",
+    "logs": [],
+    "calls": [
+      {
+        "method": "POST",
+        "url": "/api/cart/sync",
+        "status": 200,
+        "ms": 1623
+      }
+    ],
+    "snapshot": {
+      "tree": "- link \"The Artisanal Archive\" (ref=e2)\n- link \"Continue Shopping\" (ref=e3)\n- button \"Flag a bug for the agent\" (ref=e4)",
+      "status": {
+        "route": "/checkout",
+        "title": "Shree Hari Cutpiece | Premium Fabric Per Meter",
+        "visibleDialogs": []
+      },
+      "nodes": 3,
+      "truncated": false,
+      "cost": {
+        "bytes": 275,
+        "tokens": 69
+      }
+    }
+  }
+}

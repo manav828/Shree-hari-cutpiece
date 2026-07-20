@@ -14,14 +14,23 @@ export async function verifyAdminSession(): Promise<boolean> {
 
         // Verify the JWT access token directly with Supabase
         const { data: { user }, error } = await supabaseAdmin.auth.getUser(token);
-        if (error || !user) return false;
+        if (error) {
+            console.error("Error verifying admin session token:", error.message || error);
+            return false;
+        }
+        if (!user) return false;
 
         // Verify that the user role is indeed admin
-        const { data: profile } = await supabaseAdmin
+        const { data: profile, error: pError } = await supabaseAdmin
             .from("user_profiles")
             .select("role")
             .eq("id", user.id)
             .maybeSingle();
+
+        if (pError) {
+            console.error("Error fetching user profile for admin check:", pError.message || pError);
+            return false;
+        }
 
         return profile?.role === "admin";
     } catch (err) {
@@ -29,3 +38,5 @@ export async function verifyAdminSession(): Promise<boolean> {
         return false;
     }
 }
+
+

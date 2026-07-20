@@ -32,6 +32,7 @@
   "devDependencies": {
     "@reticlehq/next": "^2.0.0",
     "@reticlehq/react": "^2.0.0",
+    "@reticlehq/server": "^2.0.0",
     "@types/canvas-confetti": "^1.9.0",
     "@types/node": "^20",
     "@types/nodemailer": "^8.0.0",

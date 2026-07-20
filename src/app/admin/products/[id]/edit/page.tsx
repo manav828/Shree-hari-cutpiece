@@ -1006,9 +1006,9 @@ export default function EditProductPage() {
                 </div>
             )}
 
-            <div className={`grid grid-cols-1 gap-5 ${isDetailsTab ? "lg:grid-cols-3" : "lg:grid-cols-1"}`}>
-                {/* ═══ LEFT COLUMN — Only active tab shows ═══ */}
-                <div className={isDetailsTab ? "lg:col-span-2" : ""}>
+            <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
+                {/* ═══ LEFT COLUMN — Shows active tab content ═══ */}
+                <div className="lg:col-span-2">
 
                     {/* ──── TAB: Details ──── */}
                     {activeTab === "details" && (
@@ -2791,28 +2791,26 @@ export default function EditProductPage() {
                 </div>
 
                 {/* ═══ RIGHT COLUMN ═══ */}
-                {isDetailsTab && (
-                    <div className="lg:col-span-1">
-                        <div className="lg:sticky lg:top-8 space-y-5">
-                            <div className="bg-white rounded-xl border border-gray-200 p-5">
-                                <h3 className="text-sm font-semibold text-gray-900 mb-4">Status & Visibility</h3>
-                                <div className="space-y-3">
-                                    {[
-                                        { key: "is_active" as const, icon: form.is_active ? Eye : EyeOff, label: "Live on store", desc: "Visible to customers", color: "text-emerald-500" },
-                                        { key: "is_featured" as const, icon: Star, label: "Featured", desc: "Homepage section", color: "text-amber-500" },
-                                        { key: "is_new_arrival" as const, icon: Sparkles, label: "New Arrival", desc: "Badge & section", color: "text-violet-500" },
-                                    ].map(opt => (
-                                        <div key={opt.key} className="flex items-center gap-3 py-1.5 cursor-pointer" onClick={() => upd(opt.key, !form[opt.key])}>
-                                            <opt.icon className={`h-4 w-4 flex-shrink-0 ${form[opt.key] ? opt.color : "text-gray-300"}`} />
-                                            <div className="flex-1 min-w-0"><p className="text-sm font-medium text-gray-800">{opt.label}</p><p className="text-xs text-gray-400">{opt.desc}</p></div>
-                                            <div className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${form[opt.key] ? "bg-gray-900" : "bg-gray-200"}`}><span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${form[opt.key] ? "left-[18px]" : "left-0.5"}`} /></div>
-                                        </div>
-                                    ))}
-                                </div>
+                <div className="lg:col-span-1">
+                    <div className="lg:sticky lg:top-8 space-y-5">
+                        <div className="bg-white rounded-xl border border-gray-200 p-5">
+                            <h3 className="text-sm font-semibold text-gray-900 mb-4">Status & Visibility</h3>
+                            <div className="space-y-3">
+                                {[
+                                    { key: "is_active" as const, icon: form.is_active ? Eye : EyeOff, label: "Live on store", desc: "Visible to customers", color: "text-emerald-500" },
+                                    { key: "is_featured" as const, icon: Star, label: "Featured", desc: "Homepage section", color: "text-amber-500" },
+                                    { key: "is_new_arrival" as const, icon: Sparkles, label: "New Arrival", desc: "Badge & section", color: "text-violet-500" },
+                                ].map(opt => (
+                                    <div key={opt.key} className="flex items-center gap-3 py-1.5 cursor-pointer" onClick={() => upd(opt.key, !form[opt.key])}>
+                                        <opt.icon className={`h-4 w-4 flex-shrink-0 ${form[opt.key] ? opt.color : "text-gray-300"}`} />
+                                        <div className="flex-1 min-w-0"><p className="text-sm font-medium text-gray-800">{opt.label}</p><p className="text-xs text-gray-400">{opt.desc}</p></div>
+                                        <div className={`w-9 h-5 rounded-full relative transition-colors flex-shrink-0 ${form[opt.key] ? "bg-gray-900" : "bg-gray-200"}`}><span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all ${form[opt.key] ? "left-[18px]" : "left-0.5"}`} /></div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
             </div>
         </div>
     );
